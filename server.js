@@ -10,6 +10,11 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname)));
 
+// Explicit Admin Route fix
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
@@ -65,7 +70,6 @@ let rocketBets = [];
 let cachedUsers = new Map();
 let allTransactions = [];
 
-// Load initial data from MongoDB
 async function loadDataFromDB() {
   try {
     const usersList = await User.find({});
@@ -227,20 +231,21 @@ setInterval(async () => {
 
 io.on('connection', (socket) => {
   socket.on('user_register', async ({ name, phone, password }) => {
-    if (cachedUsers.has(phone)) {
-      socket.emit('auth_error', 'Phone number already registered!');
-    } else {
-      const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
-      const newUser = { userId, name, phone, password, balance: 10 };
-      
-      try {
+    try {
+      let existingUser = await User.findOne({ phone });
+      if (existingUser || cachedUsers.has(phone)) {
+        socket.emit('auth_error', 'Phone number already registered!');
+      } else {
+        const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
+        const newUser = { userId, name, phone, password, balance: 10 };
+        
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
         io.emit('admin_update', await getAdminPayload());
-      } catch (err) {
-        socket.emit('auth_error', 'Registration failed!');
       }
+    } catch (err) {
+      socket.emit('auth_error', 'Registration failed!');
     }
   });
 
