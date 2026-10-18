@@ -8,6 +8,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body { background-color: #070a12; color: #f1f5f9; font-family: system-ui, sans-serif; overflow-x: hidden; }
+    .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
+    .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
     
     .night {
       position: absolute;
@@ -159,16 +161,32 @@
       <button onclick="setMode('MANUAL')" id="mode-MANUAL" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">🎯 Manual Override</button>
     </div>
 
-    <div class="grid grid-cols-3 gap-3">
-      <button onclick="forceColour('GREEN')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg">
-        Force GREEN Win (₹<span id="stake-GREEN">0</span>)
-      </button>
-      <button onclick="forceColour('VIOLET')" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-3 rounded-xl shadow-lg">
-        Force VIOLET Win (₹<span id="stake-VIOLET">0</span>)
-      </button>
-      <button onclick="forceColour('RED')" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg">
-        Force RED Win (₹<span id="stake-RED">0</span>)
-      </button>
+    <!-- Exact UI Match Buttons like User Screen -->
+    <div class="space-y-3">
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="forceColour('GREEN')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE GREEN <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-GREEN">0</span>)</span>
+        </button>
+        <button onclick="forceColour('VIOLET')" class="bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE VIOLET <span class="block text-[10px] opacity-85 font-normal">Win 4.5x (₹<span id="stake-VIOLET">0</span>)</span>
+        </button>
+        <button onclick="forceColour('RED')" class="bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE RED <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-RED">0</span>)</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-5 gap-2.5">
+        <button onclick="forceNum(0)" class="num-0 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">0</button>
+        <button onclick="forceNum(1)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">1</button>
+        <button onclick="forceNum(2)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
+        <button onclick="forceNum(3)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
+        <button onclick="forceNum(4)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
+        <button onclick="forceNum(5)" class="num-5 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
+        <button onclick="forceNum(6)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
+        <button onclick="forceNum(7)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
+        <button onclick="forceNum(8)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
+        <button onclick="forceNum(9)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
+      </div>
     </div>
 
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
@@ -179,10 +197,13 @@
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-          <p class="text-[11px] text-slate-400">Manage user accounts, set custom balance or delete users</p>
+          <p class="text-[11px] text-slate-400">Select or search user accounts, set custom balance or delete users</p>
         </div>
-        <div class="relative w-full sm:w-72">
-          <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name, Phone or ID..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="quickUserSelect" onchange="onQuickUserSelect(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-indigo-300 font-bold outline-none">
+            <option value="">-- Choose User Name --</option>
+          </select>
+          <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
         </div>
       </div>
 
@@ -262,6 +283,12 @@
       }
     }
 
+    function onQuickUserSelect(phone) {
+      if (!phone) return;
+      document.getElementById('userSearchInput').value = phone;
+      renderUsersTable();
+    }
+
     function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
 
     socket.on('rocket_tick', ({ status, multiplier }) => {
@@ -277,6 +304,12 @@
       document.getElementById('adminPeriod').innerText = gameState.period;
       document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
       document.getElementById('adminTotalRocketPool').innerText = `₹${totalRocketPool || 0}`;
+
+      const quickSelect = document.getElementById('quickUserSelect');
+      const currentSelected = quickSelect.value;
+      quickSelect.innerHTML = `<option value="">-- Choose User Name --</option>` + 
+        cachedUsers.map(u => `<option value="${u.phone}">${u.name} (${u.phone})</option>`).join('');
+      quickSelect.value = currentSelected;
 
       if (rocketState) {
         document.getElementById('nextRocketBanner').innerText = rocketState.forcedNextCrash
@@ -322,14 +355,14 @@
         for (let n = 0; n <= 9; n++) {
           const isSelected = gameState.mode === 'MANUAL' && gameState.forcedNumber === n;
           gridHtml += `
-            <button onclick="forceNum(${n})" class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
+            <div class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
               <div class="flex justify-between items-center">
                 <span class="text-lg font-black text-white">#${n}</span>
-                ${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">SELECTED</span>' : ''}
+                ${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">LOCKED</span>' : ''}
               </div>
               <p class="text-[11px] text-slate-400 mt-1">Bet: ₹${summary.stakes[n]}</p>
               <p class="text-xs font-bold text-amber-300">Payout: ₹${summary.projectedPayouts[n]}</p>
-            </button>
+            </div>
           `;
         }
         document.getElementById('numberGrid').innerHTML = gridHtml;
@@ -358,7 +391,7 @@
         (u.phone && u.phone.toLowerCase().includes(q))
       );
       const uBody = document.getElementById('usersTableBody');
-      uBody.innerHTML = filtered.length === 0
+      uBody.innerHTML = filtered.length ===0
         ? `<tr><td colspan="4" class="py-4 text-center text-slate-500">No matching users found.</td></tr>`
         : filtered.map(u => `
           <tr>
