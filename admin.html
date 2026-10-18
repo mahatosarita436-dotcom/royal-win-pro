@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Admin Panel - 2 Games Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { background-color: #070a12; color: #f1f5f9; font-family: system-ui, sans-serif; overflow-x: hidden; }
+    
+    .night {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      transform: rotateZ(45deg);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .shooting_star {
+      position: absolute;
+      left: 50%; top: 50%;
+      height: 2px;
+      background: linear-gradient(-45deg, rgba(95, 145, 255, 1), rgba(0, 0, 255, 0));
+      border-radius: 999px;
+      filter: drop-shadow(0 0 6px rgba(105, 215, 255, 1));
+      animation: tail 3000ms ease-in-out infinite, shooting 3000ms ease-in-out infinite;
+    }
+    .shooting_star::before {
+      content: '';
+      position: absolute; top: calc(50% - 1px); right: 0;
+      height: 2px; background: linear-gradient(-45deg, rgba(0, 0, 255, 0), rgba(95, 145, 255, 1), rgba(0, 0, 255, 0));
+      transform: translateX(50%) rotateZ(45deg);
+      border-radius: 100%;
+      animation: shining 3000ms ease-in-out infinite;
+    }
+    .shooting_star::after {
+      content: '';
+      position: absolute; top: calc(50% - 1px); right: 0;
+      height: 2px; background: linear-gradient(-45deg, rgba(0, 0, 255, 0), rgba(95, 145, 255, 1), rgba(0, 0, 255, 0));
+      transform: translateX(50%) rotateZ(-45deg);
+      border-radius: 100%;
+      animation: shining 3000ms ease-in-out infinite;
+    }
+    @keyframes tail {
+      0% { width: 0; }
+      30% { width: 100px; }
+      100% { width: 0; }
+    }
+    @keyframes shining {
+      0% { width: 0; }
+      50% { width: 30px; }
+      100% { width: 0; }
+    }
+    @keyframes shooting {
+      0% { transform: translateX(0) translateY(0); }
+      100% { transform: translateX(300px) translateY(600px); }
+    }
+    .shooting_star:nth-child(1) { top: 20%; left: 30%; animation-delay: 1000ms; }
+    .shooting_star:nth-child(2) { top: 40%; left: 10%; animation-delay: 4000ms; }
+    .shooting_star:nth-child(3) { top: 60%; left: 50%; animation-delay: 2000ms; }
+    .shooting_star:nth-child(4) { top: 10%; left: 80%; animation-delay: 3500ms; }
+  </style>
+</head>
+<body class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 relative">
+
+  <div id="adminAuthModal" class="fixed inset-0 bg-[#05070c] z-[9999] flex items-center justify-center p-4 overflow-hidden">
+    <div class="night">
+      <div class="shooting_star"></div>
+      <div class="shooting_star"></div>
+      <div class="shooting_star"></div>
+      <div class="shooting_star"></div>
+    </div>
+    <div class="bg-slate-900/90 backdrop-blur-md border-2 border-indigo-500/40 p-6 rounded-3xl w-full max-w-sm text-center relative z-10 shadow-2xl space-y-4">
+      <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
+        Security Gate
+      </span>
+      <h2 class="text-2xl font-black text-white mt-1">Admin Authentication</h2>
+      <p class="text-xs text-slate-400">Enter master password to access control panel.</p>
+      
+      <input id="adminPassInput" type="password" placeholder="Enter Password..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white text-center outline-none focus:border-indigo-500 font-mono tracking-widest" />
+      
+      <button onclick="verifyAdminPass()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
+        ACCESS PANEL
+      </button>
+      <p id="passError" class="text-xs text-rose-500 font-bold hidden">Incorrect Password! Redirecting...</p>
+    </div>
+  </div>
+
+  <script>
+    function verifyAdminPass() {
+      const val = document.getElementById('adminPassInput').value;
+      if (val === "Deba000") {
+        document.getElementById('adminAuthModal').style.display = 'none';
+      } else {
+        const err = document.getElementById('passError');
+        err.classList.remove('hidden');
+        setTimeout(() => { window.location.href = "/index.html"; }, 1500);
+      }
+    }
+  </script>
+
+  <header class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-widest text-rose-400">Master Admin Control</span>
+      <h1 class="text-2xl font-black text-white">Royal Win Backoffice (Colour • Rocket)</h1>
+    </div>
+    <div class="flex flex-wrap items-center gap-6">
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Registered Users</span>
+        <span id="totalUsers" class="font-mono text-xl font-black text-emerald-400">0</span>
+      </div>
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Colour Period</span>
+        <span id="adminPeriod" class="font-mono text-xl font-bold text-indigo-400">--</span>
+      </div>
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Count Down</span>
+        <span id="adminTimer" class="font-mono text-2xl font-black text-amber-400">00:30</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid md:grid-cols-1 gap-6">
+    <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller (70% Loss)</h2>
+          <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
+        </div>
+        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
+          💥 CRASH ROCKET NOW!
+        </button>
+        <div class="flex gap-2">
+          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
+          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+        </div>
+      </div>
+      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto 70% Loss / Random</p>
+    </div>
+  </div>
+
+  <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-5 shadow-xl">
+    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h2 class="text-lg font-black text-white">🎨 Colour Trading Result Control Engine</h2>
+        <p class="text-xs text-slate-400">Click any colour or exact number below to force it as the winner for the next round.</p>
+      </div>
+      <div id="winnerBanner" class="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-sm font-black">
+        Current Mode: Auto Profit
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="setMode('MIN_PAYOUT')" id="mode-MIN_PAYOUT" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">📉 Auto Profit (Active)</button>
+      <button onclick="setMode('MANUAL')" id="mode-MANUAL" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">🎯 Manual Override</button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <button onclick="forceColour('GREEN')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow-lg">
+        Force GREEN Win (₹<span id="stake-GREEN">0</span>)
+      </button>
+      <button onclick="forceColour('VIOLET')" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-3 rounded-xl shadow-lg">
+        Force VIOLET Win (₹<span id="stake-VIOLET">0</span>)
+      </button>
+      <button onclick="forceColour('RED')" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg">
+        Force RED Win (₹<span id="stake-RED">0</span>)
+      </button>
+    </div>
+
+    <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
+          <p class="text-[11px] text-slate-400">Manage user accounts, set custom balance or delete users</p>
+        </div>
+        <div class="relative w-full sm:w-72">
+          <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name, Phone or ID..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-80">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800">
+              <th class="pb-2">User ID</th>
+              <th class="pb-2">Name / Mobile</th>
+              <th class="pb-2">Balance</th>
+              <th class="pb-2 text-right">Custom Balance & Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Active Bets</h2>
+      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto">
+        <p class="text-slate-500">No rocket bets right now.</p>
+      </div>
+
+      <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pt-3 pb-3">🎲 Colour Live Round Bets</h2>
+      <div id="liveBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+      <h2 class="text-base font-bold text-white">💳 Deposit & Withdrawal Requests</h2>
+      <input id="txSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search TX by Phone, Name or UTR..." class="w-full sm:w-72 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
+        <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
+      </div>
+
+      <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
+        <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    let cachedUsers = [];
+    let cachedTransactions = [];
+
+    socket.emit('admin_init');
+
+    function setMode(m) { socket.emit('admin_set_mode', m); }
+    function forceNum(n) { socket.emit('admin_force_num', n); }
+    function forceColour(col) { socket.emit('admin_force_colour', col); }
+    function crashRocketNow() { socket.emit('admin_rocket_crash_now'); }
+    function setNextRocket(val) { socket.emit('admin_rocket_set_next', val); }
+    function setCustomRocketX() {
+      const val = document.getElementById('customRocketXInput').value;
+      if (!val) return alert('Please enter a multiplier value!');
+      setNextRocket(val);
+    }
+    
+    function deleteUser(phone) {
+      if (confirm('Are you sure you want to delete this user account?')) {
+        socket.emit('admin_delete_user', phone);
+      }
+    }
+
+    function setCustomBalance(phone) {
+      const inputVal = prompt('Enter new custom balance amount (₹):');
+      if (inputVal !== null && inputVal.trim() !== '') {
+        socket.emit('admin_custom_balance', { phone, amount: Number(inputVal) });
+      }
+    }
+
+    function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
+
+    socket.on('rocket_tick', ({ status, multiplier }) => {
+      const el = document.getElementById('adminRocketMult');
+      el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
+    });
+
+    socket.on('admin_update', ({ gameState, rocketState, summary, transactions, usersList, currentBets, rocketBets, totalRocketPool }) => {
+      cachedUsers = usersList || [];
+      cachedTransactions = transactions || [];
+
+      document.getElementById('totalUsers').innerText = cachedUsers.length;
+      document.getElementById('adminPeriod').innerText = gameState.period;
+      document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
+      document.getElementById('adminTotalRocketPool').innerText = `₹${totalRocketPool || 0}`;
+
+      if (rocketState) {
+        document.getElementById('nextRocketBanner').innerText = rocketState.forcedNextCrash
+          ? `✅ Next Flight Locked Crash @ ${rocketState.forcedNextCrash}x`
+          : 'Next Flight Mode: Auto 70% Loss / Random';
+      }
+
+      const rocketBetsEl = document.getElementById('adminRocketBetsList');
+      if (rocketBetsEl) {
+        rocketBetsEl.innerHTML = (!rocketBets || rocketBets.length === 0)
+          ? `<p class="text-slate-500">No rocket bets right now.</p>`
+          : rocketBets.map(b => `
+            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div>
+                <strong class="text-white">${b.userName}</strong> 
+                <span class="text-slate-400 text-[10px] block">Phone: ${b.phone}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-black text-emerald-400 block">₹${b.amount}</span>
+                <span class="text-[10px] text-amber-300">${b.cashedOut ? 'Cashed Out @ ' + b.cashedoutMult + 'x' : 'Playing...'}</span>
+              </div>
+            </div>
+          `).join('');
+      }
+
+      ['MIN_PAYOUT', 'MANUAL'].forEach(m => {
+        document.getElementById('mode-' + m).className = gameState.mode === m
+          ? 'py-2.5 px-3 rounded-xl text-xs font-black border-2 border-indigo-400 bg-indigo-600 text-white'
+          : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300';
+      });
+
+      const banner = document.getElementById('winnerBanner');
+      banner.innerText = gameState.mode === 'MANUAL' && gameState.forcedNumber !== null
+        ? `✅ LOCKED WINNER: Number #${gameState.forcedNumber}`
+        : `Current Mode: Auto Profit`;
+
+      if (summary) {
+        document.getElementById('stake-GREEN').innerText = summary.stakes.GREEN;
+        document.getElementById('stake-VIOLET').innerText = summary.stakes.VIOLET;
+        document.getElementById('stake-RED').innerText = summary.stakes.RED;
+
+        let gridHtml = '';
+        for (let n = 0; n <= 9; n++) {
+          const isSelected = gameState.mode === 'MANUAL' && gameState.forcedNumber === n;
+          gridHtml += `
+            <button onclick="forceNum(${n})" class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-black text-white">#${n}</span>
+                ${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">SELECTED</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Bet: ₹${summary.stakes[n]}</p>
+              <p class="text-xs font-bold text-amber-300">Payout: ₹${summary.projectedPayouts[n]}</p>
+            </button>
+          `;
+        }
+        document.getElementById('numberGrid').innerHTML = gridHtml;
+      }
+
+      renderUsersTable();
+
+      const betsEl = document.getElementById('liveBetsList');
+      betsEl.innerHTML = (!currentBets || currentBets.length === 0)
+        ? `<p class="text-slate-500">No bets in this round.</p>`
+        : currentBets.map(b => `
+          <div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <span><strong>${b.userName || b.phone}</strong> → <strong class="text-amber-400">${b.choice}</strong></span>
+            <span class="font-black text-emerald-400">₹${b.amount}</span>
+          </div>
+        `).join('');
+
+      renderTransactions();
+    });
+
+    function renderUsersTable() {
+      const q = (document.getElementById('userSearchInput').value || '').trim().toLowerCase();
+      const filtered = cachedUsers.filter(u =>
+        (u.userId && u.userId.toLowerCase().includes(q)) ||
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.phone && u.phone.toLowerCase().includes(q))
+      );
+      const uBody = document.getElementById('usersTableBody');
+      uBody.innerHTML = filtered.length === 0
+        ? `<tr><td colspan="4" class="py-4 text-center text-slate-500">No matching users found.</td></tr>`
+        : filtered.map(u => `
+          <tr>
+            <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
+            <td class="py-2.5">
+              <strong class="text-white block">${u.name}</strong>
+              <span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span>
+            </td>
+            <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
+            <td class="py-2.5 text-right space-x-1">
+              <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Set Balance</button>
+              <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function renderTransactions() {
+      const q = (document.getElementById('txSearchInput').value || '').trim().toLowerCase();
+      const filtered = cachedTransactions.filter(t =>
+        (t.phone && t.phone.toLowerCase().includes(q)) ||
+        (t.userName && t.userName.toLowerCase().includes(q)) ||
+        (t.details && t.details.toLowerCase().includes(q))
+      );
+      const deps = filtered.filter(t => t.type === 'DEPOSIT');
+      const withs = filtered.filter(t => t.type === 'WITHDRAW');
+
+      document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits.</p>` : deps.map(t => `
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+          <div>
+            <span class="font-black text-emerald-400">+₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
+            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
+          </div>
+          <div>
+            ${t.status === 'PENDING' ? `
+              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
+              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
+            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals.</p>` : withs.map(t => `
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+          <div>
+            <span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
+            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
+          </div>
+          <div>
+            ${t.status === 'PENDING' ? `
+              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
+              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
+            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
+          </div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
