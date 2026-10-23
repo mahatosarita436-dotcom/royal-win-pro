@@ -832,6 +832,7 @@
     socket.on('kismat_tick', ({ period, timeLeft, history }) => {
       document.getElementById('kismatPeriod').innerText = period;
       
+      val = Math.floor(timeLeft / 60);
       const mins = Math.floor(timeLeft / 60);
       const secs = timeLeft % 60;
       document.getElementById('kismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
