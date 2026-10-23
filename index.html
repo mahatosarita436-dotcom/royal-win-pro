@@ -19,7 +19,7 @@
     .animate-pop { animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
-<body class="min-h-screen flex justify-center items-start bg-slate-950">
+<body class="min-h-screen flex justify-center items-start bg-slate-950 pb-20">
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="w-full max-w-md bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-5 shadow-2xl mt-12 mx-4">
@@ -58,7 +58,7 @@
   </div>
 
   <!-- MAIN GAME CONTAINER -->
-  <div id="gameScreen" class="hidden w-full max-w-md bg-slate-900 min-h-screen shadow-2xl border-x border-slate-800 flex flex-col pb-12">
+  <div id="gameScreen" class="hidden w-full max-w-md bg-slate-900 min-h-screen shadow-2xl border-x border-slate-800 flex flex-col pb-16">
     <header class="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center sticky top-0 z-20">
       <div class="flex items-center gap-2">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -238,6 +238,47 @@
         </button>
       </div>
     </div>
+
+    <!-- BOTTOM FIXED NAVIGATION BAR (Niche Mark Kora Jaigae Thakbe) -->
+    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-slate-950 border-t border-slate-800 py-3 px-6 flex justify-around items-center z-40">
+      <button onclick="switchGame('colour')" class="flex flex-col items-center text-emerald-400 font-bold text-xs">
+        <span class="text-base">🎮</span>
+        <span>Games</span>
+      </button>
+      <button onclick="openSupportModal()" class="flex flex-col items-center text-amber-400 font-bold text-xs">
+        <span class="text-base">💬</span>
+        <span>Support</span>
+      </button>
+      <button onclick="openSocialsModal()" class="flex flex-col items-center text-indigo-400 font-bold text-xs">
+        <span class="text-base">📢</span>
+        <span>Join Channels</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SOCIAL LINKS POPUP MODAL -->
+  <div id="socialsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-4 border border-slate-700 text-center">
+      <h3 class="font-bold text-indigo-400 text-base">📢 Join Our Official Channels</h3>
+      <p class="text-xs text-slate-400">Click below to copy or visit our social links.</p>
+      
+      <div class="space-y-2.5 text-xs">
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+          <span class="text-sky-400 font-bold">Telegram</span>
+          <button onclick="copyOrOpenLink('telegram')" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+          <span class="text-rose-400 font-bold">YouTube</span>
+          <button onclick="copyOrOpenLink('youtube')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+          <span class="text-purple-400 font-bold">Instagram</span>
+          <button onclick="copyOrOpenLink('instagram')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+        </div>
+      </div>
+
+      <button onclick="document.getElementById('socialsModal').classList.add('hidden')" class="w-full bg-slate-800 py-2.5 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+    </div>
   </div>
 
   <!-- SUPPORT MODAL -->
@@ -256,7 +297,7 @@
     </div>
   </div>
 
-  <!-- TRANSACTION HISTORY MODAL (Deposit & Withdrawal Alada Tabs) -->
+  <!-- TRANSACTION HISTORY MODAL -->
   <div id="transactionModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -361,6 +402,28 @@
     let myTransactionsHistory = [];
     let activeTxTab = 'deposit';
     let activeGameFilter = 'Colour Trading';
+    let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
+
+    socket.on('social_links_sync', (links) => {
+      currentSocialLinks = links || {};
+    });
+
+    function openSocialsModal() {
+      document.getElementById('socialsModal').classList.remove('hidden');
+    }
+
+    function copyOrOpenLink(type) {
+      const url = currentSocialLinks[type];
+      if (!url) return alert('Link not available right now!');
+      
+      // Copy to clipboard & open
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`${type.toUpperCase()} link copied to clipboard! Opening link...`);
+        window.open(url, '_blank');
+      }).catch(() => {
+        window.open(url, '_blank');
+      });
+    }
 
     function claimGiftCode() {
       const code = document.getElementById('userGiftCodeInput').value.trim();
@@ -832,7 +895,6 @@
     socket.on('kismat_tick', ({ period, timeLeft, history }) => {
       document.getElementById('kismatPeriod').innerText = period;
       
-      val = Math.floor(timeLeft / 60);
       const mins = Math.floor(timeLeft / 60);
       const secs = timeLeft % 60;
       document.getElementById('kismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
