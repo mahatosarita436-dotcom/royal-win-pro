@@ -215,7 +215,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop with Smooth Speed Scaling & 80% Profit Pool Auto-Crash
+// Rocket Game Loop (<=100rs max 2x, >100rs max 3x, Total Pool >=1000 80% Profit Cap)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -239,22 +239,16 @@ setInterval(async () => {
         } else {
           rocketState.crashPoint = +(5 + Math.random() * 90).toFixed(2);
         }
-      } else if (maxBet <= 20) {
-        rocketState.crashPoint = +(15 + Math.random() * 85).toFixed(2);
-      } else if (maxBet <= 50) {
-        rocketState.crashPoint = +(3 + Math.random() * 15).toFixed(2);
+      } else if (maxBet <= 100) {
+        rocketState.crashPoint = +(1.05 + Math.random() * 0.90).toFixed(2); // Max 2x
       } else {
-        rocketState.crashPoint = +(1.02 + Math.random() * 0.45).toFixed(2);
+        rocketState.crashPoint = +(1.05 + Math.random() * 1.90).toFixed(2); // Max 3x
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    // Smoother and Balanced Speed Scaling
     let increment = 0.03;
     if (rocketState.multiplier > 5) increment = 0.08;
     if (rocketState.multiplier > 20) increment = 0.25;
-    if (rocketState.multiplier > 50) increment = 0.60;
-    if (rocketState.multiplier > 100) increment = 1.50;
-    if (rocketState.multiplier > 300) increment = 3.00;
 
     rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
 
@@ -399,7 +393,7 @@ io.on('connection', (socket) => {
   socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
     const u = cachedUsers.get(phone);
     const requestedAmt = Number(amount);
-    if (!u || requestedAmt < 100) return;
+    if (!u || requestedAmt < 30) return;
     const taxAmount = +(requestedAmt * 0.03).toFixed(2);
     const finalDeduct = +(requestedAmt + taxAmount).toFixed(2);
     if (u.balance < finalDeduct) return;
