@@ -80,34 +80,34 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <div class="grid md:grid-cols-1 gap-6">
-    <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller (90% Loss)</h2>
-          <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
-        </div>
-        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
+  <!-- ROCKET GAME CONTROL -->
+  <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
+        <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
       </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
-          💥 CRASH ROCKET NOW!
-        </button>
-        <div class="flex gap-2">
-          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
-          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
-        </div>
-      </div>
-      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto 90% Loss / Random</p>
+      <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
     </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
+        💥 CRASH ROCKET NOW!
+      </button>
+      <div class="flex gap-2">
+        <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
+        <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+      </div>
+    </div>
+    <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
   </div>
 
+  <!-- COLOUR TRADING CONTROL -->
   <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-5 shadow-xl">
     <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
       <div>
         <h2 class="text-lg font-black text-white">🎨 Colour Trading Result Control Engine</h2>
-        <p class="text-xs text-slate-400">Click any colour or exact number below to force it as the winner for the next round.</p>
+        <p class="text-xs text-slate-400">Click any colour or exact number below to force it as the winner.</p>
       </div>
       <div id="winnerBanner" class="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-sm font-black">
         Current Mode: Auto Profit
@@ -121,55 +121,54 @@
 
     <div class="space-y-3">
       <div class="grid grid-cols-3 gap-3">
-        <button onclick="forceColour('GREEN')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+        <button onclick="forceColour('GREEN')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
           FORCE GREEN <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-GREEN">0</span>)</span>
         </button>
-        <button onclick="forceColour('VIOLET')" class="bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+        <button onclick="forceColour('VIOLET')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
           FORCE VIOLET <span class="block text-[10px] opacity-85 font-normal">Win 4.5x (₹<span id="stake-VIOLET">0</span>)</span>
         </button>
-        <button onclick="forceColour('RED')" class="bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+        <button onclick="forceColour('RED')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
           FORCE RED <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-RED">0</span>)</span>
         </button>
       </div>
 
       <div class="grid grid-cols-5 gap-2.5">
-        <button onclick="forceNum(0)" class="num-0 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">0</button>
-        <button onclick="forceNum(1)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">1</button>
-        <button onclick="forceNum(2)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
-        <button onclick="forceNum(3)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
-        <button onclick="forceNum(4)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
-        <button onclick="forceNum(5)" class="num-5 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
-        <button onclick="forceNum(6)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
-        <button onclick="forceNum(7)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
-        <button onclick="forceNum(8)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
-        <button onclick="forceNum(9)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
+        <button onclick="forceNum(0)" class="num-0 py-3 rounded-xl font-black text-white text-base shadow">0</button>
+        <button onclick="forceNum(1)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">1</button>
+        <button onclick="forceNum(2)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">2</button>
+        <button onclick="forceNum(3)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">3</button>
+        <button onclick="forceNum(4)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">4</button>
+        <button onclick="forceNum(5)" class="num-5 py-3 rounded-xl font-black text-white text-base shadow">5</button>
+        <button onclick="forceNum(6)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">6</button>
+        <button onclick="forceNum(7)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">7</button>
+        <button onclick="forceNum(8)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">8</button>
+        <button onclick="forceNum(9)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">9</button>
       </div>
     </div>
 
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- SUPPORT TICKETS & WITHDRAWAL PROBLEMS PANEL -->
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-    <h2 class="text-base font-bold text-amber-400 border-b border-slate-800 pb-3">🚨 User Support Tickets & Complaints (With Reply)</h2>
+  <!-- ALADA SECTION: USER SUPPORT TICKETS & HISTORY -->
+  <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <h2 class="text-base font-bold text-amber-400">💬 User Support Tickets & Complaints (Alada Section)</h2>
+      <span class="text-xs text-slate-400 font-mono">Realtime Chat & Reply</span>
+    </div>
     <div id="supportTicketsList" class="space-y-3 text-xs max-h-80 overflow-y-auto">
       <p class="text-slate-500">No support requests.</p>
     </div>
   </div>
 
+  <!-- USERS & LIVE BETS / HISTORY -->
   <div class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-          <p class="text-[11px] text-slate-400">Select or search user accounts, set custom balance or delete users</p>
+          <p class="text-[11px] text-slate-400">Search users, set custom balance or delete</p>
         </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <select id="quickUserSelect" onchange="onQuickUserSelect(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-indigo-300 font-bold outline-none">
-            <option value="">-- Choose User Name --</option>
-          </select>
-          <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-        </div>
+        <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       </div>
 
       <div class="overflow-x-auto max-h-80">
@@ -179,7 +178,7 @@
               <th class="pb-2">User ID</th>
               <th class="pb-2">Name / Mobile</th>
               <th class="pb-2">Balance</th>
-              <th class="pb-2 text-right">Custom Balance & Actions</th>
+              <th class="pb-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
@@ -188,20 +187,21 @@
     </div>
 
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Active Bets</h2>
-      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto">
+      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets</h2>
+      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-60 overflow-y-auto">
         <p class="text-slate-500">No rocket bets right now.</p>
       </div>
 
-      <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pt-3 pb-3">🎲 Colour Live Round Bets</h2>
-      <div id="liveBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto"></div>
+      <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pt-3 pb-3">🎲 Colour Live Bets</h2>
+      <div id="liveBetsList" class="space-y-2 text-xs max-h-60 overflow-y-auto"></div>
     </div>
   </div>
 
+  <!-- DEPOSIT & WITHDRAW REQUESTS -->
   <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
     <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
       <h2 class="text-base font-bold text-white">💳 Deposit & Withdrawal Requests</h2>
-      <input id="txSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search TX by Phone, Name or UTR..." class="w-full sm:w-72 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
+      <input id="txSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search TX..." class="w-full sm:w-72 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
     </div>
 
     <div class="grid md:grid-cols-2 gap-6">
@@ -231,34 +231,24 @@
     function setNextRocket(val) { socket.emit('admin_rocket_set_next', val); }
     function setCustomRocketX() {
       const val = document.getElementById('customRocketXInput').value;
-      if (!val) return alert('Please enter a multiplier value!');
+      if (!val) return alert('Please enter multiplier!');
       setNextRocket(val);
     }
     
     function setForcedKismat() {
       const opt = document.getElementById('forcedKismatOptionInput').value;
-      if (!opt) return alert('Enter option number 1 to 10');
+      if (!opt) return alert('Enter option 1 to 10');
       socket.emit('admin_force_kismat', Number(opt));
       alert(`Forced Kismat Winner Set to Option #${opt}`);
     }
 
     function deleteUser(phone) {
-      if (confirm('Are you sure you want to delete this user account?')) {
-        socket.emit('admin_delete_user', phone);
-      }
+      if (confirm('Delete this user?')) socket.emit('admin_delete_user', phone);
     }
 
     function setCustomBalance(phone) {
-      const inputVal = prompt('Enter new custom balance amount (₹):');
-      if (inputVal !== null && inputVal.trim() !== '') {
-        socket.emit('admin_custom_balance', { phone, amount: Number(inputVal) });
-      }
-    }
-
-    function onQuickUserSelect(phone) {
-      if (!phone) return;
-      document.getElementById('userSearchInput').value = phone;
-      renderUsersTable();
+      const val = prompt('Enter new custom balance (₹):');
+      if (val !== null && val.trim() !== '') socket.emit('admin_custom_balance', { phone, amount: Number(val) });
     }
 
     function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
@@ -273,7 +263,7 @@
 
     socket.on('rocket_tick', ({ status, multiplier }) => {
       const el = document.getElementById('adminRocketMult');
-      el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
+      if(el) el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
     });
 
     socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool }) => {
@@ -283,51 +273,17 @@
       document.getElementById('totalUsers').innerText = cachedUsers.length;
       document.getElementById('adminPeriod').innerText = gameState.period;
       document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
-      document.getElementById('adminTotalRocketPool').innerText = `₹${totalRocketPool || 0}`;
+      const totalPoolEl = document.getElementById('adminTotalRocketPool');
+      if(totalPoolEl) totalPoolEl.innerText = `₹${totalRocketPool || 0}`;
 
       if (kismatState) {
         document.getElementById('adminKismatPeriod').innerText = kismatState.period;
-        let kismatGridHtml = '';
+        let kGrid = '';
         for (let i = 1; i <= 10; i++) {
           const stake = kismatState.stakes ? (kismatState.stakes[i] || 0) : 0;
-          kismatGridHtml += `
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
-              <span class="text-sm font-black text-amber-400">Option #${i}</span>
-              <p class="text-xs text-slate-300 mt-1">Bet: ₹${stake}</p>
-            </div>
-          `;
+          kGrid += `<div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center"><span class="text-sm font-black text-amber-400">Opt #${i}</span><p class="text-xs text-slate-300 mt-1">₹${stake}</p></div>`;
         }
-        document.getElementById('adminKismatOptionsGrid').innerHTML = kismatGridHtml;
-      }
-
-      const quickSelect = document.getElementById('quickUserSelect');
-      const currentSelected = quickSelect.value;
-      quickSelect.innerHTML = `<option value="">-- Choose User Name --</option>` + 
-        cachedUsers.map(u => `<option value="${u.phone}">${u.name} (${u.phone})</option>`).join('');
-      quickSelect.value = currentSelected;
-
-      if (rocketState) {
-        document.getElementById('nextRocketBanner').innerText = rocketState.forcedNextCrash
-          ? `✅ Next Flight Locked Crash @ ${rocketState.forcedNextCrash}x`
-          : 'Next Flight Mode: Auto 90% Loss / Random';
-      }
-
-      const rocketBetsEl = document.getElementById('adminRocketBetsList');
-      if (rocketBetsEl) {
-        rocketBetsEl.innerHTML = (!rocketBets || rocketBets.length === 0)
-          ? `<p class="text-slate-500">No rocket bets right now.</p>`
-          : rocketBets.map(b => `
-            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-              <div>
-                <strong class="text-white">${b.userName}</strong> 
-                <span class="text-slate-400 text-[10px] block">Phone: ${b.phone}</span>
-              </div>
-              <div class="text-right">
-                <span class="font-black text-emerald-400 block">₹${b.amount}</span>
-                <span class="text-[10px] text-amber-300">${b.cashedOut ? 'Cashed Out @ ' + b.cashedoutMult + 'x' : 'Playing...'}</span>
-              </div>
-            </div>
-          `).join('');
+        document.getElementById('adminKismatOptionsGrid').innerHTML = kGrid;
       }
 
       const ticketEl = document.getElementById('supportTicketsList');
@@ -337,30 +293,29 @@
           : supportTickets.map(t => `
             <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
               <div class="flex justify-between items-center">
-                <strong class="text-white">${t.userName}</strong> - <span class="text-emerald-400 font-mono font-bold">Phone: ${t.phone}</span>
+                <strong class="text-white">${t.userName}</strong> - <span class="text-emerald-400 font-mono font-bold">${t.phone}</span>
                 <span class="font-bold ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
               </div>
               <p class="text-slate-300">📝 Complain: ${t.message}</p>
               ${t.adminReply ? `<p class="text-indigo-300 font-semibold">👑 Your Reply: ${t.adminReply}</p>` : ''}
               <div class="flex gap-2 pt-1">
                 <button onclick="adminReplyTicket(${t.id})" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-white font-bold">Reply</button>
-                ${t.status === 'PENDING' ? `
-                  <button onclick="resolveTicket(${t.id})" class="bg-amber-600 hover:bg-amber-500 px-3 py-1 rounded font-bold text-slate-950">Mark Resolved</button>
-                ` : ''}
+                ${t.status === 'PENDING' ? `<button onclick="resolveTicket(${t.id})" class="bg-amber-600 hover:bg-amber-500 px-3 py-1 rounded font-bold text-slate-950">Resolve</button>` : ''}
               </div>
             </div>
           `).join('');
       }
 
       ['MIN_PAYOUT', 'MANUAL'].forEach(m => {
-        document.getElementById('mode-' + m).className = gameState.mode === m
+        const btn = document.getElementById('mode-' + m);
+        if(btn) btn.className = gameState.mode === m
           ? 'py-2.5 px-3 rounded-xl text-xs font-black border-2 border-indigo-400 bg-indigo-600 text-white'
           : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300';
       });
 
       const banner = document.getElementById('winnerBanner');
-      banner.innerText = gameState.mode === 'MANUAL' && gameState.forcedNumber !== null
-        ? `✅ LOCKED WINNER: Number #${gameState.forcedNumber}`
+      if(banner) banner.innerText = gameState.mode === 'MANUAL' && gameState.forcedNumber !== null
+        ? `✅ LOCKED WINNER: #${gameState.forcedNumber}`
         : `Current Mode: Auto Profit`;
 
       if (summary) {
@@ -373,10 +328,7 @@
           const isSelected = gameState.mode === 'MANUAL' && gameState.forcedNumber === n;
           gridHtml += `
             <div class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
-              <div class="flex justify-between items-center">
-                <span class="text-lg font-black text-white">#${n}</span>
-                ${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">LOCKED</span>' : ''}
-              </div>
+              <div class="flex justify-between items-center"><span class="text-lg font-black text-white">#${n}</span>${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">LOCKED</span>' : ''}</div>
               <p class="text-[11px] text-slate-400 mt-1">Bet: ₹${summary.stakes[n]}</p>
               <p class="text-xs font-bold text-amber-300">Payout: ₹${summary.projectedPayouts[n]}</p>
             </div>
@@ -388,81 +340,47 @@
       renderUsersTable();
 
       const betsEl = document.getElementById('liveBetsList');
-      betsEl.innerHTML = (!currentBets || currentBets.length === 0)
+      if(betsEl) betsEl.innerHTML = (!currentBets || currentBets.length === 0)
         ? `<p class="text-slate-500">No bets in this round.</p>`
-        : currentBets.map(b => `
-          <div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-            <span><strong>${b.userName || b.phone}</strong> → <strong class="text-amber-400">${b.choice}</strong></span>
-            <span class="font-black text-emerald-400">₹${b.amount}</span>
-          </div>
-        `).join('');
+        : currentBets.map(b => `<div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800"><span><strong>${b.userName || b.phone}</strong> → <strong class="text-amber-400">${b.choice}</strong></span><span class="font-black text-emerald-400">₹${b.amount}</span></div>`).join('');
 
       renderTransactions();
     });
 
     function renderUsersTable() {
       const q = (document.getElementById('userSearchInput').value || '').trim().toLowerCase();
-      const filtered = cachedUsers.filter(u =>
-        (u.userId && u.userId.toLowerCase().includes(q)) ||
-        (u.name && u.name.toLowerCase().includes(q)) ||
-        (u.phone && u.phone.toLowerCase().includes(q))
-      );
+      const filtered = cachedUsers.filter(u => (u.userId && u.userId.toLowerCase().includes(q)) || (u.name && u.name.toLowerCase().includes(q)) || (u.phone && u.phone.toLowerCase().includes(q)));
       const uBody = document.getElementById('usersTableBody');
-      uBody.innerHTML = filtered.length === 0
-        ? `<tr><td colspan="4" class="py-4 text-center text-slate-500">No matching users found.</td></tr>`
-        : filtered.map(u => `
-          <tr>
-            <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
-            <td class="py-2.5">
-              <strong class="text-white block">${u.name}</strong>
-              <span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span>
-            </td>
-            <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
-            <td class="py-2.5 text-right space-x-1">
-              <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Set Balance</button>
-              <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Delete</button>
-            </td>
-          </tr>
-        `).join('');
+      uBody.innerHTML = filtered.length === 0 ? `<tr><td colspan="4" class="py-4 text-center text-slate-500">No users found.</td></tr>` : filtered.map(u => `
+        <tr>
+          <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
+          <td class="py-2.5"><strong class="text-white block">${u.name}</strong><span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span></td>
+          <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
+          <td class="py-2.5 text-right space-x-1">
+            <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 px-2.5 py-1 rounded text-white font-bold">Balance</button>
+            <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 px-2.5 py-1 rounded text-white font-bold">Delete</button>
+          </td>
+        </tr>
+      `).join('');
     }
 
     function renderTransactions() {
       const q = (document.getElementById('txSearchInput').value || '').trim().toLowerCase();
-      const filtered = cachedTransactions.filter(t =>
-        (t.phone && t.phone.toLowerCase().includes(q)) ||
-        (t.userName && t.userName.toLowerCase().includes(q)) ||
-        (t.details && t.details.toLowerCase().includes(q))
-      );
+      const filtered = cachedTransactions.filter(t => (t.phone && t.phone.toLowerCase().includes(q)) || (t.userName && t.userName.toLowerCase().includes(q)));
       const deps = filtered.filter(t => t.type === 'DEPOSIT');
       const withs = filtered.filter(t => t.type === 'WITHDRAW');
 
       document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits.</p>` : deps.map(t => `
         <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-          <div>
-            <span class="font-black text-emerald-400">+₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
-            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
-          </div>
-          <div>
-            ${t.status === 'PENDING' ? `
-              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
-              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
-            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
-          </div>
+          <div><span class="font-black text-emerald-400">+₹${t.amount}</span> <span class="text-white font-bold">${t.userName}</span><span class="block text-[10px] text-slate-400">${t.details}</span></div>
+          <div>${t.status === 'PENDING' ? `<button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button>` : `<span class="font-bold text-indigo-300">${t.status}</span>`}</div>
         </div>
       `).join('');
 
       document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals.</p>` : withs.map(t => `
         <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-          <div>
-            <span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
-            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
-          </div>
-          <div>
-            ${t.status === 'PENDING' ? `
-              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
-              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
-            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
-          </div>
+          <div><span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName}</span><span class="block text-[10px] text-slate-400">${t.details}</span></div>
+          <div>${t.status === 'PENDING' ? `<button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button>` : `<span class="font-bold text-indigo-300">${t.status}</span>`}</div>
         </div>
       `).join('');
     }
