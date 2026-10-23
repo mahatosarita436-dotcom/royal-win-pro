@@ -69,6 +69,22 @@
     </div>
   </header>
 
+  <!-- SOCIAL LINKS MANAGER PANEL -->
+  <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-base font-black text-indigo-400">📢 Social Media Links Manager (Footer Menu)</h2>
+        <p class="text-xs text-slate-400">Update Telegram, YouTube, and Instagram links shown to users.</p>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-3">
+      <input id="adminTelegramInput" type="text" placeholder="Telegram URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <input id="adminYoutubeInput" type="text" placeholder="YouTube URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <input id="adminInstagramInput" type="text" placeholder="Instagram URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+    </div>
+    <button onclick="updateSocialLinks()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow">Update Social Links</button>
+  </div>
+
   <!-- GIFT CODE MANAGER PANEL -->
   <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -297,6 +313,14 @@
       }
     }
 
+    function updateSocialLinks() {
+      const telegram = document.getElementById('adminTelegramInput').value.trim();
+      const youtube = document.getElementById('adminYoutubeInput').value.trim();
+      const instagram = document.getElementById('adminInstagramInput').value.trim();
+      socket.emit('admin_update_socials', { telegram, youtube, instagram });
+      alert('Social links updated successfully!');
+    }
+
     function setMode(m) { socket.emit('admin_set_mode', m); }
     function forceNum(n) { socket.emit('admin_force_num', n); }
     function forceColour(col) { socket.emit('admin_force_colour', col); }
@@ -346,10 +370,16 @@
       document.getElementById('adminKismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     });
 
-    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool, giftCodes }) => {
+    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool, giftCodes, socialLinks }) => {
       cachedUsers = usersList || [];
       cachedTransactions = transactions || [];
       cachedGiftCodes = giftCodes || [];
+
+      if (socialLinks) {
+        document.getElementById('adminTelegramInput').value = socialLinks.telegram || '';
+        document.getElementById('adminYoutubeInput').value = socialLinks.youtube || '';
+        document.getElementById('adminInstagramInput').value = socialLinks.instagram || '';
+      }
 
       document.getElementById('totalUsers').innerText = cachedUsers.length;
       document.getElementById('adminPeriod').innerText = gameState.period;
@@ -357,7 +387,6 @@
       const totalPoolEl = document.getElementById('adminTotalRocketPool');
       if(totalPoolEl) totalPoolEl.innerText = `₹${totalRocketPool || 0}`;
 
-      // Render Gift Codes Table
       const giftTable = document.getElementById('adminGiftCodesTableBody');
       if (giftTable) {
         giftTable.innerHTML = cachedGiftCodes.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No active codes.</td></tr>` : cachedGiftCodes.map(g => `
@@ -372,7 +401,6 @@
         `).join('');
       }
 
-      // Render Gift Claims History Table
       const claimsTable = document.getElementById('adminGiftClaimsTableBody');
       if (claimsTable) {
         let allClaims = [];
@@ -496,7 +524,7 @@
       `).join('');
 
       document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals.</p>` : withs.map(t => `
-        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+        <div class="flex justify-button items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div><span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName}</span><span class="block text-[10px] text-slate-400">${t.details}</span></div>
           <div>${t.status === 'PENDING' ? `<button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button>` : `<span class="font-bold text-indigo-300">${t.status}</span>`}</div>
         </div>
