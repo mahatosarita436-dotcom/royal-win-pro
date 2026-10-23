@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Royal Win Pro - Colour & Rocket</title>
+  <title>Royal Win Pro - Colour, Kismat & Rocket</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
   <style>
@@ -11,14 +11,8 @@
     .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
     .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
     .chip-glow { box-shadow: 0 0 18px rgba(16, 185, 129, 0.55); }
-    .win-ribbon {
-      background: linear-gradient(90deg, #ff5722, #ff8a50, #ff5722);
-      box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5);
-    }
-    .loss-ribbon {
-      background: linear-gradient(90deg, #e11d48, #f43f5e, #e11d48);
-      box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5);
-    }
+    .win-ribbon { background: linear-gradient(90deg, #ff5722, #ff8a50, #ff5722); box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5); }
+    .loss-ribbon { background: linear-gradient(90deg, #e11d48, #f43f5e, #e11d48); box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5); }
     @keyframes popIn {
       0% { transform: scale(0.5); opacity: 0; }
       80% { transform: scale(1.06); opacity: 1; }
@@ -33,7 +27,7 @@
   <div id="authScreen" class="w-full max-w-md bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-5 shadow-2xl mt-12 mx-4">
     <div class="text-center">
       <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-        2-in-1 Super Gaming Arena (₹10 Joining Bonus)
+        3-in-1 Gaming Arena (₹10 Joining Bonus)
       </span>
       <h2 class="text-3xl font-black mt-2 bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
         ROYAL WIN PRO
@@ -85,25 +79,25 @@
             <h2 class="text-3xl font-black text-white">₹<span id="userBalance">0.00</span></h2>
           </div>
           <div class="flex gap-2">
-            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">
-              + Deposit
-            </button>
-            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">
-              ↑ Withdraw
-            </button>
+            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">+ Deposit</button>
+            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">↑ Withdraw</button>
           </div>
         </div>
       </div>
+      <!-- Help / Support Button -->
+      <div class="mt-3">
+        <button onclick="document.getElementById('supportModal').classList.remove('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
+          💬 Help / Report Problem (Withdrawal & Others)
+        </button>
+      </div>
     </div>
 
+    <!-- GAME SWITCH TABS -->
     <div class="px-4 mb-4">
-      <div class="grid grid-cols-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
-        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow">
-          🎨 Colour
-        </button>
-        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white">
-          🚀 Rocket
-        </button>
+      <div class="grid grid-cols-3 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
+        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow">🎨 Colour</button>
+        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🎲 KISMAT</button>
+        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🚀 Rocket</button>
       </div>
     </div>
 
@@ -151,30 +145,51 @@
           <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">9</button>
         </div>
       </div>
+    </div>
 
-      <div class="bg-slate-800/50 border border-slate-700/80 rounded-2xl p-4 space-y-3">
-        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex justify-between items-center">
-          <span>📊 Parity Record History (Last 20)</span>
-          <span class="text-[10px] text-emerald-400">Live Updated</span>
-        </h3>
-        <div class="overflow-y-auto max-h-56 pr-1">
-          <table class="w-full text-left text-xs font-mono">
-            <thead>
-              <tr class="text-slate-400 border-b border-slate-700 text-[10px]">
-                <th class="pb-1.5">Period ID</th>
-                <th class="pb-1.5 text-center">Number</th>
-                <th class="pb-1.5 text-right">Colour Result</th>
-              </tr>
-            </thead>
-            <tbody id="colourHistoryTableBody" class="divide-y divide-slate-700/40">
-              <tr><td colspan="3" class="py-3 text-center text-slate-500">Loading history...</td></tr>
-            </tbody>
-          </table>
+    <!-- GAME 2: KISMAT -->
+    <div id="section-kismat" class="hidden px-4 space-y-4">
+      <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
+        <div>
+          <span class="text-[11px] text-amber-400 uppercase font-bold">✨ KISMAT GAME (10 Options)</span>
+          <p id="kismatPeriod" class="text-lg font-mono font-black text-white">20261017001</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[11px] text-slate-400 uppercase font-bold">Timer</span>
+          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">00:30</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <p class="text-xs text-slate-300 font-bold">Select 1 option out of 10. Bet ₹10, Get ₹90 (9x Return with 1% tax). 9 lose, 1 wins!</p>
+        
+        <div class="grid grid-cols-5 gap-2.5">
+          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
+          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
+          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
+          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
+          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
+          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
+          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
+          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
+          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
+          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">10</button>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-bold">Bet Amount (Min ₹10):</span>
+            <button onclick="doubleKismatBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-black text-xs">2x Double</button>
+          </div>
+          <input id="kismatBetInput" type="number" min="10" value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+          <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
+            PLACE KISMAT BET ON OPTION #<span id="selectedKismatOptLabel">1</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- GAME 2: ROCKET -->
+    <!-- GAME 3: ROCKET -->
     <div id="section-rocket" class="hidden px-4 space-y-4">
       <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono"></div>
 
@@ -190,30 +205,32 @@
         <div class="flex justify-between items-center">
           <span class="text-xs text-slate-300 font-bold">Bet Amount (Min ₹10)</span>
           <div class="flex gap-1.5">
-            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-slate-900 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">₹10</button>
-            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-slate-900 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">₹50</button>
-            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-slate-900 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">₹100</button>
-            <button onclick="document.getElementById('rocketBetInput').value=500" class="bg-slate-900 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">₹500</button>
+            <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-black">2x</button>
+            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹10</button>
+            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹50</button>
+            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹100</button>
           </div>
         </div>
-        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet (Min 10)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
 
-        <div>
-          <label class="text-[11px] text-indigo-300 font-bold block mb-1">Set Auto Cashout X Target (Optional)</label>
-          <input id="rocketTargetXInput" type="number" step="0.1" placeholder="Ex: 2.00x" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono text-white" />
-        </div>
-
-        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg transition">
+        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
           🚀 PLACE BET (Min ₹10)
         </button>
       </div>
     </div>
+  </div>
 
-    <div class="p-4 mt-2">
-      <div class="bg-slate-800/40 rounded-2xl p-4 border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-400 uppercase mb-2">My Activity Feed</h3>
-        <div id="userTxList" class="space-y-2 text-xs"></div>
-      </div>
+  <!-- SUPPORT / HELP MODAL -->
+  <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700">
+      <h3 class="font-bold text-amber-400">Report an Issue (Withdrawal & Others)</h3>
+      <p class="text-[11px] text-slate-400">Apnar somossa ba withdrawal-related jekono kotha ekhane likhun. Phone number deya badhonmulok (Mandatory).</p>
+      
+      <input id="supportPhone" type="text" placeholder="Your Phone Number (Mandatory)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <textarea id="supportMessage" rows="3" placeholder="Describe your problem here..." class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none"></textarea>
+      
+      <button onclick="sendSupportTicket()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl shadow">Send to Admin</button>
+      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
     </div>
   </div>
 
@@ -222,7 +239,7 @@
     <div class="bg-slate-900 w-full max-w-md rounded-t-3xl border-t-2 border-emerald-400 overflow-hidden shadow-2xl animate-pop">
       <div id="drawerHeader" class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex justify-between items-center">
         <div>
-          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Official Contract Slip</span>
+          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Official Contract Slip (1% Tax)</span>
           <h3 class="text-xl font-black text-white">BET ON: <span id="drawerTargetName">GREEN</span></h3>
         </div>
         <button onclick="closeUniqueBetDrawer()" class="bg-black/30 text-white w-8 h-8 rounded-full font-bold">✕</button>
@@ -231,41 +248,12 @@
       <div class="p-5 space-y-5">
         <div>
           <div class="flex justify-between items-center mb-2">
-            <p class="text-xs font-bold text-slate-400 uppercase">1. Select or Enter Custom Bet (Min ₹10)</p>
-            <button onclick="doubleBetAmount()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs font-black shadow transition active:scale-95">2x Double</button>
+            <p class="text-xs font-bold text-slate-400 uppercase">Select or Enter Bet (Min ₹10)</p>
+            <button onclick="doubleColourBet()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black">2x Double</button>
           </div>
-          <div class="grid grid-cols-4 gap-2.5 mb-3">
-            <button onclick="selectBaseChip(10)" id="chip-10" class="chip-btn chip-glow bg-emerald-500 text-slate-950 py-2 rounded-xl font-black text-xs border-2 border-white">₹10</button>
-            <button onclick="selectBaseChip(50)" id="chip-50" class="chip-btn bg-slate-800 text-white py-2 rounded-xl font-black text-xs border border-slate-700">₹50</button>
-            <button onclick="selectBaseChip(100)" id="chip-100" class="chip-btn bg-slate-800 text-white py-2 rounded-xl font-black text-xs border border-slate-700">₹100</button>
-            <button onclick="selectBaseChip(500)" id="chip-500" class="chip-btn bg-slate-800 text-white py-2 rounded-xl font-black text-xs border border-slate-700">₹500</button>
-          </div>
-          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateCustomColourBet()" placeholder="Or enter custom amount (Min 10)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
         </div>
-
-        <div>
-          <p class="text-xs font-bold text-slate-400 uppercase mb-2">2. Contract Multiplier</p>
-          <div class="grid grid-cols-5 gap-2">
-            <button onclick="selectChipQty(1)" id="qty-1" class="qty-btn bg-indigo-600 text-white py-2 rounded-xl font-black text-xs">x1</button>
-            <button onclick="selectChipQty(2)" id="qty-2" class="qty-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs">x2</button>
-            <button onclick="selectChipQty(5)" id="qty-5" class="qty-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs">x5</button>
-            <button onclick="selectChipQty(10)" id="qty-10" class="qty-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs">x10</button>
-            <button onclick="selectChipQty(20)" id="qty-20" class="qty-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs">x20</button>
-          </div>
-        </div>
-
-        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center">
-          <div>
-            <span class="text-[11px] text-slate-400 block">Total Order Point</span>
-            <span class="text-lg font-black text-white">₹<span id="drawerTotalStake">10</span></span>
-          </div>
-          <div class="text-right">
-            <span class="text-[11px] text-emerald-400 block">Estimated Win Return</span>
-            <span class="text-xl font-black text-amber-400">+₹<span id="drawerEstWin">20</span></span>
-          </div>
-        </div>
-
-        <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 font-black py-3.5 rounded-2xl text-base shadow-xl active:scale-95 transition">
+        <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black py-3.5 rounded-2xl text-base shadow-xl">
           ⚡ CONFIRM ORDER ₹<span id="drawerConfirmBtnAmt">10</span>
         </button>
       </div>
@@ -275,81 +263,31 @@
   <!-- RESULT POPUP MODAL -->
   <div id="photoWinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
-      <div class="-mt-12 mb-2 flex justify-center">
-        <div id="winPopupIconBadge" class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-700 to-rose-900 border-4 border-amber-300 flex items-center justify-center shadow-xl text-3xl">
-          🎨
-        </div>
-      </div>
-
-      <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">
-        WIN
-      </div>
-
-      <h2 id="winPopupHeading" class="text-3xl font-black text-slate-900 mt-3">
-        +₹<span id="winPopupAmount">0.00</span>
-      </h2>
-      <p id="winPopupGameName" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">COLOUR TRADING WINNER</p>
-
-      <div id="winPopupPreviewBox" class="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner my-3 mx-auto max-w-[240px] text-xs space-y-1.5 font-bold">
-        <div class="flex justify-between text-slate-600">
-          <span>Your Choice:</span>
-          <span id="popupUserChoice" class="text-indigo-600 font-black">--</span>
-        </div>
-        <div class="flex justify-between text-slate-600">
-          <span>Result Outcome:</span>
-          <span id="popupWinResult" class="text-emerald-600 font-black">--</span>
-        </div>
-      </div>
-
-      <div class="flex justify-between items-center text-xs font-bold text-slate-500 px-2 mb-3">
-        <span>Order Point: ₹<span id="winPopupOrderPoint">10</span></span>
-        <span id="winPopupStatusText" class="text-emerald-600 font-bold">Settled ✓</span>
-      </div>
-
-      <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-2.5 rounded-xl shadow-md">
-        CONTINUE
-      </button>
+      <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
+      <h2 class="text-3xl font-black text-slate-900 mt-3">+₹<span id="winPopupAmount">0.00</span></h2>
+      <p id="winPopupGameName" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">WINNER (1% Tax Applied)</p>
+      <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-2.5 rounded-xl shadow-md mt-4">CONTINUE</button>
     </div>
   </div>
 
-  <!-- DEPOSIT MODAL -->
+  <!-- DEPOSIT & WITHDRAW MODALS -->
   <div id="depositModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center shadow-2xl">
-      <h3 class="font-bold text-emerald-400 text-base">Scan QR to Deposit</h3>
-      <div class="bg-slate-950 p-4 rounded-2xl border-2 border-emerald-500/40 inline-block mx-auto">
-        <div class="bg-white p-3 rounded-xl inline-block shadow">
-          <img src="qr.png" alt="Navi QR" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=6289145092@nyes&pn=DEBASISH%20MAHATO';" class="w-48 h-48 object-contain mx-auto" />
-        </div>
-      </div>
-      <input id="depAmount" type="number" placeholder="Amount Paid (₹)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="depUtr" type="text" placeholder="12-Digit UTR Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm font-mono text-white" />
-      <button onclick="sendDeposit()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl shadow">Submit Deposit</button>
+    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
+      <h3 class="font-bold text-emerald-400">Scan QR to Deposit</h3>
+      <img src="qr.png" alt="QR" class="w-48 h-48 object-contain mx-auto bg-white p-2 rounded-xl" />
+      <input id="depAmount" type="number" placeholder="Amount (₹)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="depUtr" type="text" placeholder="UTR Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm font-mono text-white" />
+      <button onclick="sendDeposit()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl">Submit</button>
       <button onclick="document.getElementById('depositModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
     </div>
   </div>
 
-  <!-- WITHDRAW MODAL (MINIMUM 100) -->
   <div id="withdrawModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700">
-      <h3 class="font-bold text-amber-400">↑ Withdraw Balance</h3>
-      <p class="text-[11px] text-slate-400">Note: Minimum withdrawal is ₹100. 3% withdrawal tax is applied automatically. Max 3 withdrawals per day.</p>
-      <input id="withAmount" type="number" min="100" oninput="updateWithdrawTaxPreview()" placeholder="Amount (Min ₹100)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs space-y-1">
-        <div class="flex justify-between text-slate-400">
-          <span>Requested Amount:</span>
-          <span id="previewReqAmt" class="text-white font-bold">₹0.00</span>
-        </div>
-        <div class="flex justify-between text-amber-400">
-          <span>3% Tax Deduction:</span>
-          <span id="previewTaxAmt" class="font-bold">₹0.00</span>
-        </div>
-        <div class="border-t border-slate-800 pt-1 flex justify-between text-emerald-400 font-black">
-          <span>Total Balance Deducted:</span>
-          <span id="previewTotalDeduct">₹0.00</span>
-        </div>
-      </div>
+      <h3 class="font-bold text-amber-400">↑ Withdraw Balance (3% Tax)</h3>
+      <input id="withAmount" type="number" min="100" placeholder="Amount (Min ₹100)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
       <input id="withAccount" type="text" placeholder="UPI ID / Bank A/C" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <button onclick="sendWithdraw()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl shadow">Request Payout</button>
+      <button onclick="sendWithdraw()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl">Request Payout</button>
       <button onclick="document.getElementById('withdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
     </div>
   </div>
@@ -357,16 +295,11 @@
   <script>
     const socket = io();
     let currentUser = null;
-    let myBets = [];
-
+    let selectedKismatOpt = 1;
     let drawerChoice = 'GREEN';
     let drawerMult = 2;
-    let baseChip = 10;
-    let chipQty = 1;
-
     let rocketStateClient = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, history: [] };
     let myRocketBet = null;
-    let queuedRocketBetAmount = null;
 
     function updateBalanceDisplay(newBal) {
       if (!currentUser) return;
@@ -401,17 +334,14 @@
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('gameScreen').classList.remove('hidden');
       document.getElementById('userInfo').innerText = `${user.name} (${user.phone})`;
+      document.getElementById('supportPhone').value = user.phone; // Auto fill support phone
       updateBalanceDisplay(user.balance);
     });
 
-    socket.on('auth_error', (msg) => {
-      const errEl = document.getElementById('authError');
-      errEl.innerText = msg;
-      errEl.classList.remove('hidden');
-    });
+    socket.on('auth_error', (msg) => { alert(msg); });
 
     function switchGame(game) {
-      ['colour', 'rocket'].forEach(g => {
+      ['colour', 'kismat', 'rocket'].forEach(g => {
         document.getElementById('section-' + g).classList.toggle('hidden', g !== game);
         document.getElementById('tab-' + g).className = g === game
           ? 'py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow font-black'
@@ -419,117 +349,116 @@
       });
     }
 
+    function selectKismatOption(opt) {
+      selectedKismatOpt = opt;
+      document.getElementById('selectedKismatOptLabel').innerText = opt;
+      for (let i = 1; i <= 10; i++) {
+        const btn = document.getElementById('kopt-' + i);
+        if (i === opt) {
+          btn.className = 'kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95';
+        } else {
+          btn.className = 'kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95';
+        }
+      }
+    }
+
+    function doubleKismatBet() {
+      const input = document.getElementById('kismatBetInput');
+      input.value = Number(input.value) * 2;
+    }
+
+    function confirmKismatBet() {
+      const amt = Number(document.getElementById('kismatBetInput').value);
+      if (amt < 10) return alert('Minimum bet is ₹10!');
+      if (!currentUser || currentUser.balance < amt) return alert('Insufficient balance!');
+      socket.emit('kismat_place_bet', { phone: currentUser.phone, option: selectedKismatOpt, amount: amt });
+    }
+
+    socket.on('kismat_bet_confirmed', ({ balance, bet }) => {
+      updateBalanceDisplay(balance);
+      alert(`Successfully placed ₹${bet.amount} on Kismat Option #${bet.choice}!`);
+    });
+
+    socket.on('kismat_settled', ({ settledBets, winOption }) => {
+      if (!currentUser) return;
+      const myBet = settledBets.find(b => b.phone === currentUser.phone);
+      if (myBet) {
+        if (myBet.status === 'WON') showPopupResult('WIN', 'KISMAT WINNER (9x)', myBet.winAmount);
+        else showPopupResult('LOSS', 'KISMAT LOSS', myBet.amount);
+      }
+    });
+
+    function sendSupportTicket() {
+      const phone = document.getElementById('supportPhone').value.trim();
+      const message = document.getElementById('supportMessage').value.trim();
+      if (!phone) {
+        return alert('Phone number is mandatory! Please enter your phone number.');
+      }
+      if (!message) {
+        return alert('Please describe your problem in the message box.');
+      }
+      socket.emit('submit_support_ticket', { phone, name: currentUser ? currentUser.name : 'User', message });
+      document.getElementById('supportModal').classList.add('hidden');
+      document.getElementById('supportMessage').value = '';
+      alert('Your issue has been sent to admin successfully!');
+    }
+
     function openUniqueBetDrawer(choice, mult, gradClass) {
       drawerChoice = choice;
       drawerMult = mult;
       document.getElementById('drawerTargetName').innerText = choice;
       document.getElementById('drawerHeader').className = `bg-gradient-to-r ${gradClass} p-4 flex justify-between items-center`;
-      document.getElementById('customColourBetInput').value = baseChip;
+      document.getElementById('customColourBetInput').value = 10;
       updateDrawerCalculation();
       document.getElementById('uniqueBetDrawer').classList.remove('hidden');
     }
     function closeUniqueBetDrawer() { document.getElementById('uniqueBetDrawer').classList.add('hidden'); }
     
-    function selectBaseChip(amt) {
-      baseChip = amt;
-      document.getElementById('customColourBetInput').value = amt;
-      [10, 50, 100, 500].forEach(c => {
-        const btn = document.getElementById('chip-' + c);
-        if(btn) {
-          btn.className = c === amt ? 'chip-btn chip-glow bg-emerald-500 text-slate-950 py-2 rounded-xl font-black text-xs border-2 border-white' : 'chip-btn bg-slate-800 text-white py-2 rounded-xl font-black text-xs border border-slate-700';
-        }
-      });
-      updateDrawerCalculation();
-    }
-
-    function updateCustomColourBet() {
-      const val = Number(document.getElementById('customColourBetInput').value);
-      if (val > 0) {
-        baseChip = val;
-        updateDrawerCalculation();
-      }
-    }
-
-    function doubleBetAmount() {
-      baseChip = baseChip * 2;
-      document.getElementById('customColourBetInput').value = baseChip;
-      updateDrawerCalculation();
-    }
-
-    function selectChipQty(q) {
-      chipQty = q;
-      [1, 2, 5, 10, 20].forEach(x => {
-        const btn = document.getElementById('qty-' + x);
-        if(btn) {
-          btn.className = x === q ? 'qty-btn bg-indigo-600 text-white py-2 rounded-xl font-black text-xs' : 'qty-btn bg-slate-800 text-slate-300 py-2 rounded-xl font-bold text-xs';
-        }
-      });
+    function doubleColourBet() {
+      const input = document.getElementById('customColourBetInput');
+      input.value = Number(input.value) * 2;
       updateDrawerCalculation();
     }
 
     function updateDrawerCalculation() {
-      const total = baseChip * chipQty;
-      document.getElementById('drawerTotalStake').innerText = total;
-      document.getElementById('drawerConfirmBtnAmt').innerText = total;
-      document.getElementById('drawerEstWin').innerText = (total * drawerMult).toFixed(1);
+      const val = Number(document.getElementById('customColourBetInput').value) || 10;
+      document.getElementById('drawerConfirmBtnAmt').innerText = val;
     }
 
     function confirmUniqueColourBet() {
-      const total = baseChip * chipQty;
-      if (total < 10) return alert('Minimum bet amount is ₹10!');
+      const total = Number(document.getElementById('customColourBetInput').value) || 10;
+      if (total < 10) return alert('Minimum bet is ₹10!');
       if (!currentUser || currentUser.balance < total) return alert('Insufficient balance!');
       socket.emit('place_bet', { phone: currentUser.phone, name: currentUser.name, choice: drawerChoice, amount: total, multiplier: drawerMult });
       closeUniqueBetDrawer();
     }
 
+    function doubleRocketBet() {
+      const input = document.getElementById('rocketBetInput');
+      input.value = Number(input.value) * 2;
+    }
+
     socket.on('rocket_tick', (data) => {
       rocketStateClient = data;
-      if (data.status === 'WAITING' && queuedRocketBetAmount && !myRocketBet) {
-        placeRocketBetNow(queuedRocketBetAmount);
-        queuedRocketBetAmount = null;
-      }
-      if (data.status === 'CRASHED' && myRocketBet && !myRocketBet.cashedOut) {
-        myRocketBet = null;
-      }
       renderRocketUI();
     });
-
-    function placeRocketBetNow(amt) {
-      if (amt < 10) return alert('Minimum bet amount is ₹10!');
-      if (!currentUser || currentUser.balance < amt) return;
-      updateBalanceDisplay(currentUser.balance - amt);
-      const targetX = document.getElementById('rocketTargetXInput').value;
-      myRocketBet = { amount: amt, targetX: targetX ? Number(targetX) : null, cashedOut: false, cashoutMult: 0, winAmount: 0 };
-      socket.emit('rocket_place_bet', { phone: currentUser.phone, name: currentUser.name, amount: amt, targetX: myRocketBet.targetX });
-    }
 
     function handleRocketAction() {
       if (!currentUser) return;
       const amt = Number(document.getElementById('rocketBetInput').value);
-      if (amt < 10) return alert('Minimum bet amount is ₹10!');
+      if (amt < 10) return alert('Minimum bet is ₹10!');
 
       if (rocketStateClient.status === 'FLYING' && myRocketBet && !myRocketBet.cashedOut) {
         myRocketBet.cashedOut = true;
-        myRocketBet.cashoutMult = rocketStateClient.multiplier;
-        myRocketBet.winAmount = +(myRocketBet.amount * rocketStateClient.multiplier).toFixed(3);
-        updateBalanceDisplay(currentUser.balance + myRocketBet.winAmount);
         socket.emit('rocket_cashout', { phone: currentUser.phone, name: currentUser.name });
-        showPopupResult('WIN', 'ROCKET CRASH WINNER', myRocketBet.winAmount, myRocketBet.amount, 'ROCKET');
-        renderRocketUI();
         return;
       }
 
       if (rocketStateClient.status === 'WAITING' && !myRocketBet) {
-        if (!amt || amt < 10 || currentUser.balance < amt) return alert('Minimum bet is ₹10 or insufficient balance!');
-        placeRocketBetNow(amt);
-        renderRocketUI();
-        return;
-      }
-
-      if (!myRocketBet && !queuedRocketBetAmount) {
-        if (!amt || amt < 10 || currentUser.balance < amt) return alert('Minimum bet is ₹10 or insufficient balance!');
-        queuedRocketBetAmount = amt;
-        renderRocketUI();
+        if (currentUser.balance < amt) return alert('Insufficient balance!');
+        updateBalanceDisplay(currentUser.balance - amt);
+        myRocketBet = { amount: amt, cashedOut: false };
+        socket.emit('rocket_place_bet', { phone: currentUser.phone, name: currentUser.name, amount: amt });
       }
     }
 
@@ -542,161 +471,57 @@
       if (status === 'WAITING') {
         statusEl.innerText = 'NEXT ROCKET LAUNCH IN';
         multEl.innerText = `${Math.max(0, countdown).toFixed(1)}s`;
-        multEl.className = 'text-5xl font-black font-mono text-amber-400 mt-1';
-        btn.innerText = myRocketBet ? `✅ BET LOCKED (₹${myRocketBet.amount})` : '🚀 PLACE BET NOW (Min ₹10)';
-        btn.className = myRocketBet ? 'w-full bg-emerald-700 text-white font-black py-3.5 rounded-xl text-sm' : 'w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg';
+        btn.innerText = myRocketBet ? `✅ BET LOCKED` : '🚀 PLACE BET NOW (Min ₹10)';
       } else if (status === 'FLYING') {
-        statusEl.innerText = 'ROCKET FLYING LIVE';
+        statusEl.innerText = 'ROCKET FLYING (90% Loss Mode Active)';
         multEl.innerText = `${multiplier.toFixed(2)}x`;
-        multEl.className = 'text-6xl font-black font-mono text-emerald-400 mt-1';
-        if (myRocketBet && !myRocketBet.cashedOut) {
-          const winNow = (myRocketBet.amount * multiplier).toFixed(2);
-          btn.innerText = `💰 CASH OUT NOW ₹${winNow}`;
-          btn.className = 'w-full bg-gradient-to-r from-emerald-400 to-green-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-xl animate-pulse';
-        } else if (myRocketBet && myRocketBet.cashedOut) {
-          btn.innerText = `🎉 WON ₹${myRocketBet.winAmount} (@${myRocketBet.cashoutMult}x)`;
-          btn.className = 'w-full bg-emerald-900/60 text-emerald-300 font-bold py-3.5 rounded-xl text-sm border border-emerald-500/40';
-        } else {
-          btn.innerText = queuedRocketBetAmount ? `⏳ QUEUED ₹${queuedRocketBetAmount}` : '🚀 BET FOR NEXT FLIGHT';
-          btn.className = 'w-full bg-slate-800 text-amber-400 font-black py-3.5 rounded-xl text-sm border border-amber-500/40';
-        }
+        btn.innerText = (myRocketBet && !myRocketBet.cashedOut) ? `💰 CASH OUT NOW` : '🚀 FLYING...';
       } else {
         statusEl.innerText = '💥 CRASHED AT';
         multEl.innerText = `${multiplier.toFixed(2)}x`;
-        multEl.className = 'text-5xl font-black font-mono text-rose-500 mt-1';
         btn.innerText = '🚀 BET FOR NEXT FLIGHT';
-        btn.className = 'w-full bg-rose-950 text-rose-300 font-black py-3.5 rounded-xl text-sm border border-rose-500/40';
+        myRocketBet = null;
       }
-
-      document.getElementById('rocketHistoryBar').innerHTML = (history || []).map(h => `
-        <span class="px-2.5 py-0.5 rounded-full font-bold ${h >= 2 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-300'}">${Number(h).toFixed(2)}x</span>
-      `).join('');
-
-      drawRocketCanvas(status, multiplier);
+      document.getElementById('rocketHistoryBar').innerHTML = (history || []).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
     }
 
-    function drawRocketCanvas(status, mult) {
-      const canvas = document.getElementById('rocketCanvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (status === 'WAITING') return;
-
-      const progress = Math.min(1, (mult - 1) / 5);
-      const endX = 40 + progress * 290;
-      const endY = 220 - Math.pow(progress, 1.15) * 170;
-
-      ctx.beginPath();
-      ctx.moveTo(25, 230);
-      ctx.quadraticCurveTo(endX * 0.5, 230, endX, endY);
-      ctx.strokeStyle = status === 'CRASHED' ? '#f43f5e' : '#10b981';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      ctx.font = '28px serif';
-      ctx.fillText(status === 'CRASHED' ? '💥' : '🚀', endX - 14, endY + 8);
-    }
-
-    function updateWithdrawTaxPreview() {
-      const amt = Number(document.getElementById('withAmount').value) || 0;
-      const tax = +(amt * 0.03).toFixed(2);
-      const total = +(amt + tax).toFixed(2);
-      document.getElementById('previewReqAmt').innerText = `₹${amt.toFixed(2)}`;
-      document.getElementById('previewTaxAmt').innerText = `₹${tax.toFixed(2)}`;
-      document.getElementById('previewTotalDeduct').innerText = `₹${total.toFixed(2)}`;
-    }
-
-    function showPopupResult(type, title, amount, orderPoint, mode, userChoice = '--', winResult = '--') {
-      const isWin = type === 'WIN';
-      document.getElementById('winPopupRibbon').innerText = isWin ? 'WIN' : 'LOST';
-      document.getElementById('winPopupRibbon').className = isWin ? 'win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase' : 'loss-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase';
-
-      document.getElementById('winPopupHeading').innerText = isWin ? `+₹${Number(amount).toFixed(3)}` : `-₹${Number(amount).toFixed(3)}`;
+    function showPopupResult(type, title, amount) {
+      document.getElementById('winPopupRibbon').innerText = type === 'WIN' ? 'WIN' : 'LOST';
+      document.getElementById('winPopupAmount').innerText = Number(amount).toFixed(2);
       document.getElementById('winPopupGameName').innerText = title;
-      document.getElementById('winPopupOrderPoint').innerText = orderPoint || 10;
-
-      document.getElementById('popupUserChoice').innerText = userChoice;
-      document.getElementById('popupWinResult').innerText = winResult;
-
-      const badge = document.getElementById('winPopupIconBadge');
-      const statusText = document.getElementById('winPopupStatusText');
-
-      statusText.innerText = isWin ? 'Settled ✓' : 'Failed ✗';
-      statusText.className = isWin ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
-
-      if (mode === 'ROCKET') {
-        badge.innerHTML = '🚀';
-      } else {
-        badge.innerHTML = isWin ? '🎨' : '❌';
-      }
-
       document.getElementById('photoWinModal').classList.remove('hidden');
     }
 
-    socket.on('round_settled', ({ settledBets, winNumber, winColours }) => {
+    socket.on('round_settled', ({ settledBets }) => {
       if (!currentUser) return;
-      const myRoundBets = (settledBets || []).filter(b => b.phone === currentUser.phone);
-      
-      const resultText = `Number #${winNumber} (${winColours.join(', ')})`;
-
-      myRoundBets.forEach(b => {
-        if (b.status === 'WON') {
-          showPopupResult('WIN', 'COLOUR TRADING WINNER', b.winAmount, b.amount, 'COLOUR', b.choice, resultText);
-        } else if (b.status === 'LOST') {
-          showPopupResult('LOSS', 'COLOUR TRADING LOSS', b.amount, b.amount, 'COLOUR', b.choice, resultText);
-        }
-      });
+      const myBet = settledBets.find(b => b.phone === currentUser.phone);
+      if (myBet) {
+        if (myBet.status === 'WON') showPopupResult('WIN', 'COLOUR TRADING WINNER', myBet.winAmount);
+        else showPopupResult('LOSS', 'COLOUR TRADING LOSS', myBet.amount);
+      }
     });
 
-    socket.on('win_popup', ({ phone, game, winAmount, orderPoint }) => {
+    socket.on('win_popup', ({ phone, game, winAmount }) => {
       if (!currentUser || currentUser.phone !== phone) return;
-      showPopupResult('WIN', `${game} WINNER`, winAmount, orderPoint, 'ROCKET', 'Live Target', 'Success');
+      showPopupResult('WIN', `${game} WINNER`, winAmount);
     });
 
-    socket.on('tick', ({ period, timeLeft, history }) => {
+    socket.on('tick', ({ period, timeLeft }) => {
       document.getElementById('periodId').innerText = period;
       document.getElementById('timerDisplay').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
-      const lockOverlay = document.getElementById('lockOverlay');
-      if (timeLeft <= 5) { lockOverlay.classList.remove('hidden'); closeUniqueBetDrawer(); }
-      else { lockOverlay.classList.add('hidden'); }
-      
-      renderColourHistory(history);
+      if (timeLeft <= 5) closeUniqueBetDrawer();
     });
 
-    function renderColourHistory(history) {
-      const tbody = document.getElementById('colourHistoryTableBody');
-      if (!tbody) return;
-      if (!history || history.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="py-3 text-center text-slate-500">No history available yet.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = history.slice(0, 20).map(h => {
-        const colourDots = (h.colours || []).map(c => {
-          const bg = c === 'GREEN' ? 'bg-emerald-500' : c === 'RED' ? 'bg-rose-500' : 'bg-purple-500';
-          return `<span class="inline-block w-2.5 h-2.5 rounded-full ${bg} ml-1"></span>`;
-        }).join('');
-        return `
-          <tr class="hover:bg-slate-700/30 transition">
-            <td class="py-2 font-mono text-indigo-300">${h.period}</td>
-            <td class="py-2 text-center font-bold text-white text-sm">#${h.number}</td>
-            <td class="py-2 text-right">${colourDots}</td>
-          </tr>
-        `;
-      }).join('');
-    }
+    socket.on('kismat_tick', ({ period, timeLeft }) => {
+      document.getElementById('kismatPeriod').innerText = period;
+      document.getElementById('kismatTimer').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
+    });
 
-    socket.on('user_sync', ({ user, myTransactions }) => {
+    socket.on('user_sync', ({ user }) => {
       if (currentUser && user.phone === currentUser.phone) {
         currentUser = user;
         updateBalanceDisplay(user.balance);
-        renderHistoryAndTx(myTransactions);
       }
-    });
-
-    socket.on('bet_confirmed', ({ balance, bet }) => {
-      updateBalanceDisplay(balance);
-      myBets.unshift(bet);
-      renderHistoryAndTx([]);
     });
 
     function sendDeposit() {
@@ -711,28 +536,9 @@
       const amount = Number(document.getElementById('withAmount').value);
       const account = document.getElementById('withAccount').value;
       if (!amount || !account) return alert('Fill all fields');
-      if (amount < 100) return alert('Minimum withdrawal amount is ₹100!');
+      if (amount < 100) return alert('Minimum withdrawal is ₹100!');
       socket.emit('withdraw_request', { phone: currentUser.phone, name: currentUser.name, amount, account });
       document.getElementById('withdrawModal').classList.add('hidden');
-    }
-
-    function renderHistoryAndTx(txs) {
-      const el = document.getElementById('userTxList');
-      if (!el) return;
-      let html = '';
-      myBets.slice(0, 4).forEach(b => {
-        html += `<div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-          <span>Colour Bet: <strong class="text-emerald-400">${b.choice}</strong> (₹${b.amount})</span>
-          <span class="font-bold ${b.status === 'WON' ? 'text-emerald-400' : b.status === 'LOST' ? 'text-rose-500' : 'text-amber-400'}">${b.status}</span>
-        </div>`;
-      });
-      (txs || []).slice(0, 4).forEach(t => {
-        html += `<div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-          <span><strong class="${t.type === 'DEPOSIT' ? 'text-emerald-400' : 'text-amber-400'}">${t.type} ₹${t.amount}</strong></span>
-          <span class="font-bold text-indigo-300">${t.status}</span>
-        </div>`;
-      });
-      el.innerHTML = html || `<p class="text-slate-500">No recent orders.</p>`;
     }
   </script>
 </body>
