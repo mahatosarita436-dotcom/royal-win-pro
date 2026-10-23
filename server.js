@@ -215,7 +215,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop with Smart Dynamic Crash (Kono bet na thakle 500x, kom bet thakle 100x, besi thakle taratari crash)
+// Rocket Game Loop with Speed Scaling & Last 20 History preservation
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -223,27 +223,35 @@ setInterval(async () => {
       rocketState.status = 'FLYING';
       rocketState.multiplier = 1.00;
 
-      let totalPool = rocketBets.reduce((sum, b) => sum + b.amount, 0);
       let maxBet = rocketBets.length > 0 ? Math.max(...rocketBets.map(b => b.amount)) : 0;
 
       if (rocketState.forcedNextCrash !== null) {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
       } else if (rocketBets.length === 0) {
-        // Kono bet na thakle 500x projonto jete pare
-        rocketState.crashPoint = +(100 + Math.random() * 400).toFixed(2);
+        let highChance = Math.random() < 0.20;
+        if (highChance) {
+          rocketState.crashPoint = +(100 + Math.random() * 400).toFixed(2);
+        } else {
+          rocketState.crashPoint = +(5 + Math.random() * 90).toFixed(2);
+        }
       } else if (maxBet <= 20) {
-        // Shudhu 10 ba 20 taka lagale 100x projonto jete pare
         rocketState.crashPoint = +(15 + Math.random() * 85).toFixed(2);
       } else if (maxBet <= 50) {
         rocketState.crashPoint = +(3 + Math.random() * 15).toFixed(2);
       } else {
-        // Besi bet thakle taratari crash hobe
         rocketState.crashPoint = +(1.02 + Math.random() * 0.45).toFixed(2);
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    rocketState.multiplier = +(rocketState.multiplier + 0.05).toFixed(2);
+    let increment = 0.05;
+    if (rocketState.multiplier > 10) increment = 0.20;
+    if (rocketState.multiplier > 50) increment = 1.00;
+    if (rocketState.multiplier > 100) increment = 3.50;
+    if (rocketState.multiplier > 300) increment = 8.00;
+
+    rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
+
     if (rocketState.multiplier >= rocketState.crashPoint) {
       rocketState.status = 'CRASHED';
       rocketState.history.unshift(rocketState.crashPoint);
@@ -361,7 +369,6 @@ io.on('connection', (socket) => {
     }
     allUserBetsHistory.unshift(rBet);
 
-    // Send cashout success popup details back to user
     socket.emit('rocket_cashed_out_success', {
       betAmount: rBet.amount,
       multiplier: rocketState.multiplier,
