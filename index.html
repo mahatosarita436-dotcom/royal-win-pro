@@ -10,9 +10,7 @@
     body { background-color: #070a14; color: #f8fafc; font-family: system-ui, sans-serif; }
     .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
     .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
-    .chip-glow { box-shadow: 0 0 18px rgba(16, 185, 129, 0.55); }
     .win-ribbon { background: linear-gradient(90deg, #ff5722, #ff8a50, #ff5722); box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5); }
-    .loss-ribbon { background: linear-gradient(90deg, #e11d48, #f43f5e, #e11d48); box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5); }
     @keyframes popIn {
       0% { transform: scale(0.5); opacity: 0; }
       80% { transform: scale(1.06); opacity: 1; }
@@ -84,10 +82,10 @@
           </div>
         </div>
       </div>
-      <!-- Help / Support Button -->
-      <div class="mt-3">
-        <button onclick="document.getElementById('supportModal').classList.remove('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
-          💬 Help / Report Problem (Withdrawal & Others)
+      <!-- Support Button -->
+      <div class="mt-3 flex gap-2">
+        <button onclick="openSupportModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
+          💬 Support & Complaint History
         </button>
       </div>
     </div>
@@ -106,7 +104,7 @@
       <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex justify-between items-center">
         <div>
           <span class="text-[11px] text-slate-400 uppercase font-bold">Period ID</span>
-          <p id="periodId" class="text-lg font-mono font-black text-white">20261017001</p>
+          <p id="periodId" class="text-lg font-mono font-black text-white">--</p>
         </div>
         <div class="text-right">
           <span class="text-[11px] text-slate-400 uppercase font-bold">Count Down</span>
@@ -114,12 +112,15 @@
         </div>
       </div>
 
-      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div id="lockOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-20 rounded-2xl flex flex-col items-center justify-center border border-rose-500/40">
-          <span class="text-4xl font-black text-rose-500 animate-ping" id="lockTimer">5</span>
-          <p class="text-xs uppercase text-slate-300 mt-2 font-bold">Betting Locked</p>
-        </div>
+      <div class="bg-slate-800/50 border border-slate-800 p-3 rounded-2xl space-y-2">
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Colour Recent History (Last 20)</span>
+        <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
+      </div>
 
+      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <div id="colourLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-xl">
+          Betting Locked for this round!
+        </div>
         <div class="grid grid-cols-3 gap-3">
           <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
             JOIN GREEN <span class="block text-[10px] opacity-80 font-normal">Win 2x</span>
@@ -147,21 +148,29 @@
       </div>
     </div>
 
-    <!-- GAME 2: KISMAT -->
+    <!-- GAME 2: KISMAT (2:30 Min Timer) -->
     <div id="section-kismat" class="hidden px-4 space-y-4">
       <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
         <div>
-          <span class="text-[11px] text-amber-400 uppercase font-bold">✨ KISMAT GAME (10 Options)</span>
-          <p id="kismatPeriod" class="text-lg font-mono font-black text-white">20261017001</p>
+          <span class="text-[11px] text-amber-400 uppercase font-bold">✨ KISMAT GAME (2:30 Min, Max ₹10)</span>
+          <p id="kismatPeriod" class="text-lg font-mono font-black text-white">--</p>
         </div>
         <div class="text-right">
           <span class="text-[11px] text-slate-400 uppercase font-bold">Timer</span>
-          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">00:30</div>
+          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">02:30</div>
         </div>
       </div>
 
-      <div class="bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <p class="text-xs text-slate-300 font-bold">Select 1 option out of 10. Bet ₹10, Get ₹90 (9x Return with 1% tax). 9 lose, 1 wins!</p>
+      <div class="bg-slate-800/50 border border-slate-800 p-3 rounded-2xl space-y-2">
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kismat Recent History (Last 20)</span>
+        <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
+      </div>
+
+      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+        <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-xl text-center px-4">
+          Betting Locked (Last 10s)!
+        </div>
+        <p class="text-xs text-slate-300 font-bold">Select 1 option out of 10. Fixed Bet: ₹10, Get ₹90 (9x Return).</p>
         
         <div class="grid grid-cols-5 gap-2.5">
           <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
@@ -177,13 +186,9 @@
         </div>
 
         <div class="space-y-2 pt-2">
-          <div class="flex justify-between items-center text-xs">
-            <span class="text-slate-400 font-bold">Bet Amount (Min ₹10):</span>
-            <button onclick="doubleKismatBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-black text-xs">2x Double</button>
-          </div>
-          <input id="kismatBetInput" type="number" min="10" value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+          <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white text-center" />
           <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
-            PLACE KISMAT BET ON OPTION #<span id="selectedKismatOptLabel">1</span>
+            PLACE KISMAT BET (₹10) ON OPTION #<span id="selectedKismatOptLabel">1</span>
           </button>
         </div>
       </div>
@@ -220,47 +225,42 @@
     </div>
   </div>
 
-  <!-- SUPPORT / HELP MODAL -->
+  <!-- SUPPORT MODAL -->
   <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700">
-      <h3 class="font-bold text-amber-400">Report an Issue (Withdrawal & Others)</h3>
-      <p class="text-[11px] text-slate-400">Apnar somossa ba withdrawal-related jekono kotha ekhane likhun. Phone number deya badhonmulok (Mandatory).</p>
-      
-      <input id="supportPhone" type="text" placeholder="Your Phone Number (Mandatory)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <textarea id="supportMessage" rows="3" placeholder="Describe your problem here..." class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none"></textarea>
-      
-      <button onclick="sendSupportTicket()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl shadow">Send to Admin</button>
-      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
+    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
+      <h3 class="font-bold text-amber-400 text-base">💬 Complaint & Support History</h3>
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+        <input id="supportPhone" type="hidden" />
+        <textarea id="supportMessage" rows="2" placeholder="Write new complain or message..." class="w-full bg-slate-900 p-2 rounded-lg border border-slate-700 text-xs text-white outline-none"></textarea>
+        <button onclick="sendSupportTicket()" class="w-full bg-amber-500 text-slate-950 font-black py-2 rounded-lg text-xs">Submit New Complain</button>
+      </div>
+      <div id="userTicketsHistoryList" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
+        <p class="text-slate-500 text-center py-4">Loading history...</p>
+      </div>
+      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
     </div>
   </div>
 
-  <!-- UNIQUE BET DRAWER WITH 2X BUTTON -->
+  <!-- UNIQUE BET DRAWER -->
   <div id="uniqueBetDrawer" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-end justify-center">
     <div class="bg-slate-900 w-full max-w-md rounded-t-3xl border-t-2 border-emerald-400 overflow-hidden shadow-2xl animate-pop">
       <div id="drawerHeader" class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex justify-between items-center">
         <div>
-          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Official Contract Slip (1% Tax)</span>
+          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Unuk Bet Slip (1% Tax)</span>
           <h3 class="text-xl font-black text-white">BET ON: <span id="drawerTargetName">GREEN</span></h3>
         </div>
         <button onclick="closeUniqueBetDrawer()" class="bg-black/30 text-white w-8 h-8 rounded-full font-bold">✕</button>
       </div>
-
       <div class="p-5 space-y-5">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <p class="text-xs font-bold text-slate-400 uppercase">Select or Enter Bet (Min ₹10)</p>
-            <button onclick="doubleColourBet()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black">2x Double</button>
-          </div>
-          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
-        </div>
+        <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
         <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black py-3.5 rounded-2xl text-base shadow-xl">
-          ⚡ CONFIRM ORDER ₹<span id="drawerConfirmBtnAmt">10</span>
+          ⚡ CONFIRM UNUK ORDER ₹<span id="drawerConfirmBtnAmt">10</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- RESULT POPUP MODAL -->
+  <!-- RESULT POPUP -->
   <div id="photoWinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
       <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
@@ -270,7 +270,7 @@
     </div>
   </div>
 
-  <!-- DEPOSIT & WITHDRAW MODALS -->
+  <!-- DEPOSIT & WITHDRAW -->
   <div id="depositModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
       <h3 class="font-bold text-emerald-400">Scan QR to Deposit</h3>
@@ -300,6 +300,7 @@
     let drawerMult = 2;
     let rocketStateClient = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, history: [] };
     let myRocketBet = null;
+    let allUserTickets = [];
 
     function updateBalanceDisplay(newBal) {
       if (!currentUser) return;
@@ -334,7 +335,7 @@
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('gameScreen').classList.remove('hidden');
       document.getElementById('userInfo').innerText = `${user.name} (${user.phone})`;
-      document.getElementById('supportPhone').value = user.phone; // Auto fill support phone
+      document.getElementById('supportPhone').value = user.phone;
       updateBalanceDisplay(user.balance);
     });
 
@@ -362,14 +363,8 @@
       }
     }
 
-    function doubleKismatBet() {
-      const input = document.getElementById('kismatBetInput');
-      input.value = Number(input.value) * 2;
-    }
-
     function confirmKismatBet() {
-      const amt = Number(document.getElementById('kismatBetInput').value);
-      if (amt < 10) return alert('Minimum bet is ₹10!');
+      const amt = 10;
       if (!currentUser || currentUser.balance < amt) return alert('Insufficient balance!');
       socket.emit('kismat_place_bet', { phone: currentUser.phone, option: selectedKismatOpt, amount: amt });
     }
@@ -379,29 +374,44 @@
       alert(`Successfully placed ₹${bet.amount} on Kismat Option #${bet.choice}!`);
     });
 
-    socket.on('kismat_settled', ({ settledBets, winOption }) => {
-      if (!currentUser) return;
-      const myBet = settledBets.find(b => b.phone === currentUser.phone);
-      if (myBet) {
-        if (myBet.status === 'WON') showPopupResult('WIN', 'KISMAT WINNER (9x)', myBet.winAmount);
-        else showPopupResult('LOSS', 'KISMAT LOSS', myBet.amount);
-      }
-    });
+    function openSupportModal() {
+      document.getElementById('supportModal').classList.remove('hidden');
+      socket.emit('fetch_user_tickets', { phone: currentUser.phone });
+    }
 
     function sendSupportTicket() {
-      const phone = document.getElementById('supportPhone').value.trim();
       const message = document.getElementById('supportMessage').value.trim();
-      if (!phone) {
-        return alert('Phone number is mandatory! Please enter your phone number.');
-      }
-      if (!message) {
-        return alert('Please describe your problem in the message box.');
-      }
-      socket.emit('submit_support_ticket', { phone, name: currentUser ? currentUser.name : 'User', message });
-      document.getElementById('supportModal').classList.add('hidden');
+      if (!message) return alert('Please enter your message.');
+      socket.emit('submit_support_ticket', { phone: currentUser.phone, name: currentUser.name, message });
       document.getElementById('supportMessage').value = '';
-      alert('Your issue has been sent to admin successfully!');
     }
+
+    function replyToTicket(ticketId) {
+      const replyText = prompt('Enter your reply to Admin:');
+      if (replyText && replyText.trim() !== '') {
+        socket.emit('user_reply_ticket', { ticketId, reply: replyText.trim(), phone: currentUser.phone });
+      }
+    }
+
+    socket.on('support_tickets_response', (tickets) => {
+      allUserTickets = tickets || [];
+      const listEl = document.getElementById('userTicketsHistoryList');
+      if (allUserTickets.length === 0) {
+        listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No complaint history found.</p>`;
+        return;
+      }
+      listEl.innerHTML = allUserTickets.map(t => `
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span>Ticket ID: #${t.id}</span>
+            <span class="font-bold uppercase ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
+          </div>
+          <p class="text-white font-medium">👤 You: ${t.message}</p>
+          ${t.adminReply ? `<div class="bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30 text-indigo-200 mt-1">👑 Admin Reply: ${t.adminReply}</div>` : ''}
+          <button onclick="replyToTicket(${t.id})" class="w-full mt-1 bg-slate-800 hover:bg-slate-700 text-amber-400 py-1.5 rounded-lg text-[11px] font-bold">💬 Reply / Continue Chat</button>
+        </div>
+      `).join('');
+    });
 
     function openUniqueBetDrawer(choice, mult, gradClass) {
       drawerChoice = choice;
@@ -413,12 +423,6 @@
       document.getElementById('uniqueBetDrawer').classList.remove('hidden');
     }
     function closeUniqueBetDrawer() { document.getElementById('uniqueBetDrawer').classList.add('hidden'); }
-    
-    function doubleColourBet() {
-      const input = document.getElementById('customColourBetInput');
-      input.value = Number(input.value) * 2;
-      updateDrawerCalculation();
-    }
 
     function updateDrawerCalculation() {
       const val = Number(document.getElementById('customColourBetInput').value) || 10;
@@ -482,7 +486,7 @@
         btn.innerText = '🚀 BET FOR NEXT FLIGHT';
         myRocketBet = null;
       }
-      document.getElementById('rocketHistoryBar').innerHTML = (history || []).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
+      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
     }
 
     function showPopupResult(type, title, amount) {
@@ -492,7 +496,12 @@
       document.getElementById('photoWinModal').classList.remove('hidden');
     }
 
-    socket.on('round_settled', ({ settledBets }) => {
+    socket.on('round_settled', ({ settledBets, history }) => {
+      if (history) {
+        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
+          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
+        `).join('');
+      }
       if (!currentUser) return;
       const myBet = settledBets.find(b => b.phone === currentUser.phone);
       if (myBet) {
@@ -501,20 +510,51 @@
       }
     });
 
+    socket.on('kismat_settled', ({ settledBets, history }) => {
+      if (history) {
+        document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
+          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
+        `).join('');
+      }
+    });
+
     socket.on('win_popup', ({ phone, game, winAmount }) => {
       if (!currentUser || currentUser.phone !== phone) return;
       showPopupResult('WIN', `${game} WINNER`, winAmount);
     });
 
-    socket.on('tick', ({ period, timeLeft }) => {
+    // Colour Game Tick (Lock last 5 seconds)
+    socket.on('tick', ({ period, timeLeft, history }) => {
       document.getElementById('periodId').innerText = period;
       document.getElementById('timerDisplay').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
-      if (timeLeft <= 5) closeUniqueBetDrawer();
+      
+      const isLocked = timeLeft <= 5;
+      document.getElementById('colourLockOverlay').classList.toggle('hidden', !isLocked);
+      if (isLocked) closeUniqueBetDrawer();
+
+      if (history) {
+        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
+          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
+        `).join('');
+      }
     });
 
-    socket.on('kismat_tick', ({ period, timeLeft }) => {
+    // Kismat Game Tick (2:30 min, Lock last 10 seconds)
+    socket.on('kismat_tick', ({ period, timeLeft, history }) => {
       document.getElementById('kismatPeriod').innerText = period;
-      document.getElementById('kismatTimer').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
+      
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      document.getElementById('kismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      
+      const isLocked = timeLeft <= 10;
+      document.getElementById('kismatLockOverlay').classList.toggle('hidden', !isLocked);
+
+      if (history) {
+        document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
+          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
+        `).join('');
+      }
     });
 
     socket.on('user_sync', ({ user }) => {
