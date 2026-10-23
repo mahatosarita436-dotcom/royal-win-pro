@@ -53,6 +53,15 @@ const supportSchema = new mongoose.Schema({
 });
 const SupportTicket = mongoose.model('SupportTicket', supportSchema);
 
+const giftCodeSchema = new mongoose.Schema({
+  code: { type: String, unique: true, uppercase: true },
+  amount: Number,
+  maxUses: Number,
+  usedCount: { type: Number, default: 0 },
+  usedBy: [String]
+});
+const GiftCode = mongoose.model('GiftCode', giftCodeSchema);
+
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
 let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
 let currentKismatBets = [];
@@ -65,6 +74,7 @@ let allUserBetsHistory = [];
 let cachedUsers = new Map();
 let allTransactions = [];
 let allSupportTickets = [];
+let allGiftCodes = [];
 
 async function loadDataFromDB() {
   try {
@@ -72,7 +82,8 @@ async function loadDataFromDB() {
     usersList.forEach(u => cachedUsers.set(u.phone, u));
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
-    console.log(`✅ Loaded ${cachedUsers.size} users from DB.[cite: 3]`);
+    allGiftCodes = await GiftCode.find({});
+    console.log(`✅ Loaded ${cachedUsers.size} users and gift codes from DB.[cite: 3]`);
   } catch (e) {
     console.log('Error loading DB:', e);
   }
@@ -215,7 +226,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop (<=100rs max 2x, >100rs max 3x, Total Pool >=1000 80% Profit Cap)
+// Rocket Game Loop
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -230,7 +241,7 @@ setInterval(async () => {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
       } else if (totalPool >= 1000) {
-        let targetProfitMultiplier = +(1 + 0.80).toFixed(2); // 1.80x
+        let targetProfitMultiplier = +(1 + 0.80).toFixed(2);
         rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
       } else if (rocketBets.length === 0) {
         let highChance = Math.random() < 0.20;
@@ -240,9 +251,9 @@ setInterval(async () => {
           rocketState.crashPoint = +(5 + Math.random() * 90).toFixed(2);
         }
       } else if (maxBet <= 100) {
-        rocketState.crashPoint = +(1.05 + Math.random() * 0.90).toFixed(2); // Max 2x
+        rocketState.crashPoint = +(1.05 + Math.random() * 0.90).toFixed(2);
       } else {
-        rocketState.crashPoint = +(1.05 + Math.random() * 1.90).toFixed(2); // Max 3x
+        rocketState.crashPoint = +(1.05 + Math.random() * 1.90).toFixed(2);
       }
     }
   } else if (rocketState.status === 'FLYING') {
@@ -302,6 +313,71 @@ io.on('connection', (socket) => {
       socket.emit('auth_error', 'Invalid password![cite: 3]');
     } else {
       socket.emit('auth_success', { user });
+    }
+  });
+
+  // GIFT CODE REDEEM LOGIC FOR USERS
+  socket.on('claim_gift_code', async ({ phone, code }) => {
+    try {
+      const formattedCode = code.trim().toUpperCase();
+      const gift = await GiftCode.findOne({ code: formattedCode });
+      const u = cachedUsers.get(phone);
+
+      if (!u) {
+        return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
+      }
+      if (!gift) {
+        return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
+      }
+      if (gift.usedBy && gift.usedBy.includes(phone)) {
+        return socket.emit('gift_code_response', { success: false, message: 'Already use code! You have already claimed this gift code.' });
+      }
+      if (gift.usedCount >= gift.maxUses) {
+        return socket.emit('gift_code_response', { success: false, message: 'This gift code limit has been reached!' });
+      }
+
+      // Update Gift Code
+      gift.usedCount += 1;
+      gift.usedBy.push(phone);
+      await gift.save();
+
+      // Update Local Gift Code Cache list
+      allGiftCodes = await GiftCode.find({});
+
+      // Update User Balance
+      u.balance = +(u.balance + gift.amount).toFixed(3);
+      await User.updateOne({ phone }, { balance: u.balance });
+
+      socket.emit('user_sync', { user: u });
+      socket.emit('gift_code_response', { success: true, message: `Successfully redeemed ₹${gift.amount}!`, amount: gift.amount });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (err) {
+      console.log('Gift claim error:', err);
+      socket.emit('gift_code_response', { success: false, message: 'Something went wrong!' });
+    }
+  });
+
+  // ADMIN GIFT CODE CREATION & DELETION
+  socket.on('admin_create_gift_code', async ({ code, amount, maxUses }) => {
+    try {
+      const fCode = code.trim().toUpperCase();
+      const exists = await GiftCode.findOne({ code: fCode });
+      if (exists) return;
+      const newCode = await GiftCode.create({ code: fCode, amount: Number(amount), maxUses: Number(maxUses), usedCount: 0, usedBy: [] });
+      allGiftCodes.push(newCode);
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      console.log('Error creating gift code:', e);
+    }
+  });
+
+  socket.on('admin_delete_gift_code', async (code) => {
+    try {
+      await GiftCode.deleteOne({ code });
+      allGiftCodes = await GiftCode.find({});
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      console.log('Error deleting gift code:', e);
     }
   });
 
@@ -539,7 +615,8 @@ async function getAdminPayload() {
     transactions: allTransactions,
     currentBets: currentRoundBets,
     rocketBets,
-    totalRocketPool
+    totalRocketPool,
+    giftCodes: allGiftCodes
   };
 }
 
@@ -553,7 +630,8 @@ function getAdminPayloadSync() {
     transactions: allTransactions,
     currentBets: currentRoundBets,
     rocketBets,
-    totalRocketPool: rocketServiceTotalPool()
+    totalRocketPool: rocketServiceTotalPool(),
+    giftCodes: allGiftCodes
   };
 }
 
