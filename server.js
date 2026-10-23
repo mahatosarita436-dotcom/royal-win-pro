@@ -53,36 +53,15 @@ const supportSchema = new mongoose.Schema({
 });
 const SupportTicket = mongoose.model('SupportTicket', supportSchema);
 
-// Colour Game State (30 seconds timer)
-let gameState = {
-  period: 20261017001,
-  timeLeft: 30,
-  mode: 'MIN_PAYOUT',
-  forcedNumber: null,
-  history: []
-};
-
-// Kismat Game State (2.30 min = 150 seconds timer)
-let kismatState = {
-  period: 20261017001,
-  timeLeft: 150,
-  history: []
-};
+let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
+let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
 let currentKismatBets = [];
 let forcedKismatOption = null;
 
-let rocketState = {
-  status: 'WAITING',
-  countdown: 5.0,
-  multiplier: 1.00,
-  crashPoint: 2.50,
-  forcedNextCrash: null,
-  history: []
-};
-
+let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, history: [] };
 let currentRoundBets = [];
 let rocketBets = [];
-let allUserBetsHistory = []; // Track all user bets for history
+let allUserBetsHistory = [];
 let cachedUsers = new Map();
 let allTransactions = [];
 let allSupportTickets = [];
@@ -116,12 +95,11 @@ function calculatePayoutForNumber(num) {
   return totalPayout;
 }
 
-// Colour Game Timer Interval (30s)
+// Colour Game Timer
 setInterval(async () => {
   gameState.timeLeft -= 1;
   if (gameState.timeLeft <= 0) {
     let winNum = Math.floor(Math.random() * 10);
-    
     if (gameState.mode === 'MANUAL' && gameState.forcedNumber !== null) {
       winNum = Number(gameState.forcedNumber);
     } else {
@@ -165,19 +143,17 @@ setInterval(async () => {
     if (allUserBetsHistory.length > 200) allUserBetsHistory.pop();
     
     io.emit('round_settled', { settledBets: currentRoundBets, winNumber: winNum, winColours: winCols, history: gameState.history });
-
     gameState.period += 1;
     gameState.timeLeft = 30;
     gameState.forcedNumber = null;
     if (gameState.mode === 'MANUAL') gameState.mode = 'MIN_PAYOUT';
     currentRoundBets = [];
   }
-
   io.emit('tick', { period: gameState.period, timeLeft: gameState.timeLeft, history: gameState.history });
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Kismat Game Timer Interval (150s = 2:30 min)
+// Kismat Game Timer (150s)
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
@@ -188,7 +164,7 @@ setInterval(async () => {
     }
     
     for (const b of currentKismatBets) {
-      if (b.choice === winOption) {
+      if (b.choice === `Option #${winOption}`) {
         b.status = 'WON';
         const rawWin = b.amount * 9;
         const tax = +(rawWin * 0.01).toFixed(3);
@@ -211,12 +187,10 @@ setInterval(async () => {
     if (kismatState.history.length > 20) kismatState.history.pop();
 
     io.emit('kismat_settled', { settledBets: currentKismatBets, winOption, history: kismatState.history });
-
     kismatState.period += 1;
     kismatState.timeLeft = 150;
     currentKismatBets = [];
   }
-
   io.emit('kismat_tick', { period: kismatState.period, timeLeft: kismatState.timeLeft, history: kismatState.history });
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
@@ -237,6 +211,15 @@ setInterval(async () => {
       rocketState.status = 'CRASHED';
       rocketState.history.unshift(rocketState.crashPoint);
       if (rocketState.history.length > 20) rocketState.history.pop();
+      
+      for (const rb of rocketBets) {
+        if (!rb.cashedOut) {
+          rb.status = 'LOST';
+          rb.winAmount = 0;
+          allUserBetsHistory.unshift(rb);
+        }
+      }
+
       setTimeout(() => {
         rocketState.status = 'WAITING';
         rocketState.countdown = 5.0;
@@ -277,7 +260,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Colour Bet (Lock last 5 seconds)
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     const u = cachedUsers.get(phone);
@@ -293,7 +275,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // Kismat Bet (Lock last 10 seconds, fixed ₹10)
   socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
     if (kismatState.timeLeft <= 10) return;
     const u = cachedUsers.get(phone);
@@ -314,9 +295,39 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
+    const u = cachedUsers.get(phone);
+    const amt = Number(amount);
+    if (!u || amt < 10 || u.balance < amt) return;
+    if (rocketBets.find(b => b.phone === phone)) return;
+
+    u.balance = +(u.balance - amt).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+    const rBet = { id: Date.now(), phone, game: 'Rocket Crash', userName: u.name, period: '', choice: 'Flight Bet', amount: amt, cashedOut: false, status: 'PENDING', winAmount: 0 };
+    rocketBets.push(rBet);
+    socket.emit('user_sync', { user: u });
+  });
+
+  socket.on('rocket_cashout', async ({ phone }) => {
+    if (rocketState.status !== 'FLYING') return;
+    const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
+    if (!rBet) return;
+    rBet.cashedOut = true;
+    rBet.status = 'WON';
+    rBet.winAmount = +(rBet.amount * rocketState.multiplier * 0.99).toFixed(3);
+    
+    const u = cachedUsers.get(phone);
+    if (u) {
+      u.balance = +(u.balance + rBet.winAmount).toFixed(3);
+      await User.updateOne({ phone }, { balance: u.balance });
+      socket.emit('user_sync', { user: u });
+    }
+    allUserBetsHistory.unshift(rBet);
+  });
+
   socket.on('fetch_my_bets', ({ phone }) => {
     const userBets = allUserBetsHistory.filter(b => b.phone === phone);
-    const liveBets = [...currentRoundBets, ...currentKismatBets].filter(b => b.phone === phone);
+    const liveBets = [...currentRoundBets, ...currentKismatBets, ...rocketBets.filter(b => !b.cashedOut)].filter(b => b.phone === phone);
     socket.emit('my_bets_response', [...liveBets, ...userBets]);
   });
 
