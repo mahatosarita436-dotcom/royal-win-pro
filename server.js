@@ -16,8 +16,8 @@ app.get('/admin', (req, res) => {
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))[cite: 3]
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));[cite: 3]
 
 const userSchema = new mongoose.Schema({
   userId: String,
@@ -141,7 +141,6 @@ function getKismatSummary() {
   return { period: kismatState.period, stakes };
 }
 
-// Colour Game Timer & Settlement (1% tax)
 setInterval(async () => {
   gameState.timeLeft -= 1;
   if (gameState.timeLeft <= 0) {
@@ -200,7 +199,6 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// KISMAT Game Timer & Settlement (1% tax)
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
@@ -243,7 +241,6 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game 90% Loss Probability
 function generateRocketCrashPoint() {
   if (rocketState.forcedNextCrash !== null) {
     const val = Number(rocketState.forcedNextCrash);
@@ -414,7 +411,32 @@ io.on('connection', (socket) => {
 
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
     const u = cachedUsers.get(phone);
-    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: Number(amount), details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() }; await Transaction.create(tx); allTransactions.unshift(tx); io.emit('admin_update', await getAdminPayload()); });  socket.on('withdraw_request', async ({ phone, name, amount, account }) => { const u = cachedUsers.get(phone); const requestedAmt = Number(amount); if (!u \vert{}\vert{} requestedAmt < 100) return socket.emit('auth_error', 'Minimum withdrawal is ₹100!');  const todayStr = new Date().toDateString(); const userTodayWithdraws = allTransactions.filter(t => t.phone === phone && t.type === 'WITHDRAW' && new Date(t.id).toDateString() === todayStr); if (userTodayWithdraws.length >= 3) return socket.emit('auth_error', 'Daily withdrawal limit reached!');  const taxAmount = +(requestedAmt * 0.03).toFixed(2); const finalDeductAmount = +(requestedAmt + taxAmount).toFixed(2); if (u.balance < finalDeductAmount) return socket.emit('auth_error', 'Insufficient balance including 3\% tax!');  u.balance = +(u.balance - finalDeductAmount).toFixed(3); await User.updateOne({ phone }, { balance: u.balance });  const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeductAmount, details: `To: ${account} (Incl. 3% Tax)`, status: 'PENDING', time: new Date().toLocaleTimeString() 
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: Number(amount), details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    await Transaction.create(tx);
+    allTransactions.unshift(tx);
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
+    const u = cachedUsers.get(phone);
+    const requestedAmt = Number(amount);
+    if (!u || requestedAmt < 100) return socket.emit('auth_error', 'Minimum withdrawal is ₹100!');
+
+    const todayStr = new Date().toDateString();
+    const userTodayWithdraws = allTransactions.filter(t => t.phone === phone && t.type === 'WITHDRAW' && new Date(t.id).toDateString() === todayStr);
+    if (userTodayWithdraws.length >= 3) return socket.emit('auth_error', 'Daily withdrawal limit reached!');
+
+    const taxAmount = +(requestedAmt * 0.03).toFixed(2);
+    const finalDeductAmount = +(requestedAmt + taxAmount).toFixed(2);
+    if (u.balance < finalDeductAmount) return socket.emit('auth_error', 'Insufficient balance including 3% tax!');
+
+    u.balance = +(u.balance - finalDeductAmount).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const tx = { 
+      id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', 
+      amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeductAmount,
+      details: `To: ${account} (Incl. 3% Tax)`, status: 'PENDING', time: new Date().toLocaleTimeString() 
     };
     await Transaction.create(tx);
     allTransactions.unshift(tx);
