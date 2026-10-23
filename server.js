@@ -53,11 +53,13 @@ const supportSchema = new mongoose.Schema({
 });
 const SupportTicket = mongoose.model('SupportTicket', supportSchema);
 
+// Gift Code Schema with Expiry Time support
 const giftCodeSchema = new mongoose.Schema({
   code: { type: String, unique: true, uppercase: true },
   amount: Number,
   maxUses: Number,
   usedCount: { type: Number, default: 0 },
+  expiresAt: { type: Date, default: null }, // Expiry time tracking
   usedBy: [String],
   claims: [{
     userId: String,
@@ -325,18 +327,25 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FIXED GIFT CODE REDEEM LOGIC WITH RELIABLE APPROVED DEPOSIT CHECK
+  // GIFT CODE REDEEM LOGIC WITH EXPIRY TIME & AUTO-DELETE ON LIMIT REACH
   socket.on('claim_gift_code', async ({ phone, code }) => {
     try {
       const formattedCode = code.trim().toUpperCase();
-      const gift = await GiftCode.findOne({ code: formattedCode });
+      let gift = await GiftCode.findOne({ code: formattedCode });
       const u = cachedUsers.get(phone);
 
       if (!u) return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
-      if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
+      if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
+
+      // Check Expiry Timer
+      if (gift.expiresAt && new Date() > new Date(gift.expiresAt)) {
+        await GiftCode.deleteOne({ code: formattedCode });
+        allGiftCodes = await GiftCode.find({});
+        io.emit('admin_update', await getAdminPayload());
+        return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
+      }
 
       if (global.requireDepositForGift) {
-        // Find any approved deposit for this user without strict regex string timing bugs
         const userDeposit = await Transaction.findOne({ 
           phone: phone, 
           type: 'DEPOSIT', 
@@ -352,7 +361,10 @@ io.on('connection', (socket) => {
         return socket.emit('gift_code_response', { success: false, message: 'You have already claimed this gift code.' });
       }
       if (gift.usedCount >= gift.maxUses) {
-        return socket.emit('gift_code_response', { success: false, message: 'This gift code limit has been reached!' });
+        await GiftCode.deleteOne({ code: formattedCode });
+        allGiftCodes = await GiftCode.find({});
+        io.emit('admin_update', await getAdminPayload());
+        return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
       }
 
       gift.usedCount += 1;
@@ -364,7 +376,13 @@ io.on('connection', (socket) => {
         amount: gift.amount,
         time: new Date().toLocaleTimeString()
       });
-      await gift.save();
+
+      // AUTOMATIC DELETE IF MAX USES REACHED AFTER THIS CLAIM
+      if (gift.usedCount >= gift.maxUses) {
+        await GiftCode.deleteOne({ code: formattedCode });
+      } else {
+        await gift.save();
+      }
 
       allGiftCodes = await GiftCode.find({});
       u.balance = +(u.balance + gift.amount).toFixed(3);
@@ -374,17 +392,32 @@ io.on('connection', (socket) => {
       socket.emit('gift_code_response', { success: true, message: `Successfully redeemed ₹${gift.amount}!`, amount: gift.amount });
       io.emit('admin_update', await getAdminPayload());
     } catch (err) {
-      socket.emit('gift_code_response', { success: false, message: 'Something went wrong!' });
+      socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
     }
   });
 
-  socket.on('admin_create_gift_code', async ({ code, amount, maxUses }) => {
+  // ADMIN CREATE GIFT CODE WITH TIMER (HOURS/MINUTES OR DATETIME)
+  socket.on('admin_create_gift_code', async ({ code, amount, maxUses, durationMinutes }) => {
     try {
       const fCode = code.trim().toUpperCase();
       const exists = await GiftCode.findOne({ code: fCode });
       if (exists) return;
-      const newCode = await GiftCode.create({ code: fCode, amount: Number(amount), maxUses: Number(maxUses), usedCount: 0, usedBy: [], claims: [] });
-      allGiftCodes.push(newCode);
+
+      let expiresAt = null;
+      if (durationMinutes && Number(durationMinutes) > 0) {
+        expiresAt = new Date(Date.now() + Number(durationMinutes) * 60000);
+      }
+
+      const newCode = await GiftCode.create({ 
+        code: fCode, 
+        amount: Number(amount), 
+        maxUses: Number(maxUses), 
+        expiresAt: expiresAt,
+        usedCount: 0, 
+        usedBy: [], 
+        claims: [] 
+      });
+      allGiftCodes = await GiftCode.find({});
       io.emit('admin_update', await getAdminPayload());
     } catch (e) {}
   });
@@ -529,7 +562,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // ADMIN PROCESS TRANSACTION WITH AUTOMATIC BALANCE REFUND ON REJECT
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
