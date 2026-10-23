@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully![cite: 3]'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const userSchema = new mongoose.Schema({
@@ -72,7 +72,7 @@ async function loadDataFromDB() {
     usersList.forEach(u => cachedUsers.set(u.phone, u));
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
-    console.log(`✅ Loaded ${cachedUsers.size} users from DB.`);
+    console.log(`✅ Loaded ${cachedUsers.size} users from DB.[cite: 3]`);
   } catch (e) {
     console.log('Error loading DB:', e);
   }
@@ -215,7 +215,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop with Speed Scaling & Last 20 History preservation
+// Rocket Game Loop with Total Pool >= 1000 and 80% Profit Booking Auto-Crash
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -223,11 +223,16 @@ setInterval(async () => {
       rocketState.status = 'FLYING';
       rocketState.multiplier = 1.00;
 
+      let totalPool = rocketServiceTotalPool();
       let maxBet = rocketBets.length > 0 ? Math.max(...rocketBets.map(b => b.amount)) : 0;
 
       if (rocketState.forcedNextCrash !== null) {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
+      } else if (totalPool >= 1000) {
+        // Jodi shob user mile total ₹1000 ba tar besi bet lagaye, tahobe 80% profit payout-ei (1.80x ashe-pashe) crash korbe
+        let targetProfitMultiplier = +(1 + 0.80).toFixed(2); // 1.80x
+        rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
       } else if (rocketBets.length === 0) {
         let highChance = Math.random() < 0.20;
         if (highChance) {
@@ -244,11 +249,12 @@ setInterval(async () => {
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    let increment = 0.05;
-    if (rocketState.multiplier > 10) increment = 0.20;
-    if (rocketState.multiplier > 50) increment = 1.00;
-    if (rocketState.multiplier > 100) increment = 3.50;
-    if (rocketState.multiplier > 300) increment = 8.00;
+    let increment = 0.15;
+    if (rocketState.multiplier > 5) increment = 0.50;
+    if (rocketState.multiplier > 20) increment = 2.00;
+    if (rocketState.multiplier > 50) increment = 6.00;
+    if (rocketState.multiplier > 100) increment = 15.00;
+    if (rocketState.multiplier > 300) increment = 30.00;
 
     rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
 
@@ -281,7 +287,7 @@ io.on('connection', (socket) => {
     try {
       let existingUser = await User.findOne({ phone });
       if (existingUser || cachedUsers.has(phone)) {
-        socket.emit('auth_error', 'Phone number already registered!');
+        socket.emit('auth_error', 'Phone number already registered![cite: 3]');
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
         const newUser = { userId, name, phone, password, balance: 10 };
@@ -290,16 +296,16 @@ io.on('connection', (socket) => {
         socket.emit('auth_success', { user: newUser });
       }
     } catch (err) {
-      socket.emit('auth_error', 'Registration failed!');
+      socket.emit('auth_error', 'Registration failed![cite: 3]');
     }
   });
 
   socket.on('user_login', ({ phone, password }) => {
     const user = cachedUsers.get(phone);
     if (!user) {
-      socket.emit('auth_error', 'Account not found!');
+      socket.emit('auth_error', 'Account not found![cite: 3]');
     } else if (user.password !== password) {
-      socket.emit('auth_error', 'Invalid password!');
+      socket.emit('auth_error', 'Invalid password![cite: 3]');
     } else {
       socket.emit('auth_success', { user });
     }
@@ -327,7 +333,7 @@ io.on('connection', (socket) => {
     if (!u || u.balance < amt) return;
 
     if (currentKismatBets.find(b => b.phone === phone)) {
-      return socket.emit('auth_error', 'You can bet on only ONE option per round!');
+      return socket.emit('auth_error', 'You can bet on only ONE option per round![cite: 3]');
     }
 
     u.balance = +(u.balance - amt).toFixed(3);
@@ -563,5 +569,5 @@ function rocketServiceTotalPool() {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log('✅ Server running on port ' + PORT);
+  console.log('✅ Server running on port ' + PORT + '[cite: 3]');
 });
