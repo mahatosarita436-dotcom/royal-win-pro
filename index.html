@@ -397,7 +397,18 @@
 
     socket.on('kismat_bet_confirmed', ({ balance, bet }) => {
       updateBalanceDisplay(balance);
-      alert(`Successfully placed ₹${bet.amount} on Kismat Option #${bet.choice}!`); socket.emit('fetch_my_bets', { phone: currentUser.phone }); });  function openSupportModal() { document.getElementById('supportModal').classList.remove('hidden'); socket.emit('fetch_user_tickets', { phone: currentUser.phone }); }  function openMyBetsModal(gameName) { activeGameFilter = gameName; document.getElementById('myBetsModalTitle').innerText = `📊 My ${gameName} Bet History`;
+      alert(`Successfully placed ₹${bet.amount} on Kismat Option #${bet.choice}!`);
+      socket.emit('fetch_my_bets', { phone: currentUser.phone });
+    });
+
+    function openSupportModal() {
+      document.getElementById('supportModal').classList.remove('hidden');
+      socket.emit('fetch_user_tickets', { phone: currentUser.phone });
+    }
+
+    function openMyBetsModal(gameName) {
+      activeGameFilter = gameName;
+      document.getElementById('myBetsModalTitle').innerText = `📊 My ${gameName} Bet History`;
       document.getElementById('myBetsModal').classList.remove('hidden');
       socket.emit('fetch_my_bets', { phone: currentUser.phone });
     }
@@ -415,10 +426,11 @@
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
           <div>
             <strong class="text-white">${b.period ? 'Period: ' + b.period : 'Rocket Flight'}</strong>
-            <p class="text-slate-300">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> \vert{} Amt: ₹${b.amount}</p>
+            <p class="text-slate-300">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> | Amt: ₹${b.amount}</p>
           </div>
           <div class="text-right">
-            <span class="font-bold uppercase ${b.status === 'WON' ? 'text-emerald-400' : b.status === 'LOST' ? 'text-rose-400' : 'text-amber-400'}">${b.status \vert{}\vert{} 'PENDING'}</span>${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px]">+₹${b.winAmount}</span>` : ''}
+            <span class="font-bold uppercase ${b.status === 'WON' ? 'text-emerald-400' : b.status === 'LOST' ? 'text-rose-400' : 'text-amber-400'}">${b.status || 'PENDING'}</span>
+            ${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px]">+₹${b.winAmount}</span>` : ''}
           </div>
         </div>
       `).join('');
@@ -451,7 +463,8 @@
             <span>Ticket ID: #${t.id}</span>
             <span class="font-bold uppercase ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
           </div>
-          <p class="text-white font-medium">👤 You: ${t.message}</p>${t.adminReply ? `<div class="bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30 text-indigo-200 mt-1">👑 Admin Reply: ${t.adminReply}</div>` : ''}
+          <p class="text-white font-medium">👤 You: ${t.message}</p>
+          ${t.adminReply ? `<div class="bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30 text-indigo-200 mt-1">👑 Admin Reply: ${t.adminReply}</div>` : ''}
           <button onclick="replyToTicket(${t.id})" class="w-full mt-1 bg-slate-800 hover:bg-slate-700 text-amber-400 py-1.5 rounded-lg text-[11px] font-bold">💬 Reply / Continue Chat</button>
         </div>
       `).join('');
@@ -573,7 +586,12 @@
 
     socket.on('win_popup', ({ phone, game, winAmount }) => {
       if (!currentUser || currentUser.phone !== phone) return;
-      showPopupResult('WIN', `${game} WINNER`, winAmount); });  socket.on('tick', ({ period, timeLeft, history }) => { document.getElementById('periodId').innerText = period; document.getElementById('timerDisplay').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
+      showPopupResult('WIN', `${game} WINNER`, winAmount);
+    });
+
+    socket.on('tick', ({ period, timeLeft, history }) => {
+      document.getElementById('periodId').innerText = period;
+      document.getElementById('timerDisplay').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
       
       const isLocked = timeLeft <= 5;
       document.getElementById('colourLockOverlay').classList.toggle('hidden', !isLocked);
