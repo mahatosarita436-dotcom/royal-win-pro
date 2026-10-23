@@ -8,7 +8,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Direct Route for Admin Panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -371,18 +370,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  socket.on('user_reply_ticket', async ({ ticketId, reply, phone }) => {
-    const t = allSupportTickets.find(item => item.id === ticketId);
-    if (t) {
-      t.message += ` | Reply: ${reply}`;
-      t.status = 'PENDING';
-      await SupportTicket.updateOne({ id: ticketId }, { message: t.message, status: 'PENDING' });
-      socket.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === phone));
-      io.emit('admin_update', await getAdminPayload());
-    }
-  });
-
-  // --- ADMIN CONTROL HANDLERS ---
   socket.on('admin_set_mode', (mode) => {
     gameState.mode = mode;
     if (mode === 'MIN_PAYOUT') gameState.forcedNumber = null;
@@ -434,7 +421,7 @@ io.on('connection', (socket) => {
     if (u) {
       u.balance = Number(amount);
       await User.updateOne({ phone }, { balance: u.balance });
-      io.emit('user_sync', { user: u });
+      socket.emit('user_sync', { user: u });
       io.emit('admin_update', await getAdminPayload());
     }
   });
@@ -493,7 +480,7 @@ async function getAdminPayload() {
 
   return {
     gameState,
-    kismatState: { period: kismatState.period, stakes: kStakes },
+    kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft, stakes: kStakes },
     rocketState,
     summary: { stakes, projectedPayouts },
     supportTickets: allSupportTickets,
@@ -508,7 +495,7 @@ async function getAdminPayload() {
 function getAdminPayloadSync() {
   return {
     gameState,
-    kismatState: { period: kismatState.period },
+    kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft },
     rocketState,
     supportTickets: allSupportTickets,
     usersList: Array.from(cachedUsers.values()).reverse(),
