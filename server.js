@@ -8,11 +8,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.static(path.join(__dirname)));
-
+// Admin Route must be placed BEFORE express.static to prevent routing conflicts
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
+
+app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
