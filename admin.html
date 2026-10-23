@@ -49,18 +49,22 @@
       <span class="text-xs font-bold uppercase tracking-widest text-rose-400">Master Admin Control</span>
       <h1 class="text-2xl font-black text-white">Royal Win Backoffice (Colour • Kismat • Rocket)</h1>
     </div>
-    <div class="flex flex-wrap items-center gap-6">
-      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-        <span class="text-[11px] text-slate-400 block">Registered Users</span>
-        <span id="totalUsers" class="font-mono text-xl font-black text-emerald-400">0</span>
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-400 block">Users</span>
+        <span id="totalUsers" class="font-mono text-lg font-black text-emerald-400">0</span>
       </div>
-      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-        <span class="text-[11px] text-slate-400 block">Colour Period</span>
-        <span id="adminPeriod" class="font-mono text-xl font-bold text-indigo-400">--</span>
+      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-400 block">Colour Period</span>
+        <span id="adminPeriod" class="font-mono text-base font-bold text-indigo-400">--</span>
       </div>
-      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-        <span class="text-[11px] text-slate-400 block">Count Down</span>
-        <span id="adminTimer" class="font-mono text-2xl font-black text-amber-400">00:30</span>
+      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+        <span class="text-[10px] text-slate-400 block">Colour Timer</span>
+        <span id="adminTimer" class="font-mono text-lg font-black text-amber-400">00:30</span>
+      </div>
+      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-amber-500/30">
+        <span class="text-[10px] text-amber-400 block">✨ Kismat Timer</span>
+        <span id="adminKismatTimer" class="font-mono text-lg font-black text-amber-400">02:30</span>
       </div>
     </div>
   </header>
@@ -149,18 +153,18 @@
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- ALADA SECTION: USER SUPPORT TICKETS & HISTORY -->
+  <!-- SUPPORT TICKETS -->
   <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-4">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h2 class="text-base font-bold text-amber-400">💬 User Support Tickets & Complaints (Alada Section)</h2>
-      <span class="text-xs text-slate-400 font-mono">Realtime Chat & Reply</span>
+      <h2 class="text-base font-bold text-amber-400">💬 User Support Tickets</h2>
+      <span class="text-xs text-slate-400 font-mono">Realtime Support</span>
     </div>
     <div id="supportTicketsList" class="space-y-3 text-xs max-h-80 overflow-y-auto">
       <p class="text-slate-500">No support requests.</p>
     </div>
   </div>
 
-  <!-- USERS & LIVE BETS / HISTORY -->
+  <!-- USERS & LIVE BETS -->
   <div class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
@@ -266,6 +270,13 @@
       if(el) el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
     });
 
+    socket.on('kismat_tick', ({ period, timeLeft }) => {
+      document.getElementById('adminKismatPeriod').innerText = period;
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      document.getElementById('adminKismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    });
+
     socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool }) => {
       cachedUsers = usersList || [];
       cachedTransactions = transactions || [];
@@ -296,8 +307,8 @@
                 <strong class="text-white">${t.userName}</strong> - <span class="text-emerald-400 font-mono font-bold">${t.phone}</span>
                 <span class="font-bold ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
               </div>
-              <p class="text-slate-300">📝 Complain: ${t.message}</p>
-              ${t.adminReply ? `<p class="text-indigo-300 font-semibold">👑 Your Reply: ${t.adminReply}</p>` : ''}
+              <p class="text-slate-300">📝 Ticket: ${t.message}</p>
+              ${t.adminReply ? `<p class="text-indigo-300 font-semibold">👑 Admin Reply: ${t.adminReply}</p>` : ''}
               <div class="flex gap-2 pt-1">
                 <button onclick="adminReplyTicket(${t.id})" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-white font-bold">Reply</button>
                 ${t.status === 'PENDING' ? `<button onclick="resolveTicket(${t.id})" class="bg-amber-600 hover:bg-amber-500 px-3 py-1 rounded font-bold text-slate-950">Resolve</button>` : ''}
