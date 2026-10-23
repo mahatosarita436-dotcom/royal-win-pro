@@ -89,10 +89,8 @@
         <button onclick="claimGiftCode()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow">Redeem</button>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="openSupportModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
-          💬 Support & Tickets
-        </button>
+      <!-- Full Width Txn History Button (Support removed from here) -->
+      <div>
         <button onclick="openTransactionModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold py-2.5 rounded-xl border border-indigo-500/30 text-xs shadow">
           📜 Txn History
         </button>
@@ -239,7 +237,7 @@
       </div>
     </div>
 
-    <!-- BOTTOM FIXED NAVIGATION BAR (Niche Mark Kora Jaigae Thakbe) -->
+    <!-- BOTTOM FIXED NAVIGATION BAR -->
     <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-slate-950 border-t border-slate-800 py-3 px-6 flex justify-around items-center z-40">
       <button onclick="switchGame('colour')" class="flex flex-col items-center text-emerald-400 font-bold text-xs">
         <span class="text-base">🎮</span>
@@ -416,7 +414,6 @@
       const url = currentSocialLinks[type];
       if (!url) return alert('Link not available right now!');
       
-      // Copy to clipboard & open
       navigator.clipboard.writeText(url).then(() => {
         alert(`${type.toUpperCase()} link copied to clipboard! Opening link...`);
         window.open(url, '_blank');
