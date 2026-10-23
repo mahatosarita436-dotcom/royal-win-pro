@@ -148,7 +148,7 @@
       </div>
     </div>
 
-    <!-- GAME 2: KISMAT (Lucky Cards Concept) -->
+    <!-- GAME 2: KISMAT -->
     <div id="section-kismat" class="hidden px-4 space-y-4">
       <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
         <div>
@@ -173,7 +173,6 @@
         </div>
         <p class="text-xs text-slate-300 font-bold text-center">Choose 1 Lucky Card out of 10. Fixed Bet: ₹10, Win ₹90 (9x Return).</p>
         
-        <!-- 10 Hidden Cards Grid -->
         <div class="grid grid-cols-5 gap-2.5">
           <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-4 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition">🎴 Card 1</button>
           <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 2</button>
@@ -288,6 +287,13 @@
   <div id="photoWinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
       <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
+      
+      <!-- Rocket Cashout Details inside Popup -->
+      <div id="cashoutDetailsBox" class="hidden text-xs text-slate-700 bg-amber-100 p-2.5 rounded-xl my-2 space-y-1 font-mono font-bold">
+        <p>Bet: ₹<span id="popupBetAmt">0</span></p>
+        <p>Multiplier: <span id="popupMult">0</span>x</p>
+      </div>
+
       <h2 class="text-3xl font-black text-slate-900 mt-3">+₹<span id="winPopupAmount">0.00</span></h2>
       <p id="winPopupGameName" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">WINNER (1% Tax Applied)</p>
       <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-2.5 rounded-xl shadow-md mt-4">CONTINUE</button>
@@ -533,9 +539,15 @@
         multEl.innerText = `${Math.max(0, countdown).toFixed(1)}s`;
         btn.innerText = myRocketBet ? `✅ BET LOCKED` : '🚀 PLACE BET NOW (Min ₹10)';
       } else if (status === 'FLYING') {
-        statusEl.innerText = 'ROCKET FLYING (90% Loss Mode Active)';
+        statusEl.innerText = 'ROCKET FLYING';
         multEl.innerText = `${multiplier.toFixed(2)}x`;
-        btn.innerText = (myRocketBet && !myRocketBet.cashedOut) ? `💰 CASH OUT NOW` : '🚀 FLYING...';
+        
+        if (myRocketBet && !myRocketBet.cashedOut) {
+          const liveWinAmt = (myRocketBet.amount * multiplier).toFixed(2);
+          btn.innerHTML = `💰 CASH OUT NOW <span class="block text-xs font-mono font-bold text-amber-300">Live Return: ₹${liveWinAmt}</span>`;
+        } else {
+          btn.innerText = '🚀 FLYING...';
+        }
       } else {
         statusEl.innerText = '💥 CRASHED AT';
         multEl.innerText = `${multiplier.toFixed(2)}x`;
@@ -545,12 +557,26 @@
       document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
     }
 
-    function showPopupResult(type, title, amount) {
+    function showPopupResult(type, title, amount, betAmt = null, mult = null) {
       document.getElementById('winPopupRibbon').innerText = type === 'WIN' ? 'WIN' : 'LOST';
       document.getElementById('winPopupAmount').innerText = Number(amount).toFixed(2);
       document.getElementById('winPopupGameName').innerText = title;
+      
+      const detailsBox = document.getElementById('cashoutDetailsBox');
+      if (betAmt !== null && mult !== null) {
+        document.getElementById('popupBetAmt').innerText = betAmt;
+        document.getElementById('popupMult').innerText = mult;
+        detailsBox.classList.remove('hidden');
+      } else {
+        detailsBox.classList.add('hidden');
+      }
+
       document.getElementById('photoWinModal').classList.remove('hidden');
     }
+
+    socket.on('rocket_cashed_out_success', ({ betAmount, multiplier, winAmount }) => {
+      showPopupResult('WIN', 'ROCKET CASH OUT SUCCESS', winAmount, betAmount, multiplier);
+    });
 
     socket.on('round_settled', ({ settledBets, history }) => {
       if (history) {
