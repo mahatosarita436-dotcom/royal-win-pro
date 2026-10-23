@@ -153,7 +153,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Kismat Game Timer (150s) - Smart Logic: Jekhane bet nei shetai win hobe, sob lagale random hobe!
+// Kismat Game Timer
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
@@ -163,14 +163,12 @@ setInterval(async () => {
       winOption = forcedKismatOption;
       forcedKismatOption = null;
     } else {
-      // Check kon kon option-e bet lagano hoyeche
       let bettedOptions = new Set();
       currentKismatBets.forEach(b => {
         let optNum = parseInt(b.choice.replace('Option #', ''));
         bettedOptions.add(optNum);
       });
 
-      // Je option gulo te KOKHONO bet lagbe ni (1 theke 10 er modhye empty gulo)
       let emptyOptions = [];
       for (let i = 1; i <= 10; i++) {
         if (!bettedOptions.has(i)) {
@@ -178,11 +176,9 @@ setInterval(async () => {
         }
       }
 
-      // Jodi emon option thake jekhane keu bet lagay ni, tabe tar modhye theke ekta win hobe (Admin 100% Profit)
       if (emptyOptions.length > 0) {
         winOption = emptyOptions[Math.floor(Math.random() * emptyOptions.length)];
       } else {
-        // Jodi 10 tai option-e bet lagano thake, tobe system automatic random korbe
         winOption = Math.floor(Math.random() * 10) + 1;
       }
     }
@@ -219,15 +215,32 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop
+// Rocket Game Loop with Smart Dynamic Crash (Kono bet na thakle 500x, kom bet thakle 100x, besi thakle taratari crash)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
     if (rocketState.countdown <= 0) {
       rocketState.status = 'FLYING';
       rocketState.multiplier = 1.00;
-      rocketState.crashPoint = rocketState.forcedNextCrash !== null ? rocketState.forcedNextCrash : +(1.01 + Math.random() * 0.50).toFixed(2);
-      rocketState.forcedNextCrash = null;
+
+      let totalPool = rocketBets.reduce((sum, b) => sum + b.amount, 0);
+      let maxBet = rocketBets.length > 0 ? Math.max(...rocketBets.map(b => b.amount)) : 0;
+
+      if (rocketState.forcedNextCrash !== null) {
+        rocketState.crashPoint = rocketState.forcedNextCrash;
+        rocketState.forcedNextCrash = null;
+      } else if (rocketBets.length === 0) {
+        // Kono bet na thakle 500x projonto jete pare
+        rocketState.crashPoint = +(100 + Math.random() * 400).toFixed(2);
+      } else if (maxBet <= 20) {
+        // Shudhu 10 ba 20 taka lagale 100x projonto jete pare
+        rocketState.crashPoint = +(15 + Math.random() * 85).toFixed(2);
+      } else if (maxBet <= 50) {
+        rocketState.crashPoint = +(3 + Math.random() * 15).toFixed(2);
+      } else {
+        // Besi bet thakle taratari crash hobe
+        rocketState.crashPoint = +(1.02 + Math.random() * 0.45).toFixed(2);
+      }
     }
   } else if (rocketState.status === 'FLYING') {
     rocketState.multiplier = +(rocketState.multiplier + 0.05).toFixed(2);
@@ -347,6 +360,13 @@ io.on('connection', (socket) => {
       socket.emit('user_sync', { user: u });
     }
     allUserBetsHistory.unshift(rBet);
+
+    // Send cashout success popup details back to user
+    socket.emit('rocket_cashed_out_success', {
+      betAmount: rBet.amount,
+      multiplier: rocketState.multiplier,
+      winAmount: rBet.winAmount
+    });
   });
 
   socket.on('fetch_my_bets', ({ phone }) => {
