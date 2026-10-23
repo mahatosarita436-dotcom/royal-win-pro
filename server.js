@@ -215,7 +215,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop with Total Pool >= 1000 and 80% Profit Booking Auto-Crash
+// Rocket Game Loop with Smooth Speed Scaling & 80% Profit Pool Auto-Crash
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -230,7 +230,6 @@ setInterval(async () => {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
       } else if (totalPool >= 1000) {
-        // Jodi shob user mile total ₹1000 ba tar besi bet lagaye, tahobe 80% profit payout-ei (1.80x ashe-pashe) crash korbe
         let targetProfitMultiplier = +(1 + 0.80).toFixed(2); // 1.80x
         rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
       } else if (rocketBets.length === 0) {
@@ -249,12 +248,13 @@ setInterval(async () => {
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    let increment = 0.15;
-    if (rocketState.multiplier > 5) increment = 0.50;
-    if (rocketState.multiplier > 20) increment = 2.00;
-    if (rocketState.multiplier > 50) increment = 6.00;
-    if (rocketState.multiplier > 100) increment = 15.00;
-    if (rocketState.multiplier > 300) increment = 30.00;
+    // Smoother and Balanced Speed Scaling
+    let increment = 0.03;
+    if (rocketState.multiplier > 5) increment = 0.08;
+    if (rocketState.multiplier > 20) increment = 0.25;
+    if (rocketState.multiplier > 50) increment = 0.60;
+    if (rocketState.multiplier > 100) increment = 1.50;
+    if (rocketState.multiplier > 300) increment = 3.00;
 
     rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
 
