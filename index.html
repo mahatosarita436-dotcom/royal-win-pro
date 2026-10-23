@@ -82,6 +82,13 @@
           </div>
         </div>
       </div>
+
+      <!-- REDEEM GIFT CODE BOX -->
+      <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex gap-2">
+        <input id="userGiftCodeInput" type="text" placeholder="Enter Gift Code..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono outline-none" />
+        <button onclick="claimGiftCode()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow">Redeem</button>
+      </div>
+
       <div class="grid grid-cols-2 gap-2">
         <button onclick="openSupportModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
           💬 Support & Tickets
@@ -354,6 +361,20 @@
     let myTransactionsHistory = [];
     let activeTxTab = 'deposit';
     let activeGameFilter = 'Colour Trading';
+
+    function claimGiftCode() {
+      const code = document.getElementById('userGiftCodeInput').value.trim();
+      if (!code) return alert('Please enter a gift code!');
+      if (!currentUser) return;
+      socket.emit('claim_gift_code', { phone: currentUser.phone, code });
+    }
+
+    socket.on('gift_code_response', ({ success, message, amount }) => {
+      alert(message);
+      if (success && currentUser) {
+        document.getElementById('userGiftCodeInput').value = '';
+      }
+    });
 
     // ROCKET ANIMATION CANVAS SCRIPT
     const canvas = document.getElementById('rocketCanvas');
