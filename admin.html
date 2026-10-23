@@ -69,12 +69,12 @@
     </div>
   </header>
 
-  <!-- GIFT CODE GENERATOR PANEL -->
+  <!-- GIFT CODE MANAGER PANEL -->
   <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
       <div>
         <h2 class="text-base font-black text-emerald-400">🎁 Gift / Redeem Code Manager</h2>
-        <p class="text-xs text-slate-400">Create custom promo codes with amount limits and usage counts.</p>
+        <p class="text-xs text-slate-400">Create promo codes and track who redeemed them.</p>
       </div>
     </div>
     <div class="grid sm:grid-cols-4 gap-3">
@@ -83,20 +83,40 @@
       <input id="newGiftMaxUsesInput" type="number" placeholder="Max Uses (People)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       <button onclick="createGiftCode()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2 rounded-xl text-xs shadow">Create Code</button>
     </div>
-    <div class="overflow-x-auto max-h-48 pt-2">
-      <table class="w-full text-left text-xs">
-        <thead>
-          <tr class="text-slate-400 border-b border-slate-800">
-            <th class="pb-2">Code</th>
-            <th class="pb-2">Amount</th>
-            <th class="pb-2">Uses (Done / Max)</th>
-            <th class="pb-2 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody id="adminGiftCodesTableBody" class="divide-y divide-slate-800/60">
-          <tr><td colspan="4" class="py-2 text-center text-slate-500">No active gift codes.</td></tr>
-        </tbody>
-      </table>
+    <div class="grid md:grid-cols-2 gap-4 pt-2">
+      <div class="overflow-x-auto max-h-56 bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <h3 class="text-xs font-bold text-emerald-400 mb-2">Active Gift Codes</h3>
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800">
+              <th class="pb-2">Code</th>
+              <th class="pb-2">Amount</th>
+              <th class="pb-2">Uses</th>
+              <th class="pb-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminGiftCodesTableBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="4" class="py-2 text-center text-slate-500">No active codes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="overflow-x-auto max-h-56 bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <h3 class="text-xs font-bold text-amber-400 mb-2">🏷️ Who Redeemed Gift Codes (Live History)</h3>
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800">
+              <th class="pb-2">User (ID/Name)</th>
+              <th class="pb-2">Mobile</th>
+              <th class="pb-2">Amount</th>
+              <th class="pb-2 text-right">Time</th>
+            </tr>
+          </thead>
+          <tbody id="adminGiftClaimsTableBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="4" class="py-2 text-center text-slate-500">No claims yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -340,7 +360,7 @@
       // Render Gift Codes Table
       const giftTable = document.getElementById('adminGiftCodesTableBody');
       if (giftTable) {
-        giftTable.innerHTML = cachedGiftCodes.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No active gift codes.</td></tr>` : cachedGiftCodes.map(g => `
+        giftTable.innerHTML = cachedGiftCodes.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No active codes.</td></tr>` : cachedGiftCodes.map(g => `
           <tr>
             <td class="py-2 font-mono font-bold text-amber-400">${g.code}</td>
             <td class="py-2 font-bold text-emerald-400">₹${g.amount}</td>
@@ -348,6 +368,28 @@
             <td class="py-2 text-right">
               <button onclick="deleteGiftCode('${g.code}')" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Delete</button>
             </td>
+          </tr>
+        `).join('');
+      }
+
+      // Render Gift Claims History Table
+      const claimsTable = document.getElementById('adminGiftClaimsTableBody');
+      if (claimsTable) {
+        let allClaims = [];
+        cachedGiftCodes.forEach(g => {
+          if (g.claims) {
+            g.claims.forEach(c => {
+              allClaims.push({ ...c, code: g.code });
+            });
+          }
+        });
+
+        claimsTable.innerHTML = allClaims.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No claims yet.</td></tr>` : allClaims.map(c => `
+          <tr>
+            <td class="py-2"><strong class="text-indigo-300">${c.userId}</strong> - <span class="text-white">${c.userName}</span><span class="block text-[10px] text-amber-400 font-mono">Code: ${c.code}</span></td>
+            <td class="py-2 font-mono text-emerald-300 text-[11px]">${c.phone}</td>
+            <td class="py-2 font-black text-emerald-400">+₹${c.amount}</td>
+            <td class="py-2 text-right font-mono text-[10px] text-slate-400">${c.time}</td>
           </tr>
         `).join('');
       }
