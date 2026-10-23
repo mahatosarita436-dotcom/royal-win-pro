@@ -53,13 +53,12 @@ const supportSchema = new mongoose.Schema({
 });
 const SupportTicket = mongoose.model('SupportTicket', supportSchema);
 
-// Gift Code Schema with Claim History Track
 const giftCodeSchema = new mongoose.Schema({
   code: { type: String, unique: true, uppercase: true },
   amount: Number,
   maxUses: Number,
   usedCount: { type: Number, default: 0 },
-  usedBy: [String], // Phone numbers
+  usedBy: [String],
   claims: [{
     userId: String,
     userName: String,
@@ -83,6 +82,7 @@ let cachedUsers = new Map();
 let allTransactions = [];
 let allSupportTickets = [];
 let allGiftCodes = [];
+let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
 
 async function loadDataFromDB() {
   try {
@@ -190,9 +190,7 @@ setInterval(async () => {
 
       let emptyOptions = [];
       for (let i = 1; i <= 10; i++) {
-        if (!bettedOptions.has(i)) {
-          emptyOptions.push(i);
-        }
+        if (!bettedOptions.has(i)) emptyOptions.push(i);
       }
 
       if (emptyOptions.length > 0) {
@@ -296,6 +294,8 @@ setInterval(async () => {
 }, 100);
 
 io.on('connection', (socket) => {
+  socket.emit('social_links_sync', currentSocialLinks);
+
   socket.on('user_register', async ({ name, phone, password }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -324,27 +324,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  // GIFT CODE REDEEM LOGIC FOR USERS
   socket.on('claim_gift_code', async ({ phone, code }) => {
     try {
       const formattedCode = code.trim().toUpperCase();
       const gift = await GiftCode.findOne({ code: formattedCode });
       const u = cachedUsers.get(phone);
 
-      if (!u) {
-        return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
-      }
-      if (!gift) {
-        return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
-      }
+      if (!u) return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
+      if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
       if (gift.usedBy && gift.usedBy.includes(phone)) {
-        return socket.emit('gift_code_response', { success: false, message: 'Already use code! You have already claimed this gift code.' });
+        return socket.emit('gift_code_response', { success: false, message: 'You have already claimed this gift code.' });
       }
       if (gift.usedCount >= gift.maxUses) {
         return socket.emit('gift_code_response', { success: false, message: 'This gift code limit has been reached!' });
       }
 
-      // Update Gift Code & Push Claim details
       gift.usedCount += 1;
       gift.usedBy.push(phone);
       gift.claims.unshift({
@@ -356,10 +350,7 @@ io.on('connection', (socket) => {
       });
       await gift.save();
 
-      // Update Local Gift Code Cache list
       allGiftCodes = await GiftCode.find({});
-
-      // Update User Balance
       u.balance = +(u.balance + gift.amount).toFixed(3);
       await User.updateOne({ phone }, { balance: u.balance });
 
@@ -367,12 +358,10 @@ io.on('connection', (socket) => {
       socket.emit('gift_code_response', { success: true, message: `Successfully redeemed ₹${gift.amount}!`, amount: gift.amount });
       io.emit('admin_update', await getAdminPayload());
     } catch (err) {
-      console.log('Gift claim error:', err);
       socket.emit('gift_code_response', { success: false, message: 'Something went wrong!' });
     }
   });
 
-  // ADMIN GIFT CODE CREATION & DELETION
   socket.on('admin_create_gift_code', async ({ code, amount, maxUses }) => {
     try {
       const fCode = code.trim().toUpperCase();
@@ -381,9 +370,7 @@ io.on('connection', (socket) => {
       const newCode = await GiftCode.create({ code: fCode, amount: Number(amount), maxUses: Number(maxUses), usedCount: 0, usedBy: [], claims: [] });
       allGiftCodes.push(newCode);
       io.emit('admin_update', await getAdminPayload());
-    } catch (e) {
-      console.log('Error creating gift code:', e);
-    }
+    } catch (e) {}
   });
 
   socket.on('admin_delete_gift_code', async (code) => {
@@ -391,9 +378,13 @@ io.on('connection', (socket) => {
       await GiftCode.deleteOne({ code });
       allGiftCodes = await GiftCode.find({});
       io.emit('admin_update', await getAdminPayload());
-    } catch (e) {
-      console.log('Error deleting gift code:', e);
-    }
+    } catch (e) {}
+  });
+
+  socket.on('admin_update_socials', async (links) => {
+    currentSocialLinks = links || {};
+    io.emit('social_links_sync', currentSocialLinks);
+    io.emit('admin_update', await getAdminPayload());
   });
 
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
@@ -631,7 +622,8 @@ async function getAdminPayload() {
     currentBets: currentRoundBets,
     rocketBets,
     totalRocketPool,
-    giftCodes: allGiftCodes
+    giftCodes: allGiftCodes,
+    socialLinks: currentSocialLinks
   };
 }
 
@@ -646,7 +638,8 @@ function getAdminPayloadSync() {
     currentBets: currentRoundBets,
     rocketBets,
     totalRocketPool: rocketServiceTotalPool(),
-    giftCodes: allGiftCodes
+    giftCodes: allGiftCodes,
+    socialLinks: currentSocialLinks
   };
 }
 
