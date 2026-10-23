@@ -89,7 +89,6 @@
         <button onclick="claimGiftCode()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow">Redeem</button>
       </div>
 
-      <!-- Full Width Txn History Button (Support removed from here) -->
       <div>
         <button onclick="openTransactionModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold py-2.5 rounded-xl border border-indigo-500/30 text-xs shadow">
           📜 Txn History
@@ -415,7 +414,7 @@
       if (!url) return alert('Link not available right now!');
       
       navigator.clipboard.writeText(url).then(() => {
-        alert(`${type.toUpperCase()} link copied to clipboard! Opening link...`);
+        alert(`${type.toUpperCase()} link copied! Opening link...`);
         window.open(url, '_blank');
       }).catch(() => {
         window.open(url, '_blank');
