@@ -8,6 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Explicit Admin Route
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -72,9 +73,9 @@ async function loadDataFromDB() {
     usersList.forEach(u => cachedUsers.set(u.phone, u));
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
-    console.log(`✅ Loaded ${cachedUsers.size} users, transactions, and support tickets from MongoDB.`);
+    console.log(`✅ Loaded ${cachedUsers.size} users from DB.`);
   } catch (e) {
-    console.log('Error loading DB data:', e);
+    console.log('Error loading DB:', e);
   }
 }
 loadDataFromDB();
