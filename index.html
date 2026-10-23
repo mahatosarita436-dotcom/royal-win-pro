@@ -369,7 +369,7 @@
     <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
       <h3 class="font-bold text-emerald-400">Scan QR to Deposit</h3>
       <img src="qr.png" alt="QR" class="w-48 h-48 object-contain mx-auto bg-white p-2 rounded-xl" />
-      <input id="depAmount" type="number" placeholder="Amount (₹)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="depAmount" type="number" min="20" placeholder="Amount (Min ₹20)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
       <input id="depUtr" type="text" placeholder="UTR Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm font-mono text-white" />
       <button onclick="sendDeposit()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl">Submit</button>
       <button onclick="document.getElementById('depositModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
@@ -662,7 +662,7 @@
 
     function renderUserTransactions() {
       const listEl = document.getElementById('userTxHistoryList');
-      const filtered = myTransactionsHistory.filter(t => t.type.toLowerCase() === activeTxTab);
+      const filtered = myTransactionsHistory.filter(t => t.type.toLowerCase() === activeTxTab.toLowerCase());
 
       if (filtered.length === 0) {
         listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No ${activeTxTab} transactions found.</p>`;
@@ -913,11 +913,16 @@
     });
 
     function sendDeposit() {
-      const amount = document.getElementById('depAmount').value;
-      const utr = document.getElementById('depUtr').value;
-      if (!amount || !utr) return alert('Fill all fields');
+      const amount = Number(document.getElementById('depAmount').value);
+      const utr = document.getElementById('depUtr').value.trim();
+      
+      if (!amount || !utr) return alert('Sob gulo field fill korun!');
+      if (amount < 20) return alert('Minimum deposit amount is ₹20!');
+
       socket.emit('deposit_request', { phone: currentUser.phone, name: currentUser.name, amount, utr });
       document.getElementById('depositModal').classList.add('hidden');
+      document.getElementById('depAmount').value = '';
+      document.getElementById('depUtr').value = '';
       alert('Deposit request submitted successfully!');
       setTimeout(() => socket.emit('fetch_user_transactions', { phone: currentUser.phone }), 500);
     }
