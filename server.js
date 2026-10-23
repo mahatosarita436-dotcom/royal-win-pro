@@ -83,7 +83,7 @@ let allTransactions = [];
 let allSupportTickets = [];
 let allGiftCodes = [];
 let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
-global.requireDepositForGift = false; // By default off (Free)
+global.requireDepositForGift = false;
 
 async function loadDataFromDB() {
   try {
@@ -325,7 +325,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // GIFT CODE REDEEM LOGIC WITH SAME-DAY APPROVED DEPOSIT CHECK
+  // FIXED GIFT CODE REDEEM LOGIC WITH RELIABLE APPROVED DEPOSIT CHECK
   socket.on('claim_gift_code', async ({ phone, code }) => {
     try {
       const formattedCode = code.trim().toUpperCase();
@@ -336,16 +336,15 @@ io.on('connection', (socket) => {
       if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
 
       if (global.requireDepositForGift) {
-        const todayStr = new Date().toLocaleDateString();
+        // Find any approved deposit for this user without strict regex string timing bugs
         const userDeposit = await Transaction.findOne({ 
           phone: phone, 
           type: 'DEPOSIT', 
-          status: 'APPROVED',
-          time: { $regex: todayStr } 
+          status: 'APPROVED'
         });
 
         if (!userDeposit) {
-          return socket.emit('gift_code_response', { success: false, message: 'Ajkei apnake minimum ekta deposit safol (APPROVED) korte hobe! Purono deposit diye ajker ei code redeem kora jabe na.' });
+          return socket.emit('gift_code_response', { success: false, message: 'Apnar kono approved recharge nei! Age recharge safol (APPROVED) korte hobe.' });
         }
       }
 
@@ -490,7 +489,7 @@ io.on('connection', (socket) => {
     const u = cachedUsers.get(phone);
     const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: Number(amount), details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
     await Transaction.create(tx);
-    allTransactions.unshift(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     io.emit('admin_update', await getAdminPayload());
   });
 
@@ -507,13 +506,18 @@ io.on('connection', (socket) => {
 
     const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
     await Transaction.create(tx);
-    allTransactions.unshift(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     socket.emit('user_sync', { user: u });
     io.emit('admin_update', await getAdminPayload());
   });
 
-  socket.on('fetch_user_tickets', async ({ phone }) => {
-    socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
+  socket.on('fetch_user_transactions', async ({ phone }) => {
+    try {
+      const userTxs = await Transaction.find({ phone: phone }).sort({ id: -1 });
+      socket.emit('user_transactions_response', userTxs);
+    } catch (e) {
+      socket.emit('user_transactions_response', []);
+    }
   });
 
   socket.on('submit_support_ticket', async ({ phone, name, message }) => {
@@ -523,6 +527,34 @@ io.on('connection', (socket) => {
     allSupportTickets.unshift(ticket);
     socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
     io.emit('admin_update', await getAdminPayload());
+  });
+
+  // ADMIN PROCESS TRANSACTION WITH AUTOMATIC BALANCE REFUND ON REJECT
+  socket.on('admin_process_tx', async ({ txId, approve }) => {
+    const tx = await Transaction.findOne({ id: txId });
+    if (tx && tx.status === 'PENDING') {
+      tx.status = approve ? 'APPROVED' : 'REJECTED';
+      await Transaction.updateOne({ id: txId }, { status: tx.status });
+
+      if (approve && tx.type === 'DEPOSIT') {
+        const u = cachedUsers.get(tx.phone);
+        if (u) {
+          u.balance = +(u.balance + tx.amount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
+        }
+      } else if (!approve && tx.type === 'WITHDRAW') {
+        const u = cachedUsers.get(tx.phone);
+        if (u) {
+          u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
+        }
+      }
+
+      allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+      io.emit('admin_update', await getAdminPayload());
+    }
   });
 
   socket.on('admin_set_mode', (mode) => {
@@ -577,23 +609,6 @@ io.on('connection', (socket) => {
       u.balance = Number(amount);
       await User.updateOne({ phone }, { balance: u.balance });
       socket.emit('user_sync', { user: u });
-      io.emit('admin_update', await getAdminPayload());
-    }
-  });
-
-  socket.on('admin_process_tx', async ({ txId, approve }) => {
-    const tx = allTransactions.find(t => t.id === txId);
-    if (tx && tx.status === 'PENDING') {
-      tx.status = approve ? 'APPROVED' : 'REJECTED';
-      await Transaction.updateOne({ id: txId }, { status: tx.status });
-      if (approve && tx.type === 'DEPOSIT') {
-        const u = cachedUsers.get(tx.phone);
-        if (u) {
-          u.balance = +(u.balance + tx.amount).toFixed(3);
-          await User.updateOne({ phone: u.phone }, { balance: u.balance });
-          io.emit('user_sync', { user: u });
-        }
-      }
       io.emit('admin_update', await getAdminPayload());
     }
   });
