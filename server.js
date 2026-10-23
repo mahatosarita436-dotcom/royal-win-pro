@@ -17,7 +17,7 @@ app.get('/admin', (req, res) => {
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));[cite: 3]
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const userSchema = new mongoose.Schema({
   userId: String,
