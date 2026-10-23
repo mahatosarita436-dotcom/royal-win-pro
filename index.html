@@ -198,10 +198,10 @@
     <!-- GAME 3: ROCKET -->
     <div id="section-rocket" class="hidden px-4 space-y-4">
       <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rocket History</span>
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rocket History (Last 20)</span>
         <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold underline">📊 My Rocket Bets</button>
       </div>
-      <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono"></div>
+      <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono whitespace-nowrap"></div>
 
       <div class="relative bg-gradient-to-b from-slate-950 via-indigo-950/60 to-slate-950 border border-indigo-500/40 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
         <canvas id="rocketCanvas" width="380" height="260" class="absolute inset-0 w-full h-full"></canvas>
@@ -288,7 +288,6 @@
     <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
       <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
       
-      <!-- Rocket Cashout Details inside Popup -->
       <div id="cashoutDetailsBox" class="hidden text-xs text-slate-700 bg-amber-100 p-2.5 rounded-xl my-2 space-y-1 font-mono font-bold">
         <p>Bet: ₹<span id="popupBetAmt">0</span></p>
         <p>Multiplier: <span id="popupMult">0</span>x</p>
@@ -554,7 +553,7 @@
         btn.innerText = '🚀 BET FOR NEXT FLIGHT';
         myRocketBet = null;
       }
-      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
+      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-emerald-400 font-bold">${h.toFixed(2)}x</span>`).join('');
     }
 
     function showPopupResult(type, title, amount, betAmt = null, mult = null) {
