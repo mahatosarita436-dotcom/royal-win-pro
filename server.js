@@ -382,6 +382,80 @@ io.on('connection', (socket) => {
     }
   });
 
+  // --- ADMIN CONTROL HANDLERS ---
+  socket.on('admin_set_mode', (mode) => {
+    gameState.mode = mode;
+    if (mode === 'MIN_PAYOUT') gameState.forcedNumber = null;
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_num', (num) => {
+    gameState.mode = 'MANUAL';
+    gameState.forcedNumber = Number(num);
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_colour', (col) => {
+    gameState.mode = 'MANUAL';
+    let matching = [];
+    for (let n = 0; n <= 9; n++) {
+      const cols = getColoursForNumber(n);
+      if (cols.includes(col)) matching.push(n);
+    }
+    if (matching.length > 0) {
+      gameState.forcedNumber = matching[Math.floor(Math.random() * matching.length)];
+    }
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_kismat', (opt) => {
+    forcedKismatOption = Number(opt);
+  });
+
+  socket.on('admin_rocket_crash_now', () => {
+    if (rocketState.status === 'FLYING') {
+      rocketState.crashPoint = rocketState.multiplier;
+    }
+  });
+
+  socket.on('admin_rocket_set_next', (val) => {
+    rocketState.forcedNextCrash = Number(val);
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_delete_user', async (phone) => {
+    await User.deleteOne({ phone });
+    cachedUsers.delete(phone);
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('admin_custom_balance', async ({ phone, amount }) => {
+    const u = cachedUsers.get(phone);
+    if (u) {
+      u.balance = Number(amount);
+      await User.updateOne({ phone }, { balance: u.balance });
+      io.emit('user_sync', { user: u });
+      io.emit('admin_update', await getAdminPayload());
+    }
+  });
+
+  socket.on('admin_process_tx', async ({ txId, approve }) => {
+    const tx = allTransactions.find(t => t.id === txId);
+    if (tx && tx.status === 'PENDING') {
+      tx.status = approve ? 'APPROVED' : 'REJECTED';
+      await Transaction.updateOne({ id: txId }, { status: tx.status });
+      if (approve && tx.type === 'DEPOSIT') {
+        const u = cachedUsers.get(tx.phone);
+        if (u) {
+          u.balance = +(u.balance + tx.amount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
+        }
+      }
+      io.emit('admin_update', await getAdminPayload());
+    }
+  });
+
   socket.on('admin_reply_ticket', async ({ ticketId, reply }) => {
     const t = allSupportTickets.find(item => item.id === ticketId);
     if (t) {
@@ -403,14 +477,50 @@ io.on('connection', (socket) => {
 });
 
 async function getAdminPayload() {
+  let stakes = { GREEN: 0, VIOLET: 0, RED: 0 };
+  let projectedPayouts = {};
+  for (let n = 0; n <= 9; n++) projectedPayouts[n] = calculatePayoutForNumber(n);
+  for (const b of currentRoundBets) {
+    if (stakes[b.choice] !== undefined) stakes[b.choice] += b.amount;
+    else if (!isNaN(b.choice)) stakes[b.choice] = (stakes[b.choice] || 0) + b.amount;
+  }
+  let kStakes = {};
+  for (const b of currentKismatBets) {
+    const optNum = b.choice.replace('Option #', '');
+    kStakes[optNum] = (kStakes[optNum] || 0) + b.amount;
+  }
+  let totalRocketPool = rocketServiceTotalPool();
+
   return {
     gameState,
-    kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft },
+    kismatState: { period: kismatState.period, stakes: kStakes },
+    rocketState,
+    summary: { stakes, projectedPayouts },
     supportTickets: allSupportTickets,
     usersList: Array.from(cachedUsers.values()).reverse(),
     transactions: allTransactions,
-    rocketBets
+    currentBets: currentRoundBets,
+    rocketBets,
+    totalRocketPool
   };
+}
+
+function getAdminPayloadSync() {
+  return {
+    gameState,
+    kismatState: { period: kismatState.period },
+    rocketState,
+    supportTickets: allSupportTickets,
+    usersList: Array.from(cachedUsers.values()).reverse(),
+    transactions: allTransactions,
+    currentBets: currentRoundBets,
+    rocketBets,
+    totalRocketPool: rocketServiceTotalPool()
+  };
+}
+
+function rocketServiceTotalPool() {
+  return rocketBets.reduce((acc, b) => acc + b.amount, 0);
 }
 
 const PORT = process.env.PORT || 3000;
