@@ -82,6 +82,7 @@ let rocketState = {
 
 let currentRoundBets = [];
 let rocketBets = [];
+let allUserBetsHistory = []; // Track all user bets for history
 let cachedUsers = new Map();
 let allTransactions = [];
 let allSupportTickets = [];
@@ -156,10 +157,12 @@ setInterval(async () => {
         await User.updateOne({ phone: u.phone }, { balance: u.balance });
         io.emit('user_sync', { user: u });
       }
+      allUserBetsHistory.unshift(b);
     }
 
     gameState.history.unshift({ period: gameState.period, number: winNum, colours: winCols });
     if (gameState.history.length > 20) gameState.history.pop();
+    if (allUserBetsHistory.length > 200) allUserBetsHistory.pop();
     
     io.emit('round_settled', { settledBets: currentRoundBets, winNumber: winNum, winColours: winCols, history: gameState.history });
 
@@ -201,6 +204,7 @@ setInterval(async () => {
         b.status = 'LOST';
         b.winAmount = 0;
       }
+      allUserBetsHistory.unshift(b);
     }
 
     kismatState.history.unshift({ period: kismatState.period, winOption });
@@ -283,7 +287,7 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    const bet = { id: Date.now(), phone, userName: u.name, period: gameState.period, choice, amount: amt, multiplier: Number(multiplier), status: 'PENDING', winAmount: 0 };
+    const bet = { id: Date.now(), phone, game: 'Colour Trading', userName: u.name, period: gameState.period, choice, amount: amt, multiplier: Number(multiplier), status: 'PENDING', winAmount: 0 };
     currentRoundBets.push(bet);
     socket.emit('user_sync', { user: u });
     io.emit('admin_update', await getAdminPayload());
@@ -303,37 +307,17 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    const bet = { id: Date.now(), phone, userName: u.name, period: kismatState.period, choice: Number(option), amount: amt, status: 'PENDING', winAmount: 0 };
+    const bet = { id: Date.now(), phone, game: 'Kismat Game', userName: u.name, period: kismatState.period, choice: `Option #${option}`, amount: amt, status: 'PENDING', winAmount: 0 };
     currentKismatBets.push(bet);
     socket.emit('kismat_bet_confirmed', { balance: u.balance, bet });
     socket.emit('user_sync', { user: u });
     io.emit('admin_update', await getAdminPayload());
   });
 
-  socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
-    const u = cachedUsers.get(phone);
-    const amt = Number(amount);
-    if (!u || amt < 10 || u.balance < amt) return;
-    if (rocketBets.find(b => b.phone === phone)) return;
-
-    u.balance = +(u.balance - amt).toFixed(3);
-    await User.updateOne({ phone }, { balance: u.balance });
-    rocketBets.push({ phone, userName: u.name, amount: amt, cashedOut: false });
-    socket.emit('user_sync', { user: u });
-  });
-
-  socket.on('rocket_cashout', async ({ phone }) => {
-    if (rocketState.status !== 'FLYING') return;
-    const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
-    if (!rBet) return;
-    rBet.cashedOut = true;
-    const winAmt = +(rBet.amount * rocketState.multiplier * 0.99).toFixed(3);
-    const u = cachedUsers.get(phone);
-    if (u) {
-      u.balance = +(u.balance + winAmt).toFixed(3);
-      await User.updateOne({ phone }, { balance: u.balance });
-      socket.emit('user_sync', { user: u });
-    }
+  socket.on('fetch_my_bets', ({ phone }) => {
+    const userBets = allUserBetsHistory.filter(b => b.phone === phone);
+    const liveBets = [...currentRoundBets, ...currentKismatBets].filter(b => b.phone === phone);
+    socket.emit('my_bets_response', [...liveBets, ...userBets]);
   });
 
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
