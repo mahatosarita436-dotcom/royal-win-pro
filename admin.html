@@ -90,7 +90,7 @@
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
       <div>
         <h2 class="text-base font-black text-emerald-400">🎁 Gift / Redeem Code Manager</h2>
-        <p class="text-xs text-slate-400">Create promo codes and track who redeemed them.</p>
+        <p class="text-xs text-slate-400">Create promo codes, set timers and track claims.</p>
       </div>
     </div>
     
@@ -109,12 +109,14 @@
       </div>
     </div>
 
-    <div class="grid sm:grid-cols-4 gap-3 pt-2">
+    <div class="grid sm:grid-cols-5 gap-3 pt-2">
       <input id="newGiftCodeInput" type="text" placeholder="Code (e.g. BONUS50)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono" />
       <input id="newGiftAmountInput" type="number" placeholder="Amount (₹)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       <input id="newGiftMaxUsesInput" type="number" placeholder="Max Uses (People)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <input id="newGiftDurationInput" type="number" placeholder="Expiry Timer (Minutes)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       <button onclick="createGiftCode()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2 rounded-xl text-xs shadow">Create Code</button>
     </div>
+    
     <div class="grid md:grid-cols-2 gap-4 pt-2">
       <div class="overflow-x-auto max-h-56 bg-slate-950 p-3 rounded-xl border border-slate-800">
         <h3 class="text-xs font-bold text-emerald-400 mb-2">Active Gift Codes</h3>
@@ -123,7 +125,7 @@
             <tr class="text-slate-400 border-b border-slate-800">
               <th class="pb-2">Code</th>
               <th class="pb-2">Amount</th>
-              <th class="pb-2">Uses</th>
+              <th class="pb-2">Uses / Expiry</th>
               <th class="pb-2 text-right">Action</th>
             </tr>
           </thead>
@@ -316,11 +318,13 @@
       const code = document.getElementById('newGiftCodeInput').value.trim();
       const amount = Number(document.getElementById('newGiftAmountInput').value);
       const maxUses = Number(document.getElementById('newGiftMaxUsesInput').value);
-      if (!code || !amount || !maxUses) return alert('Please fill all gift code fields!');
-      socket.emit('admin_create_gift_code', { code, amount, maxUses });
+      const durationMinutes = Number(document.getElementById('newGiftDurationInput').value) || 0;
+      if (!code || !amount || !maxUses) return alert('Please fill all required gift code fields!');
+      socket.emit('admin_create_gift_code', { code, amount, maxUses, durationMinutes });
       document.getElementById('newGiftCodeInput').value = '';
       document.getElementById('newGiftAmountInput').value = '';
       document.getElementById('newGiftMaxUsesInput').value = '';
+      document.getElementById('newGiftDurationInput').value = '';
     }
 
     function deleteGiftCode(code) {
@@ -331,7 +335,7 @@
 
     function toggleDepositRule(status) {
       socket.emit('admin_toggle_deposit_condition', status);
-      alert(status ? 'Recharge rule Enabled! Users must have an approved deposit to claim.' : 'Recharge rule Disabled! Codes are free for everyone.');
+      alert(status ? 'Recharge rule Enabled!' : 'Recharge rule Disabled!');
     }
 
     function updateSocialLinks() {
@@ -422,7 +426,7 @@
           <tr>
             <td class="py-2 font-mono font-bold text-amber-400">${g.code}</td>
             <td class="py-2 font-bold text-emerald-400">₹${g.amount}</td>
-            <td class="py-2 font-mono">${g.usedCount} / ${g.maxUses}</td>
+            <td class="py-2 font-mono">${g.usedCount} / ${g.maxUses} ${g.expiresAt ? '<span class="block text-[10px] text-rose-400">Exp: ' + new Date(g.expiresAt).toLocaleTimeString() + '</span>' : ''}</td>
             <td class="py-2 text-right">
               <button onclick="deleteGiftCode('${g.code}')" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Delete</button>
             </td>
