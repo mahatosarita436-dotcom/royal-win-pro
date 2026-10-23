@@ -10,18 +10,15 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname)));
 
-// Explicit Admin Route fix
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Mongoose Schemas & Models
 const userSchema = new mongoose.Schema({
   userId: String,
   name: String,
@@ -45,6 +42,16 @@ const txSchema = new mongoose.Schema({
 });
 const Transaction = mongoose.model('Transaction', txSchema);
 
+const supportSchema = new mongoose.Schema({
+  id: Number,
+  phone: String,
+  userName: String,
+  message: String,
+  status: { type: String, default: 'PENDING' },
+  time: String
+});
+const SupportTicket = mongoose.model('SupportTicket', supportSchema);
+
 let gameState = {
   period: 20261017001,
   timeLeft: 30,
@@ -56,26 +63,36 @@ let gameState = {
   ]
 };
 
+let kismatState = {
+  period: 20261017001,
+  timeLeft: 30,
+  history: []
+};
+let currentKismatBets = [];
+let forcedKismatOption = null;
+
 let rocketState = {
   status: 'WAITING',
   countdown: 5.0,
   multiplier: 1.00,
   crashPoint: 2.50,
   forcedNextCrash: null,
-  history: [1.85, 3.40, 1.12, 8.90, 2.05]
+  history: [1.15, 1.05, 1.20, 1.02, 2.05]
 };
 
 let currentRoundBets = [];
 let rocketBets = [];
 let cachedUsers = new Map();
 let allTransactions = [];
+let allSupportTickets = [];
 
 async function loadDataFromDB() {
   try {
     const usersList = await User.find({});
     usersList.forEach(u => cachedUsers.set(u.phone, u));
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
-    console.log(`✅ Loaded ${cachedUsers.size} users from MongoDB.`);
+    allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
+    console.log(`✅ Loaded ${cachedUsers.size} users, transactions, and support tickets from MongoDB.`);
   } catch (e) {
     console.log('Error loading DB data:', e);
   }
@@ -115,6 +132,16 @@ function getRoundSummary() {
   return summary;
 }
 
+function getKismatSummary() {
+  const stakes = {};
+  for (let i = 1; i <= 10; i++) stakes[i] = 0;
+  for (const b of currentKismatBets) {
+    if (stakes[b.choice] !== undefined) stakes[b.choice] += b.amount;
+  }
+  return { period: kismatState.period, stakes };
+}
+
+// Colour Game Timer & Settlement (1% tax)
 setInterval(async () => {
   gameState.timeLeft -= 1;
   if (gameState.timeLeft <= 0) {
@@ -136,9 +163,18 @@ setInterval(async () => {
     const winCols = getColoursForNumber(winNum);
     for (const b of currentRoundBets) {
       let won = false;
-      if (b.choice === String(winNum)) { won = true; b.winAmount = b.amount * 9; }
-      else if (winCols.includes(b.choice)) { won = true; b.winAmount = b.amount * b.multiplier; }
-      b.status = won ? 'WON' : 'LOST';
+      let rawWin = 0;
+      if (b.choice === String(winNum)) { won = true; rawWin = b.amount * 9; }
+      else if (winCols.includes(b.choice)) { won = true; rawWin = b.amount * b.multiplier; }
+      
+      if (won) {
+        const tax = +(rawWin * 0.01).toFixed(3);
+        b.winAmount = +(rawWin - tax).toFixed(3);
+        b.status = 'WON';
+      } else {
+        b.winAmount = 0;
+        b.status = 'LOST';
+      }
 
       if (won && cachedUsers.has(b.phone)) {
         const u = cachedUsers.get(b.phone);
@@ -164,6 +200,50 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
+// KISMAT Game Timer & Settlement (1% tax)
+setInterval(async () => {
+  kismatState.timeLeft -= 1;
+  if (kismatState.timeLeft <= 0) {
+    let winOption = Math.floor(Math.random() * 10) + 1;
+    if (forcedKismatOption !== null) {
+      winOption = forcedKismatOption;
+      forcedKismatOption = null;
+    }
+    
+    for (const b of currentKismatBets) {
+      if (b.choice === winOption) {
+        b.status = 'WON';
+        const rawWin = b.amount * 9;
+        const tax = +(rawWin * 0.01).toFixed(3);
+        b.winAmount = +(rawWin - tax).toFixed(3);
+        
+        const u = cachedUsers.get(b.phone);
+        if (u) {
+          u.balance = +(u.balance + b.winAmount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u, myTransactions: allTransactions.filter(t => t.phone === u.phone) });
+        }
+      } else {
+        b.status = 'LOST';
+        b.winAmount = 0;
+      }
+    }
+
+    kismatState.history.unshift({ period: kismatState.period, winOption });
+    if (kismatState.history.length > 20) kismatState.history.pop();
+
+    io.emit('kismat_settled', { settledBets: currentKismatBets, winOption });
+
+    kismatState.period += 1;
+    kismatState.timeLeft = 30;
+    currentKismatBets = [];
+  }
+
+  io.emit('kismat_tick', { period: kismatState.period, timeLeft: kismatState.timeLeft, history: kismatState.history });
+  io.emit('admin_update', await getAdminPayload());
+}, 1000);
+
+// Rocket Game 90% Loss Probability
 function generateRocketCrashPoint() {
   if (rocketState.forcedNextCrash !== null) {
     const val = Number(rocketState.forcedNextCrash);
@@ -171,10 +251,10 @@ function generateRocketCrashPoint() {
     return Math.max(1.01, val);
   }
   const r = Math.random();
-  if (r < 0.70) {
+  if (r < 0.90) {
     return +(1.01 + Math.random() * 0.34).toFixed(2);
   }
-  return +(1.60 + Math.random() * 9.00).toFixed(2);
+  return +(1.50 + Math.random() * 5.00).toFixed(2);
 }
 
 setInterval(async () => {
@@ -186,14 +266,17 @@ setInterval(async () => {
       rocketState.crashPoint = generateRocketCrashPoint();
     }
   } else if (rocketState.status === 'FLYING') {
-    const speed = rocketState.multiplier < 2 ? 0.025 : rocketState.multiplier < 5 ? 0.06 : 0.14;
+    const speed = rocketState.multiplier < 2 ? 0.025 : 0.06;
     rocketState.multiplier = +(rocketState.multiplier + speed).toFixed(2);
 
     for (const b of rocketBets) {
       if (!b.cashedOut && b.targetX && rocketState.multiplier >= b.targetX) {
         b.cashedOut = true;
         b.cashoutMult = b.targetX;
-        b.winAmount = +(b.amount * b.targetX).toFixed(3);
+        const rawWin = b.amount * b.targetX;
+        const tax = +(rawWin * 0.01).toFixed(3);
+        b.winAmount = +(rawWin - tax).toFixed(3);
+        
         const u = cachedUsers.get(b.phone);
         if (u) {
           u.balance = +(u.balance + b.winAmount).toFixed(3);
@@ -238,7 +321,6 @@ io.on('connection', (socket) => {
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
         const newUser = { userId, name, phone, password, balance: 10 };
-        
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
@@ -252,7 +334,7 @@ io.on('connection', (socket) => {
   socket.on('user_login', ({ phone, password }) => {
     const user = cachedUsers.get(phone);
     if (!user) {
-      socket.emit('auth_error', 'Account not found or deleted! Please register first.');
+      socket.emit('auth_error', 'Account not found or deleted!');
     } else if (user.password !== password) {
       socket.emit('auth_error', 'Invalid password!');
     } else {
@@ -273,6 +355,25 @@ io.on('connection', (socket) => {
     const bet = { id: Date.now(), phone, userName: u.name, period: gameState.period, choice, amount: amt, multiplier: Number(multiplier), status: 'PENDING', winAmount: 0 };
     currentRoundBets.push(bet);
     socket.emit('bet_confirmed', { balance: u.balance, bet });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
+    if (kismatState.timeLeft <= 5) return;
+    const u = cachedUsers.get(phone);
+    const amt = Number(amount);
+    if (!u || amt < 10 || u.balance < amt) return;
+
+    if (currentKismatBets.find(b => b.phone === phone)) {
+      return socket.emit('auth_error', 'You can bet on only ONE option per round!');
+    }
+
+    u.balance = +(u.balance - amt).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const bet = { id: Date.now(), phone, userName: u.name, period: kismatState.period, choice: Number(option), amount: amt, status: 'PENDING', winAmount: 0 };
+    currentKismatBets.push(bet);
+    socket.emit('kismat_bet_confirmed', { balance: u.balance, bet });
     io.emit('admin_update', await getAdminPayload());
   });
 
@@ -298,7 +399,9 @@ io.on('connection', (socket) => {
 
     rBet.cashedOut = true;
     rBet.cashoutMult = rocketState.multiplier;
-    rBet.winAmount = +(rBet.amount * rocketState.multiplier).toFixed(3);
+    const rawWin = rBet.amount * rocketState.multiplier;
+    const tax = +(rawWin * 0.01).toFixed(3);
+    rBet.winAmount = +(rawWin - tax).toFixed(3);
 
     const u = cachedUsers.get(phone);
     if (u) {
@@ -311,57 +414,36 @@ io.on('connection', (socket) => {
 
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
     const u = cachedUsers.get(phone);
-    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: Number(amount), details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
-    
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: Number(amount), details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() }; await Transaction.create(tx); allTransactions.unshift(tx); io.emit('admin_update', await getAdminPayload()); });  socket.on('withdraw_request', async ({ phone, name, amount, account }) => { const u = cachedUsers.get(phone); const requestedAmt = Number(amount); if (!u \vert{}\vert{} requestedAmt < 100) return socket.emit('auth_error', 'Minimum withdrawal is ₹100!');  const todayStr = new Date().toDateString(); const userTodayWithdraws = allTransactions.filter(t => t.phone === phone && t.type === 'WITHDRAW' && new Date(t.id).toDateString() === todayStr); if (userTodayWithdraws.length >= 3) return socket.emit('auth_error', 'Daily withdrawal limit reached!');  const taxAmount = +(requestedAmt * 0.03).toFixed(2); const finalDeductAmount = +(requestedAmt + taxAmount).toFixed(2); if (u.balance < finalDeductAmount) return socket.emit('auth_error', 'Insufficient balance including 3\% tax!');  u.balance = +(u.balance - finalDeductAmount).toFixed(3); await User.updateOne({ phone }, { balance: u.balance });  const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeductAmount, details: `To: ${account} (Incl. 3% Tax)`, status: 'PENDING', time: new Date().toLocaleTimeString() 
+    };
     await Transaction.create(tx);
     allTransactions.unshift(tx);
+    socket.emit('user_sync', { user: u, myTransactions: allTransactions.filter(t => t.phone === phone) });
     io.emit('admin_update', await getAdminPayload());
   });
 
-  socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
-    const u = cachedUsers.get(phone);
-    const requestedAmt = Number(amount);
-    if (!u || requestedAmt < 100) {
-      socket.emit('auth_error', 'Minimum withdrawal amount is ₹100!');
-      return;
+  socket.on('submit_support_ticket', async ({ phone, name, message }) => {
+    if (!phone || !message) {
+      return socket.emit('auth_error', 'Phone number and message are required!');
     }
-
-    const todayStr = new Date().toDateString();
-    const userTodayWithdraws = allTransactions.filter(t => t.phone === phone && t.type === 'WITHDRAW' && new Date(t.id).toDateString() === todayStr);
-    
-    if (userTodayWithdraws.length >= 3) {
-      socket.emit('auth_error', 'Daily withdrawal limit reached! You can only withdraw 3 times per day.');
-      return;
-    }
-
-    const taxAmount = +(requestedAmt * 0.03).toFixed(2);
-    const finalDeductAmount = +(requestedAmt + taxAmount).toFixed(2);
-
-    if (u.balance < finalDeductAmount) {
-      socket.emit('auth_error', `Insufficient balance! Total required (₹${finalDeductAmount} including 3% tax ₹${taxAmount}) exceeds balance.`);
-      return;
-    }
-
-    u.balance = +(u.balance - finalDeductAmount).toFixed(3);
-    await User.updateOne({ phone }, { balance: u.balance });
-
-    const tx = { 
-      id: Date.now(), 
-      phone, 
-      userName: u.name, 
-      type: 'WITHDRAW', 
-      amount: requestedAmt, 
-      tax: taxAmount,
-      totalDeducted: finalDeductAmount,
-      details: `To: ${account} (Incl. 3% Tax: ₹${taxAmount})`, 
-      status: 'PENDING', 
-      time: new Date().toLocaleTimeString() 
+    const ticket = {
+      id: Date.now(),
+      phone,
+      userName: name || phone,
+      message,
+      status: 'PENDING',
+      time: new Date().toLocaleTimeString()
     };
-    
-    await Transaction.create(tx);
-    allTransactions.unshift(tx);
-    
-    socket.emit('user_sync', { user: u, myTransactions: allTransactions.filter(t => t.phone === phone) });
+    await SupportTicket.create(ticket);
+    allSupportTickets.unshift(ticket);
+    socket.emit('support_submitted_success', 'Your issue has been sent to admin successfully!');
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('admin_resolve_ticket', async (ticketId) => {
+    await SupportTicket.updateOne({ id: ticketId }, { status: 'RESOLVED' });
+    const t = allSupportTickets.find(item => item.id === ticketId);
+    if (t) t.status = 'RESOLVED';
     io.emit('admin_update', await getAdminPayload());
   });
 
@@ -376,22 +458,10 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  socket.on('admin_rocket_crash_now', async () => {
-    if (rocketState.status === 'FLYING') rocketState.crashPoint = rocketState.multiplier;
-    io.emit('admin_update', await getAdminPayload());
-  });
-
-  socket.on('admin_rocket_set_next', async (val) => {
-    rocketState.forcedNextCrash = Number(val);
-    io.emit('admin_update', await getAdminPayload());
-  });
-
-  socket.on('admin_delete_user', async (phone) => {
-    await User.deleteOne({ phone });
-    cachedUsers.delete(phone);
-    io.emit('admin_update', await getAdminPayload());
-  });
-
+  socket.on('admin_force_kismat', (opt) => { forcedKismatOption = Number(opt); });
+  socket.on('admin_rocket_crash_now', async () => { if (rocketState.status === 'FLYING') rocketState.crashPoint = rocketState.multiplier; io.emit('admin_update', await getAdminPayload()); });
+  socket.on('admin_rocket_set_next', async (val) => { rocketState.forcedNextCrash = Number(val); io.emit('admin_update', await getAdminPayload()); });
+  socket.on('admin_delete_user', async (phone) => { await User.deleteOne({ phone }); cachedUsers.delete(phone); io.emit('admin_update', await getAdminPayload()); });
   socket.on('admin_custom_balance', async ({ phone, amount }) => {
     const u = cachedUsers.get(phone);
     if (!u) return;
@@ -419,12 +489,8 @@ io.on('connection', (socket) => {
         await User.updateOne({ phone: tx.phone }, { balance: u.balance });
       }
     }
-    
     await Transaction.updateOne({ id: txId }, { status: tx.status });
-
-    if (u) {
-      io.emit('user_sync', { user: u, myTransactions: allTransactions.filter(t => t.phone === u.phone) });
-    }
+    if (u) io.emit('user_sync', { user: u, myTransactions: allTransactions.filter(t => t.phone === u.phone) });
     io.emit('admin_update', await getAdminPayload());
   });
 });
@@ -433,8 +499,10 @@ async function getAdminPayload() {
   const totalRocketPool = rocketBets.reduce((acc, b) => acc + b.amount, 0);
   return {
     gameState,
+    kismatState: getKismatSummary(),
     rocketState,
     transactions: allTransactions,
+    supportTickets: allSupportTickets,
     usersList: Array.from(cachedUsers.values()).reverse(),
     currentBets: currentRoundBets.slice().reverse(),
     rocketBets,
