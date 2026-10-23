@@ -3,646 +3,468 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Royal Win Pro - Colour, Kismat & Rocket</title>
+  <title>Master Admin Panel - 3 Games Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { background-color: #070a14; color: #f8fafc; font-family: system-ui, sans-serif; }
+    body { background-color: #070a12; color: #f1f5f9; font-family: system-ui, sans-serif; overflow-x: hidden; }
     .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
     .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
-    .win-ribbon { background: linear-gradient(90deg, #ff5722, #ff8a50, #ff5722); box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5); }
-    @keyframes popIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      80% { transform: scale(1.06); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .animate-pop { animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
-<body class="min-h-screen flex justify-center items-start bg-slate-950">
+<body class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 relative">
 
-  <!-- AUTH SCREEN -->
-  <div id="authScreen" class="w-full max-w-md bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-5 shadow-2xl mt-12 mx-4">
-    <div class="text-center">
-      <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-        3-in-1 Gaming Arena (₹10 Joining Bonus)
+  <div id="adminAuthModal" class="fixed inset-0 bg-[#05070c] z-[9999] flex items-center justify-center p-4 overflow-hidden">
+    <div class="bg-slate-900/90 backdrop-blur-md border-2 border-indigo-500/40 p-6 rounded-3xl w-full max-w-sm text-center relative z-10 shadow-2xl space-y-4">
+      <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
+        Security Gate
       </span>
-      <h2 class="text-3xl font-black mt-2 bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
-        ROYAL WIN PRO
-      </h2>
-    </div>
-
-    <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold cursor-pointer">
-      <button type="button" onclick="switchAuthTab('login')" id="tabLoginBtn" class="py-2.5 rounded-lg bg-indigo-600 text-white transition">Login</button>
-      <button type="button" onclick="switchAuthTab('register')" id="tabRegBtn" class="py-2.5 rounded-lg text-slate-400 transition">Register</button>
-    </div>
-
-    <p id="authError" class="text-xs text-rose-400 text-center hidden font-bold"></p>
-
-    <div id="loginForm" class="space-y-3">
-      <input id="loginPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="loginPass" type="password" placeholder="Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <button type="button" onclick="submitLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
-        LOGIN TO PLAY
+      <h2 class="text-2xl font-black text-white mt-1">Admin Authentication</h2>
+      <p class="text-xs text-slate-400">Enter master password to access control panel.</p>
+      
+      <input id="adminPassInput" type="password" placeholder="Enter Password..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white text-center outline-none focus:border-indigo-500 font-mono tracking-widest" />
+      
+      <button onclick="verifyAdminPass()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
+        ACCESS PANEL
       </button>
-    </div>
-
-    <div id="registerForm" class="space-y-3 hidden">
-      <input id="regName" type="text" placeholder="Full Name" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="regPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="regPass" type="password" placeholder="Create Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <button type="button" onclick="submitRegister()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
-        CREATE ACCOUNT (₹10 BONUS)
-      </button>
+      <p id="passError" class="text-xs text-rose-500 font-bold hidden">Incorrect Password! Redirecting...</p>
     </div>
   </div>
 
-  <!-- MAIN GAME CONTAINER -->
-  <div id="gameScreen" class="hidden w-full max-w-md bg-slate-900 min-h-screen shadow-2xl border-x border-slate-800 flex flex-col pb-12">
-    <header class="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center sticky top-0 z-20">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-        <h1 class="text-base font-black tracking-wider bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
-          ROYAL WIN PRO
-        </h1>
-      </div>
-      <span id="userInfo" class="text-[11px] font-mono text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700"></span>
-    </header>
+  <script>
+    function verifyAdminPass() {
+      const val = document.getElementById('adminPassInput').value;
+      if (val === "Deba000") {
+        document.getElementById('adminAuthModal').style.display = 'none';
+      } else {
+        const err = document.getElementById('passError');
+        err.classList.remove('hidden');
+        setTimeout(() => { window.location.href = "/index.html"; }, 1500);
+      }
+    }
+  </script>
 
-    <div class="p-4">
-      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-4 rounded-2xl border border-indigo-500/40 shadow-xl space-y-3">
-        <div class="flex justify-between items-center">
-          <div>
-            <p class="text-[11px] uppercase tracking-wider text-indigo-300 font-semibold">Total Balance</p>
-            <h2 class="text-3xl font-black text-white">₹<span id="userBalance">0.00</span></h2>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">+ Deposit</button>
-            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">↑ Withdraw</button>
-          </div>
+  <header class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+    <div>
+      <span class="text-xs font-bold uppercase tracking-widest text-rose-400">Master Admin Control</span>
+      <h1 class="text-2xl font-black text-white">Royal Win Backoffice (Colour • Kismat • Rocket)</h1>
+    </div>
+    <div class="flex flex-wrap items-center gap-6">
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Registered Users</span>
+        <span id="totalUsers" class="font-mono text-xl font-black text-emerald-400">0</span>
+      </div>
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Colour Period</span>
+        <span id="adminPeriod" class="font-mono text-xl font-bold text-indigo-400">--</span>
+      </div>
+      <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-[11px] text-slate-400 block">Count Down</span>
+        <span id="adminTimer" class="font-mono text-2xl font-black text-amber-400">00:30</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KISMAT GAME CONTROL PANEL -->
+  <div class="bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-5 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-base font-black text-amber-400">✨ KISMAT Game Live Control & Bets</h2>
+        <p class="text-xs text-slate-400">Kismat Period: <strong class="text-indigo-300 font-mono" id="adminKismatPeriod">--</strong></p>
+      </div>
+      <div class="flex gap-2">
+        <input id="forcedKismatOptionInput" type="number" min="1" max="10" placeholder="Win Option (1-10)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white" />
+        <button onclick="setForcedKismat()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-4 py-1.5 rounded-xl text-xs">Force Win</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
+  </div>
+
+  <div class="grid md:grid-cols-1 gap-6">
+    <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller (90% Loss)</h2>
+          <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
+        </div>
+        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
+          💥 CRASH ROCKET NOW!
+        </button>
+        <div class="flex gap-2">
+          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
+          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
         </div>
       </div>
-      <div class="mt-3">
-        <button onclick="openSupportModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 text-xs shadow">
-          💬 Support & Chat History
+      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto 90% Loss / Random</p>
+    </div>
+  </div>
+
+  <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-5 shadow-xl">
+    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h2 class="text-lg font-black text-white">🎨 Colour Trading Result Control Engine</h2>
+        <p class="text-xs text-slate-400">Click any colour or exact number below to force it as the winner for the next round.</p>
+      </div>
+      <div id="winnerBanner" class="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-sm font-black">
+        Current Mode: Auto Profit
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="setMode('MIN_PAYOUT')" id="mode-MIN_PAYOUT" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">📉 Auto Profit (Active)</button>
+      <button onclick="setMode('MANUAL')" id="mode-MANUAL" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">🎯 Manual Override</button>
+    </div>
+
+    <div class="space-y-3">
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="forceColour('GREEN')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE GREEN <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-GREEN">0</span>)</span>
+        </button>
+        <button onclick="forceColour('VIOLET')" class="bg-gradient-to-b from-purple-500 to-purple-700 hover:from-purple-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE VIOLET <span class="block text-[10px] opacity-85 font-normal">Win 4.5x (₹<span id="stake-VIOLET">0</span>)</span>
+        </button>
+        <button onclick="forceColour('RED')" class="bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 text-white font-black py-3.5 rounded-2xl shadow-lg transition">
+          FORCE RED <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-RED">0</span>)</span>
         </button>
       </div>
-    </div>
 
-    <!-- GAME SWITCH TABS -->
-    <div class="px-4 mb-4">
-      <div class="grid grid-cols-3 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
-        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow">🎨 Colour</button>
-        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🎲 KISMAT</button>
-        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🚀 Rocket</button>
+      <div class="grid grid-cols-5 gap-2.5">
+        <button onclick="forceNum(0)" class="num-0 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">0</button>
+        <button onclick="forceNum(1)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">1</button>
+        <button onclick="forceNum(2)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
+        <button onclick="forceNum(3)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
+        <button onclick="forceNum(4)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
+        <button onclick="forceNum(5)" class="num-5 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
+        <button onclick="forceNum(6)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
+        <button onclick="forceNum(7)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
+        <button onclick="forceNum(8)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
+        <button onclick="forceNum(9)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
       </div>
     </div>
 
-    <!-- GAME 1: COLOUR -->
-    <div id="section-colour" class="px-4 space-y-4">
-      <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex justify-between items-center">
+    <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+  </div>
+
+  <!-- SUPPORT TICKETS & WITHDRAWAL PROBLEMS PANEL -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <h2 class="text-base font-bold text-amber-400 border-b border-slate-800 pb-3">🚨 User Support Tickets & Complaints (With Reply)</h2>
+    <div id="supportTicketsList" class="space-y-3 text-xs max-h-80 overflow-y-auto">
+      <p class="text-slate-500">No support requests.</p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <div>
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Period ID</span>
-          <p id="periodId" class="text-lg font-mono font-black text-white">--</p>
+          <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
+          <p class="text-[11px] text-slate-400">Select or search user accounts, set custom balance or delete users</p>
         </div>
-        <div class="text-right">
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Count Down</span>
-          <div id="timerDisplay" class="text-2xl font-mono font-black text-emerald-400">00:30</div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="quickUserSelect" onchange="onQuickUserSelect(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-indigo-300 font-bold outline-none">
+            <option value="">-- Choose User Name --</option>
+          </select>
+          <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
         </div>
       </div>
 
-      <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Colour History (Last 20)</span>
-        <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold underline">📊 My Colour Bets</button>
-      </div>
-      <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
-
-      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div id="colourLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-xl">
-          Betting Locked for this round!
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN GREEN <span class="block text-[10px] opacity-80 font-normal">Win 2x</span>
-          </button>
-          <button onclick="openUniqueBetDrawer('VIOLET', 4.5, 'from-purple-600 to-indigo-600')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN VIOLET <span class="block text-[10px] opacity-80 font-normal">Win 4.5x</span>
-          </button>
-          <button onclick="openUniqueBetDrawer('RED', 2, 'from-rose-600 to-red-600')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN RED <span class="block text-[10px] opacity-80 font-normal">Win 2x</span>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-5 gap-2.5 pt-1">
-          <button onclick="openUniqueBetDrawer('0', 9, 'from-rose-600 to-purple-600')" class="num-0 py-2.5 rounded-xl font-black text-base shadow active:scale-95">0</button>
-          <button onclick="openUniqueBetDrawer('1', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
-          <button onclick="openUniqueBetDrawer('2', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">2</button>
-          <button onclick="openUniqueBetDrawer('3', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">3</button>
-          <button onclick="openUniqueBetDrawer('4', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">4</button>
-          <button onclick="openUniqueBetDrawer('5', 9, 'from-emerald-600 to-purple-600')" class="num-5 py-2.5 rounded-xl font-black text-base shadow active:scale-95">5</button>
-          <button onclick="openUniqueBetDrawer('6', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">6</button>
-          <button onclick="openUniqueBetDrawer('7', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">7</button>
-          <button onclick="openUniqueBetDrawer('8', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">8</button>
-          <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">9</button>
-        </div>
+      <div class="overflow-x-auto max-h-80">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800">
+              <th class="pb-2">User ID</th>
+              <th class="pb-2">Name / Mobile</th>
+              <th class="pb-2">Balance</th>
+              <th class="pb-2 text-right">Custom Balance & Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- GAME 2: KISMAT -->
-    <div id="section-kismat" class="hidden px-4 space-y-4">
-      <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
-        <div>
-          <span class="text-[11px] text-amber-400 uppercase font-bold">✨ KISMAT GAME (2:30 Min, Max ₹10)</span>
-          <p id="kismatPeriod" class="text-lg font-mono font-black text-white">--</p>
-        </div>
-        <div class="text-right">
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Timer</span>
-          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">02:30</div>
-        </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Active Bets</h2>
+      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto">
+        <p class="text-slate-500">No rocket bets right now.</p>
       </div>
 
-      <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kismat History (Last 20)</span>
-        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold underline">📊 My Kismat Bets</button>
-      </div>
-      <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
-
-      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-xl text-center px-4">
-          Betting Locked (Last 10s)!
-        </div>
-        <p class="text-xs text-slate-300 font-bold">Select 1 option out of 10. Fixed Bet: ₹10, Get ₹90 (9x Return).</p>
-        
-        <div class="grid grid-cols-5 gap-2.5">
-          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
-          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
-          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
-          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
-          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
-          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
-          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
-          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
-          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
-          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">10</button>
-        </div>
-
-        <div class="space-y-2 pt-2">
-          <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white text-center" />
-          <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
-            PLACE KISMAT BET (₹10) ON OPTION #<span id="selectedKismatOptLabel">1</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- GAME 3: ROCKET -->
-    <div id="section-rocket" class="hidden px-4 space-y-4">
-      <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rocket History</span>
-        <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold underline">📊 My Rocket Bets</button>
-      </div>
-      <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono"></div>
-
-      <div class="relative bg-gradient-to-b from-slate-950 via-indigo-950/60 to-slate-950 border border-indigo-500/40 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
-        <canvas id="rocketCanvas" width="380" height="260" class="absolute inset-0 w-full h-full"></canvas>
-        <div class="relative z-10 text-center pointer-events-none">
-          <p id="rocketStatusText" class="text-xs font-bold uppercase tracking-widest text-indigo-300">Next Flight In</p>
-          <h2 id="rocketMultiplierDisplay" class="text-6xl font-black font-mono text-white drop-shadow-lg mt-1">1.00x</h2>
-        </div>
-      </div>
-
-      <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 space-y-3">
-        <div class="flex justify-between items-center">
-          <span class="text-xs text-slate-300 font-bold">Bet Amount (Min ₹10)</span>
-          <div class="flex gap-1.5">
-            <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-black">2x</button>
-            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹10</button>
-            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹50</button>
-            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹100</button>
-          </div>
-        </div>
-        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
-
-        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
-          🚀 PLACE BET (Min ₹10)
-        </button>
-      </div>
+      <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pt-3 pb-3">🎲 Colour Live Round Bets</h2>
+      <div id="liveBetsList" class="space-y-2 text-xs max-h-80 overflow-y-auto"></div>
     </div>
   </div>
 
-  <!-- SUPPORT MODAL -->
-  <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
-      <h3 class="font-bold text-amber-400 text-base">💬 Complaint & Support History</h3>
-      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-        <input id="supportPhone" type="hidden" />
-        <textarea id="supportMessage" rows="2" placeholder="Write new complain or message..." class="w-full bg-slate-900 p-2 rounded-lg border border-slate-700 text-xs text-white outline-none"></textarea>
-        <button onclick="sendSupportTicket()" class="w-full bg-amber-500 text-slate-950 font-black py-2 rounded-lg text-xs">Submit New Complain</button>
-      </div>
-      <div id="userTicketsHistoryList" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
-        <p class="text-slate-500 text-center py-4">Loading history...</p>
-      </div>
-      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+      <h2 class="text-base font-bold text-white">💳 Deposit & Withdrawal Requests</h2>
+      <input id="txSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search TX by Phone, Name or UTR..." class="w-full sm:w-72 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white" />
     </div>
-  </div>
 
-  <!-- MY BET HISTORY MODAL -->
-  <div id="myBetsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
-      <h3 id="myBetsModalTitle" class="font-bold text-indigo-400 text-base">📊 My Bet History</h3>
-      <div id="myBetsHistoryList" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1">
-        <p class="text-slate-500 text-center py-4">No bets found.</p>
-      </div>
-      <button onclick="document.getElementById('myBetsModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
-    </div>
-  </div>
-
-  <!-- UNIQUE BET DRAWER -->
-  <div id="uniqueBetDrawer" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-end justify-center">
-    <div class="bg-slate-900 w-full max-w-md rounded-t-3xl border-t-2 border-emerald-400 overflow-hidden shadow-2xl animate-pop">
-      <div id="drawerHeader" class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex justify-between items-center">
-        <div>
-          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Bet Slip (1% Tax)</span>
-          <h3 class="text-xl font-black text-white">BET ON: <span id="drawerTargetName">GREEN</span></h3>
-        </div>
-        <button onclick="closeUniqueBetDrawer()" class="bg-black/30 text-white w-8 h-8 rounded-full font-bold">✕</button>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
+        <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
       </div>
 
-      <div class="p-5 space-y-5">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <p class="text-xs font-bold text-slate-400 uppercase">Select or Enter Bet (Min ₹10)</p>
-            <button onclick="doubleColourBet()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black">2x Double</button>
-          </div>
-          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
-        </div>
-        <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black py-3.5 rounded-2xl text-base shadow-xl">
-          ⚡ CONFIRM ORDER ₹<span id="drawerConfirmBtnAmt">10</span>
-        </button>
+      <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
+        <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- RESULT POPUP -->
-  <div id="photoWinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
-      <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
-      <h2 class="text-3xl font-black text-slate-900 mt-3">+₹<span id="winPopupAmount">0.00</span></h2>
-      <p id="winPopupGameName" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">WINNER (1% Tax Applied)</p>
-      <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-2.5 rounded-xl shadow-md mt-4">CONTINUE</button>
-    </div>
-  </div>
-
-  <!-- DEPOSIT & WITHDRAW -->
-  <div id="depositModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
-      <h3 class="font-bold text-emerald-400">Scan QR to Deposit</h3>
-      <img src="qr.png" alt="QR" class="w-48 h-48 object-contain mx-auto bg-white p-2 rounded-xl" />
-      <input id="depAmount" type="number" placeholder="Amount (₹)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="depUtr" type="text" placeholder="UTR Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm font-mono text-white" />
-      <button onclick="sendDeposit()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl">Submit</button>
-      <button onclick="document.getElementById('depositModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
-    </div>
-  </div>
-
-  <div id="withdrawModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700">
-      <h3 class="font-bold text-amber-400">↑ Withdraw Balance (3% Tax)</h3>
-      <input id="withAmount" type="number" min="100" placeholder="Amount (Min ₹100)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withAccount" type="text" placeholder="UPI ID / Bank A/C" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <button onclick="sendWithdraw()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl">Request Payout</button>
-      <button onclick="document.getElementById('withdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
     </div>
   </div>
 
   <script>
     const socket = io();
-    let currentUser = null;
-    let selectedKismatOpt = 1;
-    let drawerChoice = 'GREEN';
-    let drawerMult = 2;
-    let rocketStateClient = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, history: [] };
-    let myRocketBet = null;
-    let allUserTickets = [];
-    let myBetsHistory = [];
-    let activeGameFilter = 'Colour Trading';
+    let cachedUsers = [];
+    let cachedTransactions = [];
 
-    function updateBalanceDisplay(newBal) {
-      if (!currentUser) return;
-      currentUser.balance = Math.max(0, +Number(newBal).toFixed(2));
-      document.getElementById('userBalance').innerText = currentUser.balance.toFixed(2);
+    socket.emit('admin_init');
+
+    function setMode(m) { socket.emit('admin_set_mode', m); }
+    function forceNum(n) { socket.emit('admin_force_num', n); }
+    function forceColour(col) { socket.emit('admin_force_colour', col); }
+    function crashRocketNow() { socket.emit('admin_rocket_crash_now'); }
+    function setNextRocket(val) { socket.emit('admin_rocket_set_next', val); }
+    function setCustomRocketX() {
+      const val = document.getElementById('customRocketXInput').value;
+      if (!val) return alert('Please enter a multiplier value!');
+      setNextRocket(val);
+    }
+    
+    function setForcedKismat() {
+      const opt = document.getElementById('forcedKismatOptionInput').value;
+      if (!opt) return alert('Enter option number 1 to 10');
+      socket.emit('admin_force_kismat', Number(opt));
+      alert(`Forced Kismat Winner Set to Option #${opt}`);
     }
 
-    function switchAuthTab(tab) {
-      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-      document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
-      document.getElementById('tabLoginBtn').className = tab === 'login' ? 'py-2.5 rounded-lg bg-indigo-600 text-white' : 'py-2.5 rounded-lg text-slate-400';
-      document.getElementById('tabRegBtn').className = tab === 'register' ? 'py-2.5 rounded-lg bg-indigo-600 text-white' : 'py-2.5 rounded-lg text-slate-400';
-    }
-
-    function submitRegister() {
-      const name = document.getElementById('regName').value.trim();
-      const phone = document.getElementById('regPhone').value.trim();
-      const password = document.getElementById('regPass').value.trim();
-      if (!name || !phone || !password) return alert('Please fill all fields');
-      socket.emit('user_register', { name, phone, password });
-    }
-
-    function submitLogin() {
-      const phone = document.getElementById('loginPhone').value.trim();
-      const password = document.getElementById('loginPass').value.trim();
-      if (!phone || !password) return alert('Please fill all fields');
-      socket.emit('user_login', { phone, password });
-    }
-
-    socket.on('auth_success', ({ user }) => {
-      currentUser = user;
-      document.getElementById('authScreen').classList.add('hidden');
-      document.getElementById('gameScreen').classList.remove('hidden');
-      document.getElementById('userInfo').innerText = `${user.name} (${user.phone})`;
-      document.getElementById('supportPhone').value = user.phone;
-      updateBalanceDisplay(user.balance);
-      socket.emit('fetch_my_bets', { phone: user.phone });
-    });
-
-    socket.on('auth_error', (msg) => { alert(msg); });
-
-    function switchGame(game) {
-      ['colour', 'kismat', 'rocket'].forEach(g => {
-        document.getElementById('section-' + g).classList.toggle('hidden', g !== game);
-        document.getElementById('tab-' + g).className = g === game
-          ? 'py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow font-black'
-          : 'py-2.5 rounded-xl text-slate-400 hover:text-white font-bold';
-      });
-    }
-
-    function selectKismatOption(opt) {
-      selectedKismatOpt = opt;
-      document.getElementById('selectedKismatOptLabel').innerText = opt;
-      for (let i = 1; i <= 10; i++) {
-        const btn = document.getElementById('kopt-' + i);
-        if (i === opt) {
-          btn.className = 'kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95';
-        } else {
-          btn.className = 'kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95';
-        }
+    function deleteUser(phone) {
+      if (confirm('Are you sure you want to delete this user account?')) {
+        socket.emit('admin_delete_user', phone);
       }
     }
 
-    function confirmKismatBet() {
-      const amt = 10;
-      if (!currentUser || currentUser.balance < amt) return alert('Insufficient balance!');
-      socket.emit('kismat_place_bet', { phone: currentUser.phone, option: selectedKismatOpt, amount: amt });
-    }
-
-    socket.on('kismat_bet_confirmed', ({ balance, bet }) => {
-      updateBalanceDisplay(balance);
-      alert(`Successfully placed ₹${bet.amount} on Kismat Option #${bet.choice}!`);
-      socket.emit('fetch_my_bets', { phone: currentUser.phone });
-    });
-
-    function openSupportModal() {
-      document.getElementById('supportModal').classList.remove('hidden');
-      socket.emit('fetch_user_tickets', { phone: currentUser.phone });
-    }
-
-    function openMyBetsModal(gameName) {
-      activeGameFilter = gameName;
-      document.getElementById('myBetsModalTitle').innerText = `📊 My ${gameName} Bet History`;
-      document.getElementById('myBetsModal').classList.remove('hidden');
-      socket.emit('fetch_my_bets', { phone: currentUser.phone });
-    }
-
-    socket.on('my_bets_response', (bets) => {
-      myBetsHistory = bets || [];
-      const listEl = document.getElementById('myBetsHistoryList');
-      const filteredBets = myBetsHistory.filter(b => b.game === activeGameFilter);
-      
-      if (filteredBets.length === 0) {
-        listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No ${activeGameFilter} bets placed yet.</p>`;
-        return;
+    function setCustomBalance(phone) {
+      const inputVal = prompt('Enter new custom balance amount (₹):');
+      if (inputVal !== null && inputVal.trim() !== '') {
+        socket.emit('admin_custom_balance', { phone, amount: Number(inputVal) });
       }
-      listEl.innerHTML = filteredBets.map(b => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-          <div>
-            <strong class="text-white">${b.period ? 'Period: ' + b.period : 'Rocket Flight'}</strong>
-            <p class="text-slate-300">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> | Amt: ₹${b.amount}</p>
-          </div>
-          <div class="text-right">
-            <span class="font-bold uppercase ${b.status === 'WON' ? 'text-emerald-400' : b.status === 'LOST' ? 'text-rose-400' : 'text-amber-400'}">${b.status || 'PENDING'}</span>
-            ${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px]">+₹${b.winAmount}</span>` : ''}
-          </div>
-        </div>
-      `).join('');
-    });
-
-    function sendSupportTicket() {
-      const message = document.getElementById('supportMessage').value.trim();
-      if (!message) return alert('Please enter your message.');
-      socket.emit('submit_support_ticket', { phone: currentUser.phone, name: currentUser.name, message });
-      document.getElementById('supportMessage').value = '';
     }
 
-    function replyToTicket(ticketId) {
-      const replyText = prompt('Enter your reply to Admin:');
+    function onQuickUserSelect(phone) {
+      if (!phone) return;
+      document.getElementById('userSearchInput').value = phone;
+      renderUsersTable();
+    }
+
+    function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
+    function resolveTicket(ticketId) { socket.emit('admin_resolve_ticket', ticketId); }
+
+    function adminReplyTicket(ticketId) {
+      const replyText = prompt('Enter reply for user:');
       if (replyText && replyText.trim() !== '') {
-        socket.emit('user_reply_ticket', { ticketId, reply: replyText.trim(), phone: currentUser.phone });
+        socket.emit('admin_reply_ticket', { ticketId, reply: replyText.trim() });
       }
     }
 
-    socket.on('support_tickets_response', (tickets) => {
-      allUserTickets = tickets || [];
-      const listEl = document.getElementById('userTicketsHistoryList');
-      if (allUserTickets.length === 0) {
-        listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No complaint history found.</p>`;
-        return;
+    socket.on('rocket_tick', ({ status, multiplier }) => {
+      const el = document.getElementById('adminRocketMult');
+      el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
+    });
+
+    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool }) => {
+      cachedUsers = usersList || [];
+      cachedTransactions = transactions || [];
+
+      document.getElementById('totalUsers').innerText = cachedUsers.length;
+      document.getElementById('adminPeriod').innerText = gameState.period;
+      document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
+      document.getElementById('adminTotalRocketPool').innerText = `₹${totalRocketPool || 0}`;
+
+      if (kismatState) {
+        document.getElementById('adminKismatPeriod').innerText = kismatState.period;
+        let kismatGridHtml = '';
+        for (let i = 1; i <= 10; i++) {
+          const stake = kismatState.stakes ? (kismatState.stakes[i] || 0) : 0;
+          kismatGridHtml += `
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
+              <span class="text-sm font-black text-amber-400">Option #${i}</span>
+              <p class="text-xs text-slate-300 mt-1">Bet: ₹${stake}</p>
+            </div>
+          `;
+        }
+        document.getElementById('adminKismatOptionsGrid').innerHTML = kismatGridHtml;
       }
-      listEl.innerHTML = allUserTickets.map(t => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-          <div class="flex justify-between items-center text-[10px] text-slate-400">
-            <span>Ticket ID: #${t.id}</span>
-            <span class="font-bold uppercase ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
+
+      const quickSelect = document.getElementById('quickUserSelect');
+      const currentSelected = quickSelect.value;
+      quickSelect.innerHTML = `<option value="">-- Choose User Name --</option>` + 
+        cachedUsers.map(u => `<option value="${u.phone}">${u.name} (${u.phone})</option>`).join('');
+      quickSelect.value = currentSelected;
+
+      if (rocketState) {
+        document.getElementById('nextRocketBanner').innerText = rocketState.forcedNextCrash
+          ? `✅ Next Flight Locked Crash @ ${rocketState.forcedNextCrash}x`
+          : 'Next Flight Mode: Auto 90% Loss / Random';
+      }
+
+      const rocketBetsEl = document.getElementById('adminRocketBetsList');
+      if (rocketBetsEl) {
+        rocketBetsEl.innerHTML = (!rocketBets || rocketBets.length === 0)
+          ? `<p class="text-slate-500">No rocket bets right now.</p>`
+          : rocketBets.map(b => `
+            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div>
+                <strong class="text-white">${b.userName}</strong> 
+                <span class="text-slate-400 text-[10px] block">Phone: ${b.phone}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-black text-emerald-400 block">₹${b.amount}</span>
+                <span class="text-[10px] text-amber-300">${b.cashedOut ? 'Cashed Out @ ' + b.cashedoutMult + 'x' : 'Playing...'}</span>
+              </div>
+            </div>
+          `).join('');
+      }
+
+      const ticketEl = document.getElementById('supportTicketsList');
+      if (ticketEl) {
+        ticketEl.innerHTML = (!supportTickets || supportTickets.length === 0) 
+          ? `<p class="text-slate-500">No support requests.</p>` 
+          : supportTickets.map(t => `
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+              <div class="flex justify-between items-center">
+                <strong class="text-white">${t.userName}</strong> - <span class="text-emerald-400 font-mono font-bold">Phone: ${t.phone}</span>
+                <span class="font-bold ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
+              </div>
+              <p class="text-slate-300">📝 Complain: ${t.message}</p>
+              ${t.adminReply ? `<p class="text-indigo-300 font-semibold">👑 Your Reply: ${t.adminReply}</p>` : ''}
+              <div class="flex gap-2 pt-1">
+                <button onclick="adminReplyTicket(${t.id})" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-white font-bold">Reply</button>
+                ${t.status === 'PENDING' ? `
+                  <button onclick="resolveTicket(${t.id})" class="bg-amber-600 hover:bg-amber-500 px-3 py-1 rounded font-bold text-slate-950">Mark Resolved</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+      }
+
+      ['MIN_PAYOUT', 'MANUAL'].forEach(m => {
+        document.getElementById('mode-' + m).className = gameState.mode === m
+          ? 'py-2.5 px-3 rounded-xl text-xs font-black border-2 border-indigo-400 bg-indigo-600 text-white'
+          : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300';
+      });
+
+      const banner = document.getElementById('winnerBanner');
+      banner.innerText = gameState.mode === 'MANUAL' && gameState.forcedNumber !== null
+        ? `✅ LOCKED WINNER: Number #${gameState.forcedNumber}`
+        : `Current Mode: Auto Profit`;
+
+      if (summary) {
+        document.getElementById('stake-GREEN').innerText = summary.stakes.GREEN;
+        document.getElementById('stake-VIOLET').innerText = summary.stakes.VIOLET;
+        document.getElementById('stake-RED').innerText = summary.stakes.RED;
+
+        let gridHtml = '';
+        for (let n = 0; n <= 9; n++) {
+          const isSelected = gameState.mode === 'MANUAL' && gameState.forcedNumber === n;
+          gridHtml += `
+            <div class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-black text-white">#${n}</span>
+                ${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">LOCKED</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Bet: ₹${summary.stakes[n]}</p>
+              <p class="text-xs font-bold text-amber-300">Payout: ₹${summary.projectedPayouts[n]}</p>
+            </div>
+          `;
+        }
+        document.getElementById('numberGrid').innerHTML = gridHtml;
+      }
+
+      renderUsersTable();
+
+      const betsEl = document.getElementById('liveBetsList');
+      betsEl.innerHTML = (!currentBets || currentBets.length === 0)
+        ? `<p class="text-slate-500">No bets in this round.</p>`
+        : currentBets.map(b => `
+          <div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <span><strong>${b.userName || b.phone}</strong> → <strong class="text-amber-400">${b.choice}</strong></span>
+            <span class="font-black text-emerald-400">₹${b.amount}</span>
           </div>
-          <p class="text-white font-medium">👤 You: ${t.message}</p>
-          ${t.adminReply ? `<div class="bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30 text-indigo-200 mt-1">👑 Admin Reply: ${t.adminReply}</div>` : ''}
-          <button onclick="replyToTicket(${t.id})" class="w-full mt-1 bg-slate-800 hover:bg-slate-700 text-amber-400 py-1.5 rounded-lg text-[11px] font-bold">💬 Reply / Continue Chat</button>
+        `).join('');
+
+      renderTransactions();
+    });
+
+    function renderUsersTable() {
+      const q = (document.getElementById('userSearchInput').value || '').trim().toLowerCase();
+      const filtered = cachedUsers.filter(u =>
+        (u.userId && u.userId.toLowerCase().includes(q)) ||
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.phone && u.phone.toLowerCase().includes(q))
+      );
+      const uBody = document.getElementById('usersTableBody');
+      uBody.innerHTML = filtered.length === 0
+        ? `<tr><td colspan="4" class="py-4 text-center text-slate-500">No matching users found.</td></tr>`
+        : filtered.map(u => `
+          <tr>
+            <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
+            <td class="py-2.5">
+              <strong class="text-white block">${u.name}</strong>
+              <span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span>
+            </td>
+            <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
+            <td class="py-2.5 text-right space-x-1">
+              <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Set Balance</button>
+              <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function renderTransactions() {
+      const q = (document.getElementById('txSearchInput').value || '').trim().toLowerCase();
+      const filtered = cachedTransactions.filter(t =>
+        (t.phone && t.phone.toLowerCase().includes(q)) ||
+        (t.userName && t.userName.toLowerCase().includes(q)) ||
+        (t.details && t.details.toLowerCase().includes(q))
+      );
+      const deps = filtered.filter(t => t.type === 'DEPOSIT');
+      const withs = filtered.filter(t => t.type === 'WITHDRAW');
+
+      document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits.</p>` : deps.map(t => `
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+          <div>
+            <span class="font-black text-emerald-400">+₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
+            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
+          </div>
+          <div>
+            ${t.status === 'PENDING' ? `
+              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
+              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
+            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
+          </div>
         </div>
       `).join('');
-    });
 
-    function openUniqueBetDrawer(choice, mult, gradClass) {
-      drawerChoice = choice;
-      drawerMult = mult;
-      document.getElementById('drawerTargetName').innerText = choice;
-      document.getElementById('drawerHeader').className = `bg-gradient-to-r ${gradClass} p-4 flex justify-between items-center`;
-      document.getElementById('customColourBetInput').value = 10;
-      updateDrawerCalculation();
-      document.getElementById('uniqueBetDrawer').classList.remove('hidden');
-    }
-    function closeUniqueBetDrawer() { document.getElementById('uniqueBetDrawer').classList.add('hidden'); }
-
-    function doubleColourBet() {
-      const input = document.getElementById('customColourBetInput');
-      input.value = Number(input.value) * 2;
-      updateDrawerCalculation();
-    }
-
-    function updateDrawerCalculation() {
-      const val = Number(document.getElementById('customColourBetInput').value) || 10;
-      document.getElementById('drawerConfirmBtnAmt').innerText = val;
-    }
-
-    function confirmUniqueColourBet() {
-      const total = Number(document.getElementById('customColourBetInput').value) || 10;
-      if (total < 10) return alert('Minimum bet is ₹10!');
-      if (!currentUser || currentUser.balance < total) return alert('Insufficient balance!');
-      socket.emit('place_bet', { phone: currentUser.phone, name: currentUser.name, choice: drawerChoice, amount: total, multiplier: drawerMult });
-      closeUniqueBetDrawer();
-    }
-
-    function doubleRocketBet() {
-      const input = document.getElementById('rocketBetInput');
-      input.value = Number(input.value) * 2;
-    }
-
-    socket.on('rocket_tick', (data) => {
-      rocketStateClient = data;
-      renderRocketUI();
-    });
-
-    function handleRocketAction() {
-      if (!currentUser) return;
-      const amt = Number(document.getElementById('rocketBetInput').value);
-      if (amt < 10) return alert('Minimum bet is ₹10!');
-
-      if (rocketStateClient.status === 'FLYING' && myRocketBet && !myRocketBet.cashedOut) {
-        myRocketBet.cashedOut = true;
-        socket.emit('rocket_cashout', { phone: currentUser.phone, name: currentUser.name });
-        return;
-      }
-
-      if (rocketStateClient.status === 'WAITING' && !myRocketBet) {
-        if (currentUser.balance < amt) return alert('Insufficient balance!');
-        updateBalanceDisplay(currentUser.balance - amt);
-        myRocketBet = { amount: amt, cashedOut: false };
-        socket.emit('rocket_place_bet', { phone: currentUser.phone, name: currentUser.name, amount: amt });
-      }
-    }
-
-    function renderRocketUI() {
-      const statusEl = document.getElementById('rocketStatusText');
-      const multEl = document.getElementById('rocketMultiplierDisplay');
-      const btn = document.getElementById('rocketActionBtn');
-      const { status, countdown, multiplier, history } = rocketStateClient;
-
-      if (status === 'WAITING') {
-        statusEl.innerText = 'NEXT ROCKET LAUNCH IN';
-        multEl.innerText = `${Math.max(0, countdown).toFixed(1)}s`;
-        btn.innerText = myRocketBet ? `✅ BET LOCKED` : '🚀 PLACE BET NOW (Min ₹10)';
-      } else if (status === 'FLYING') {
-        statusEl.innerText = 'ROCKET FLYING (90% Loss Mode Active)';
-        multEl.innerText = `${multiplier.toFixed(2)}x`;
-        btn.innerText = (myRocketBet && !myRocketBet.cashedOut) ? `💰 CASH OUT NOW` : '🚀 FLYING...';
-      } else {
-        statusEl.innerText = '💥 CRASHED AT';
-        multEl.innerText = `${multiplier.toFixed(2)}x`;
-        btn.innerText = '🚀 BET FOR NEXT FLIGHT';
-        myRocketBet = null;
-      }
-      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">${h}x</span>`).join('');
-    }
-
-    function showPopupResult(type, title, amount) {
-      document.getElementById('winPopupRibbon').innerText = type === 'WIN' ? 'WIN' : 'LOST';
-      document.getElementById('winPopupAmount').innerText = Number(amount).toFixed(2);
-      document.getElementById('winPopupGameName').innerText = title;
-      document.getElementById('photoWinModal').classList.remove('hidden');
-    }
-
-    socket.on('round_settled', ({ settledBets, history }) => {
-      if (history) {
-        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
-        `).join('');
-      }
-      if (!currentUser) return;
-      socket.emit('fetch_my_bets', { phone: currentUser.phone });
-      const myBet = settledBets.find(b => b.phone === currentUser.phone);
-      if (myBet) {
-        if (myBet.status === 'WON') showPopupResult('WIN', 'COLOUR TRADING WINNER', myBet.winAmount);
-        else showPopupResult('LOSS', 'COLOUR TRADING LOSS', myBet.amount);
-      }
-    });
-
-    socket.on('kismat_settled', ({ settledBets, history }) => {
-      if (history) {
-        document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
-        `).join('');
-      }
-      if (!currentUser) return;
-      socket.emit('fetch_my_bets', { phone: currentUser.phone });
-    });
-
-    socket.on('win_popup', ({ phone, game, winAmount }) => {
-      if (!currentUser || currentUser.phone !== phone) return;
-      showPopupResult('WIN', `${game} WINNER`, winAmount);
-    });
-
-    socket.on('tick', ({ period, timeLeft, history }) => {
-      document.getElementById('periodId').innerText = period;
-      document.getElementById('timerDisplay').innerText = `00:${String(timeLeft).padStart(2, '0')}`;
-      
-      const isLocked = timeLeft <= 5;
-      document.getElementById('colourLockOverlay').classList.toggle('hidden', !isLocked);
-      if (isLocked) closeUniqueBetDrawer();
-
-      if (history) {
-        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
-        `).join('');
-      }
-    });
-
-    socket.on('kismat_tick', ({ period, timeLeft, history }) => {
-      document.getElementById('kismatPeriod').innerText = period;
-      
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      document.getElementById('kismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      
-      const isLocked = timeLeft <= 10;
-      document.getElementById('kismatLockOverlay').classList.toggle('hidden', !isLocked);
-
-      if (history) {
-        document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
-        `).join('');
-      }
-    });
-
-    socket.on('user_sync', ({ user }) => {
-      if (currentUser && user.phone === currentUser.phone) {
-        currentUser = user;
-        updateBalanceDisplay(user.balance);
-      }
-    });
-
-    function sendDeposit() {
-      const amount = document.getElementById('depAmount').value;
-      const utr = document.getElementById('depUtr').value;
-      if (!amount || !utr) return alert('Fill all fields');
-      socket.emit('deposit_request', { phone: currentUser.phone, name: currentUser.name, amount, utr });
-      document.getElementById('depositModal').classList.add('hidden');
-    }
-
-    function sendWithdraw() {
-      const amount = Number(document.getElementById('withAmount').value);
-      const account = document.getElementById('withAccount').value;
-      if (!amount || !account) return alert('Fill all fields');
-      if (amount < 100) return alert('Minimum withdrawal is ₹100!');
-      socket.emit('withdraw_request', { phone: currentUser.phone, name: currentUser.name, amount, account });
-      document.getElementById('withdrawModal').classList.add('hidden');
+      document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals.</p>` : withs.map(t => `
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+          <div>
+            <span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName} (${t.phone})</span>
+            <span class="block text-[10px] text-slate-400">${t.details} • ${t.time}</span>
+          </div>
+          <div>
+            ${t.status === 'PENDING' ? `
+              <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2.5 py-1 rounded font-bold text-white">Approve</button>
+              <button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2.5 py-1 rounded font-bold text-white">Reject</button>
+            ` : `<span class="font-bold text-indigo-300">${t.status}</span>`}
+          </div>
+        </div>
+      `).join('');
     }
   </script>
 </body>
