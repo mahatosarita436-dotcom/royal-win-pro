@@ -93,7 +93,7 @@
     <div class="px-4 mb-4">
       <div class="grid grid-cols-3 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
         <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow">🎨 Colour</button>
-        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🎲 KISMAT</button>
+        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🎴 KISMAT</button>
         <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🚀 Rocket</button>
       </div>
     </div>
@@ -148,11 +148,11 @@
       </div>
     </div>
 
-    <!-- GAME 2: KISMAT -->
+    <!-- GAME 2: KISMAT (Lucky Cards Concept) -->
     <div id="section-kismat" class="hidden px-4 space-y-4">
       <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
         <div>
-          <span class="text-[11px] text-amber-400 uppercase font-bold">✨ KISMAT GAME (2:30 Min, Max ₹10)</span>
+          <span class="text-[11px] text-amber-400 uppercase font-bold">🎴 LUCKY CARDS KISMAT (2:30 Min)</span>
           <p id="kismatPeriod" class="text-lg font-mono font-black text-white">--</p>
         </div>
         <div class="text-right">
@@ -162,8 +162,8 @@
       </div>
 
       <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kismat History (Last 20)</span>
-        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold underline">📊 My Kismat Bets</button>
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cards History (Last 20)</span>
+        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold underline">📊 My Card Bets</button>
       </div>
       <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
 
@@ -171,25 +171,26 @@
         <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-xl text-center px-4">
           Betting Locked (Last 10s)!
         </div>
-        <p class="text-xs text-slate-300 font-bold">Select 1 option out of 10. Fixed Bet: ₹10, Get ₹90 (9x Return).</p>
+        <p class="text-xs text-slate-300 font-bold text-center">Choose 1 Lucky Card out of 10. Fixed Bet: ₹10, Win ₹90 (9x Return).</p>
         
+        <!-- 10 Hidden Cards Grid -->
         <div class="grid grid-cols-5 gap-2.5">
-          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
-          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">2</button>
-          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">3</button>
-          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">4</button>
-          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">5</button>
-          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">6</button>
-          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">7</button>
-          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">8</button>
-          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">9</button>
-          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95">10</button>
+          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-4 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition">🎴 Card 1</button>
+          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 2</button>
+          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 3</button>
+          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 4</button>
+          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 5</button>
+          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 6</button>
+          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 7</button>
+          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-slate-950 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 8</button>
+          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 9</button>
+          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 10</button>
         </div>
 
         <div class="space-y-2 pt-2">
           <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white text-center" />
           <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
-            PLACE KISMAT BET (₹10) ON OPTION #<span id="selectedKismatOptLabel">1</span>
+            CONFIRM BET (₹10) ON <span id="selectedKismatOptLabel">Card 1</span>
           </button>
         </div>
       </div>
@@ -378,13 +379,13 @@
 
     function selectKismatOption(opt) {
       selectedKismatOpt = opt;
-      document.getElementById('selectedKismatOptLabel').innerText = opt;
+      document.getElementById('selectedKismatOptLabel').innerText = `Card ${opt}`;
       for (let i = 1; i <= 10; i++) {
         const btn = document.getElementById('kopt-' + i);
         if (i === opt) {
-          btn.className = 'kismat-btn bg-amber-500 text-slate-950 border-2 border-white py-3.5 rounded-xl font-black text-base shadow active:scale-95';
+          btn.className = 'kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-4 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition';
         } else {
-          btn.className = 'kismat-btn bg-slate-950 border border-slate-700 py-3.5 rounded-xl font-black text-white text-base shadow active:scale-95';
+          btn.className = 'kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition';
         }
       }
     }
@@ -569,7 +570,7 @@
     socket.on('kismat_settled', ({ settledBets, history }) => {
       if (history) {
         document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
+          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Card ${h.winOption}</span>
         `).join('');
       }
       if (!currentUser) return;
@@ -603,7 +604,7 @@
 
       if (history) {
         document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Opt #${h.winOption}</span>
+          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Card ${h.winOption}</span>
         `).join('');
       }
     });
