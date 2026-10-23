@@ -83,6 +83,7 @@ let allTransactions = [];
 let allSupportTickets = [];
 let allGiftCodes = [];
 let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
+global.requireDepositForGift = false; // By default off (Free)
 
 async function loadDataFromDB() {
   try {
@@ -324,6 +325,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // GIFT CODE REDEEM LOGIC WITH SAME-DAY APPROVED DEPOSIT CHECK
   socket.on('claim_gift_code', async ({ phone, code }) => {
     try {
       const formattedCode = code.trim().toUpperCase();
@@ -332,6 +334,21 @@ io.on('connection', (socket) => {
 
       if (!u) return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
       if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Invalid gift code!' });
+
+      if (global.requireDepositForGift) {
+        const todayStr = new Date().toLocaleDateString();
+        const userDeposit = await Transaction.findOne({ 
+          phone: phone, 
+          type: 'DEPOSIT', 
+          status: 'APPROVED',
+          time: { $regex: todayStr } 
+        });
+
+        if (!userDeposit) {
+          return socket.emit('gift_code_response', { success: false, message: 'Ajkei apnake minimum ekta deposit safol (APPROVED) korte hobe! Purono deposit diye ajker ei code redeem kora jabe na.' });
+        }
+      }
+
       if (gift.usedBy && gift.usedBy.includes(phone)) {
         return socket.emit('gift_code_response', { success: false, message: 'You have already claimed this gift code.' });
       }
@@ -384,6 +401,11 @@ io.on('connection', (socket) => {
   socket.on('admin_update_socials', async (links) => {
     currentSocialLinks = links || {};
     io.emit('social_links_sync', currentSocialLinks);
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('admin_toggle_deposit_condition', async (status) => {
+    global.requireDepositForGift = status;
     io.emit('admin_update', await getAdminPayload());
   });
 
@@ -623,7 +645,8 @@ async function getAdminPayload() {
     rocketBets,
     totalRocketPool,
     giftCodes: allGiftCodes,
-    socialLinks: currentSocialLinks
+    socialLinks: currentSocialLinks,
+    depositConditionActive: global.requireDepositForGift || false
   };
 }
 
@@ -639,7 +662,8 @@ function getAdminPayloadSync() {
     rocketBets,
     totalRocketPool: rocketServiceTotalPool(),
     giftCodes: allGiftCodes,
-    socialLinks: currentSocialLinks
+    socialLinks: currentSocialLinks,
+    depositConditionActive: global.requireDepositForGift || false
   };
 }
 
