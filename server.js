@@ -389,13 +389,26 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Check-in status & claim listeners
+  // Check-in status & claim handlers with midnight reset & streak logic
   socket.on('fetch_checkin_status', async ({ phone }) => {
     try {
       const u = cachedUsers.get(phone);
       if (!u) return;
 
       const todayStr = new Date().toISOString().split('T')[0];
+      
+      if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
+        const lastDate = new Date(u.lastCheckInDate);
+        const currentDate = new Date(todayStr);
+        const diffTime = currentDate - lastDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1) {
+          u.checkInDay = 1;
+          await User.updateOne({ phone }, { checkInDay: 1 });
+        }
+      }
+
       let checkedToday = u.lastCheckInDate === todayStr;
 
       socket.emit('checkin_status_response', {
@@ -412,19 +425,17 @@ io.on('connection', (socket) => {
       const u = cachedUsers.get(phone);
       if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
 
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
 
       if (u.lastCheckInDate === todayStr) {
-        return socket.emit('checkin_response', { success: false, message: 'Apni ajker check-in already claim korechen! Rat 12 tar por abar korte parben.' });
+        return socket.emit('checkin_response', { success: false, message: 'Already checked in today!' });
       }
 
       if (u.lastCheckInDate) {
         const lastDate = new Date(u.lastCheckInDate);
-        const diffTime = Math.abs(today - lastDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        if (diffDays > 2) {
+        const currentDate = new Date(todayStr);
+        const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+        if (diffDays > 1) {
           u.checkInDay = 1;
         }
       }
@@ -459,7 +470,7 @@ io.on('connection', (socket) => {
       socket.emit('user_sync', { user: u });
       socket.emit('checkin_response', { 
         success: true, 
-        message: `Abhinandan! Apni Day ${currentDay}- er check-in reward hisebe ₹${rewardAmount} pelen!`,
+        message: `Success! You got ₹${rewardAmount} for Day ${currentDay}!`,
         reward: rewardAmount
       });
 
