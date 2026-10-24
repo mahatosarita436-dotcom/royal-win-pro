@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   name: String,
   phone: { type: String, unique: true },
   password: String,
+  secretCode: { type: String, default: '1234' },
   balance: { type: Number, default: 10 }
 });
 const User = mongoose.model('User', userSchema);
@@ -334,14 +335,14 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  socket.on('user_register', async ({ name, phone, password }) => {
+  socket.on('user_register', async ({ name, phone, password, secretCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
       if (existingUser || cachedUsers.has(phone)) {
         socket.emit('auth_error', 'Phone number already registered![cite: 3]');
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
-        const newUser = { userId, name, phone, password, balance: 10 };
+        const newUser = { userId, name, phone, password, secretCode: secretCode || '1234', balance: 10 };
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
@@ -363,11 +364,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('forgot_password', async ({ phone, newPassword }) => {
+  socket.on('forgot_password', async ({ phone, secretCode, newPassword }) => {
     try {
       const user = cachedUsers.get(phone);
       if (!user) {
         return socket.emit('forgot_password_response', { success: false, message: 'Phone number not found!' });
+      }
+      if (user.secretCode && user.secretCode !== secretCode) {
+        return socket.emit('forgot_password_response', { success: false, message: 'Incorrect Secret Code! Password change denied.' });
       }
       user.password = newPassword;
       await User.updateOne({ phone }, { password: newPassword });
