@@ -1,691 +1,1132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Master Admin Panel - 3 Games Control</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body { background-color: #070a12; color: #f1f5f9; font-family: system-ui, sans-serif; overflow-x: hidden; }
-    .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
-    .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
-  </style>
-</head>
-<body class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 relative">
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const mongoose = require('mongoose');
 
-  <div id="adminAuthModal" class="fixed inset-0 bg-[#05070c] z-[9999] flex items-center justify-center p-4 overflow-hidden">
-    <div class="bg-slate-900/90 backdrop-blur-md border-2 border-indigo-500/40 p-6 rounded-3xl w-full max-w-sm text-center relative z-10 shadow-2xl space-y-4">
-      <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
-        Security Gate
-      </span>
-      <h2 class="text-2xl font-black text-white mt-1">Admin Authentication</h2>
-      <p class="text-xs text-slate-400">Enter master password to access control panel.</p>
-      
-      <input id="adminPassInput" type="password" placeholder="Enter Password..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white text-center outline-none focus:border-indigo-500 font-mono tracking-widest" />
-      
-      <button onclick="verifyAdminPass()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
-        ACCESS PANEL
-      </button>
-      <p id="passError" class="text-xs text-rose-500 font-bold hidden">Incorrect Password! Redirecting...</p>
-    </div>
-  </div>
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
-  <script>
-    function verifyAdminPass() {
-      const val = document.getElementById('adminPassInput').value;
-      if (val === "Deba000") {
-        document.getElementById('adminAuthModal').style.display = 'none';
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.use(express.static(path.join(__dirname)));
+
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully![cite: 3]'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+
+const userSchema = new mongoose.Schema({
+  userId: String,
+  name: String,
+  phone: { type: String, unique: true },
+  password: String,
+  secretCode: { type: String, default: '1234' },
+  balance: { type: Number, default: 10 },
+  checkInDay: { type: Number, default: 1 },
+  lastCheckInDate: { type: String, default: '' },
+  referralCode: { type: String, unique: true },
+  invitedBy: { type: String, default: '' },
+  totalReferrals: { type: Number, default: 0 },
+  inviteBalance: { type: Number, default: 0 },
+  firstDepositTime: { type: Date, default: null }
+});
+const User = mongoose.model('User', userSchema);
+
+const txSchema = new mongoose.Schema({
+  id: Number,
+  phone: String,
+  userName: String,
+  type: String,
+  amount: Number,
+  tax: Number,
+  totalDeducted: Number,
+  details: String,
+  status: String,
+  time: String
+});
+const Transaction = mongoose.model('Transaction', txSchema);
+
+const supportSchema = new mongoose.Schema({
+  id: Number,
+  phone: String,
+  userName: String,
+  message: String,
+  adminReply: { type: String, default: '' },
+  status: { type: String, default: 'PENDING' },
+  time: String
+});
+const SupportTicket = mongoose.model('SupportTicket', supportSchema);
+
+const betSchema = new mongoose.Schema({
+  id: Number,
+  phone: String,
+  game: String,
+  userName: String,
+  period: String,
+  choice: String,
+  amount: Number,
+  multiplier: Number,
+  status: { type: String, default: 'PENDING' },
+  winAmount: { type: Number, default: 0 },
+  time: String
+});
+const Bet = mongoose.model('Bet', betSchema);
+
+const giftCodeSchema = new mongoose.Schema({
+  code: { type: String, unique: true, uppercase: true },
+  amount: Number,
+  maxUses: Number,
+  usedCount: { type: Number, default: 0 },
+  expiresAt: { type: Date, default: null },
+  usedBy: [String],
+  claims: [{
+    userId: String,
+    userName: String,
+    phone: String,
+    amount: Number,
+    time: String
+  }]
+});
+const GiftCode = mongoose.model('GiftCode', giftCodeSchema);
+
+const socialSchema = new mongoose.Schema({
+  key: { type: String, default: 'main_links', unique: true },
+  telegram: String,
+  youtube: String,
+  instagram: String
+});
+const SocialLink = mongoose.model('SocialLink', socialSchema);
+
+let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
+let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
+let currentKismatBets = [];
+let forcedKismatOption = null;
+
+let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, history: [] };
+let currentRoundBets = [];
+let rocketBets = [];
+let cachedUsers = new Map();
+let allTransactions = [];
+let allSupportTickets = [];
+let allGiftCodes = [];
+let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
+global.requireDepositForGift = false;
+
+async function loadDataFromDB() {
+  try {
+    const usersList = await User.find({});
+    usersList.forEach(u => cachedUsers.set(u.phone, u));
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+    allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
+    allGiftCodes = await GiftCode.find({});
+    
+    const savedLinks = await SocialLink.findOne({ key: 'main_links' });
+    if (savedLinks) {
+      currentSocialLinks = {
+        telegram: savedLinks.telegram || '',
+        youtube: savedLinks.youtube || '',
+        instagram: savedLinks.instagram || ''
+      };
+    }
+    
+    console.log(`✅ Loaded ${cachedUsers.size} users and social links from DB.[cite: 3]`);
+  } catch (e) {
+    console.log('Error loading DB:', e);
+  }
+}
+loadDataFromDB();
+
+function getColoursForNumber(num) {
+  if (num === 0) return ['RED', 'VIOLET'];
+  if (num === 5) return ['GREEN', 'VIOLET'];
+  return [1, 3, 7, 9].includes(num) ? ['GREEN'] : ['RED'];
+}
+
+function calculatePayoutForNumber(num) {
+  const cols = getColoursForNumber(num);
+  let totalPayout = 0;
+  for (const b of currentRoundBets) {
+    if (b.choice === String(num)) totalPayout += b.amount * 9;
+    else if (cols.includes(b.choice)) totalPayout += b.amount * b.multiplier;
+  }
+  return totalPayout;
+}
+
+// Colour Game Timer
+setInterval(async () => {
+  gameState.timeLeft -= 1;
+  if (gameState.timeLeft <= 0) {
+    let winNum = Math.floor(Math.random() * 10);
+    if (gameState.mode === 'MANUAL' && gameState.forcedNumber !== null) {
+      winNum = Number(gameState.forcedNumber);
+    } else {
+      let bestNums = [];
+      let minPay = Infinity;
+      for (let n = 0; n <= 9; n++) {
+        const pay = calculatePayoutForNumber(n);
+        if (pay < minPay) { minPay = pay; bestNums = [n]; }
+        else if (pay === minPay) { bestNums.push(n); }
+      }
+      winNum = bestNums[Math.floor(Math.random() * bestNums.length)];
+    }
+
+    const winCols = getColoursForNumber(winNum);
+    for (const b of currentRoundBets) {
+      let won = false;
+      let rawWin = 0;
+      if (b.choice === String(winNum)) { won = true; rawWin = b.amount * 9; }
+      else if (winCols.includes(b.choice)) { won = true; rawWin = b.amount * b.multiplier; }
+      
+      if (won) {
+        const tax = +(rawWin * 0.01).toFixed(3);
+        b.winAmount = +(rawWin - tax).toFixed(3);
+        b.status = 'WON';
       } else {
-        const err = document.getElementById('passError');
-        err.classList.remove('hidden');
-        setTimeout(() => { window.location.href = "/index.html"; }, 1500);
-      }
-    }
-  </script>
-
-  <header class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap justify-between items-center gap-4 shadow-xl">
-    <div>
-      <span class="text-xs font-bold uppercase tracking-widest text-rose-400">Master Admin Control</span>
-      <h1 class="text-2xl font-black text-white">Royal Win Backoffice (Colour • Kismat • Rocket)</h1>
-    </div>
-    <div class="flex flex-wrap items-center gap-4">
-      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-        <span class="text-[10px] text-slate-400 block">Users</span>
-        <span id="totalUsers" class="font-mono text-lg font-black text-emerald-400">0</span>
-      </div>
-      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-        <span class="text-[10px] text-slate-400 block">Colour Period</span>
-        <span id="adminPeriod" class="font-mono text-base font-bold text-indigo-400">--</span>
-      </div>
-      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-        <span class="text-[10px] text-slate-400 block">Colour Timer</span>
-        <span id="adminTimer" class="font-mono text-lg font-black text-amber-400">00:30</span>
-      </div>
-      <div class="bg-slate-950 px-3 py-2 rounded-xl border border-amber-500/30">
-        <span class="text-[10px] text-amber-400 block">✨ Kismat Timer</span>
-        <span id="adminKismatTimer" class="font-mono text-lg font-black text-amber-400">02:30</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- SOCIAL LINKS MANAGER PANEL -->
-  <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-black text-indigo-400">📢 Social Media Links Manager (Footer Menu)</h2>
-        <p class="text-xs text-slate-400">Update Telegram, YouTube, and Instagram links shown to users.</p>
-      </div>
-    </div>
-    <div class="grid sm:grid-cols-3 gap-3">
-      <input id="adminTelegramInput" type="text" placeholder="Telegram URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-      <input id="adminYoutubeInput" type="text" placeholder="YouTube URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-      <input id="adminInstagramInput" type="text" placeholder="Instagram URL" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-    </div>
-    <button onclick="updateSocialLinks()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow">Update Social Links</button>
-  </div>
-
-  <!-- GIFT CODE MANAGER PANEL -->
-  <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-black text-emerald-400">🎁 Gift / Redeem Code Manager</h2>
-        <p class="text-xs text-slate-400">Create promo codes, set timers and track claims.</p>
-      </div>
-    </div>
-    
-    <!-- GIFT CODE RECHARGE RULE MANAGER -->
-    <div class="bg-slate-950 border border-purple-500/30 rounded-xl p-4 space-y-3">
-      <div class="flex justify-between items-center">
-        <div>
-          <h3 class="text-xs font-black text-purple-400">⚙️ Recharge Rule for Gift Codes</h3>
-          <p class="text-[11px] text-slate-400">When enabled, users must have an approved deposit to claim codes.</p>
-        </div>
-        <span id="conditionStatusBadge" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full text-xs font-bold">STATUS: OFF (Free Claim)</span>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="toggleDepositRule(true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">Enable Rule (Require Approved Deposit)</button>
-        <button onclick="toggleDepositRule(false)" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">Disable Rule (Free for Everyone)</button>
-      </div>
-    </div>
-
-    <div class="grid sm:grid-cols-5 gap-3 pt-2">
-      <input id="newGiftCodeInput" type="text" placeholder="Code (e.g. BONUS50)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono" />
-      <input id="newGiftAmountInput" type="number" placeholder="Amount (₹)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-      <input id="newGiftMaxUsesInput" type="number" placeholder="Max Uses (People)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-      <input id="newGiftDurationInput" type="number" placeholder="Expiry Timer (Minutes)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-      <button onclick="createGiftCode()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2 rounded-xl text-xs shadow">Create Code</button>
-    </div>
-    
-    <div class="grid md:grid-cols-2 gap-4 pt-2">
-      <div class="overflow-x-auto max-h-56 bg-slate-950 p-3 rounded-xl border border-slate-800">
-        <h3 class="text-xs font-bold text-emerald-400 mb-2">Active Gift Codes</h3>
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800">
-              <th class="pb-2">Code</th>
-              <th class="pb-2">Amount</th>
-              <th class="pb-2">Uses / Expiry</th>
-              <th class="pb-2 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="adminGiftCodesTableBody" class="divide-y divide-slate-800/60">
-            <tr><td colspan="4" class="py-2 text-center text-slate-500">No active codes.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="overflow-x-auto max-h-56 bg-slate-950 p-3 rounded-xl border border-slate-800">
-        <h3 class="text-xs font-bold text-amber-400 mb-2">🏷️ Who Redeemed Gift Codes (Live History)</h3>
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800">
-              <th class="pb-2">User (ID/Name)</th>
-              <th class="pb-2">Mobile</th>
-              <th class="pb-2">Amount</th>
-              <th class="pb-2 text-right">Time</th>
-            </tr>
-          </thead>
-          <tbody id="adminGiftClaimsTableBody" class="divide-y divide-slate-800/60">
-            <tr><td colspan="4" class="py-2 text-center text-slate-500">No claims yet.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- KISMAT GAME CONTROL PANEL -->
-  <div class="bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-black text-amber-400">✨ KISMAT Game Live Control & Bets</h2>
-        <p class="text-xs text-slate-400">Kismat Period: <strong class="text-indigo-300 font-mono" id="adminKismatPeriod">--</strong></p>
-      </div>
-      <div class="flex gap-2">
-        <input id="forcedKismatOptionInput" type="number" min="1" max="10" placeholder="Win Option (1-10)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white" />
-        <button onclick="setForcedKismat()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-4 py-1.5 rounded-xl text-xs">Force Win</button>
-      </div>
-    </div>
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
-  </div>
-
-  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE -->
-  <div class="grid lg:grid-cols-3 gap-6">
-    <!-- ROCKET CONTROLLER (2 Cols) -->
-    <div class="lg:col-span-2 bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
-          <p class="text-xs text-slate-400">Total Pool: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong> | Claimed Out: <strong class="text-amber-400 font-mono text-sm" id="adminTotalRocketClaimed">₹0</strong></p>
-        </div>
-        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
-          💥 CRASH ROCKET NOW!
-        </button>
-        <div class="flex gap-2">
-          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
-          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
-        </div>
-      </div>
-      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
-    </div>
-
-    <!-- ROCKET LIVE BETS (1 Col, Sorted with Live Return Display) -->
-    <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-5 space-y-3 flex flex-col">
-      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets (Sorted)</h2>
-      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto flex-1 pr-1">
-        <p class="text-slate-500 text-center py-4">No rocket bets right now.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- COLOUR TRADING CONTROL -->
-  <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 space-y-5 shadow-xl">
-    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
-      <div>
-        <h2 class="text-lg font-black text-white">🎨 Colour Trading Result Control Engine</h2>
-        <p class="text-xs text-slate-400">Click any colour or exact number below to force it as the winner.</p>
-      </div>
-      <div id="winnerBanner" class="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-sm font-black">
-        Current Mode: Auto Profit
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="setMode('MIN_PAYOUT')" id="mode-MIN_PAYOUT" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">📉 Auto Profit (Active)</button>
-      <button onclick="setMode('MANUAL')" id="mode-MANUAL" class="py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800">🎯 Manual Override</button>
-    </div>
-
-    <div class="space-y-3">
-      <div class="grid grid-cols-3 gap-3">
-        <button onclick="forceColour('GREEN')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
-          FORCE GREEN <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-GREEN">0</span>)</span>
-        </button>
-        <button onclick="forceColour('VIOLET')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
-          FORCE VIOLET <span class="block text-[10px] opacity-85 font-normal">Win 4.5x (₹<span id="stake-VIOLET">0</span>)</span>
-        </button>
-        <button onclick="forceColour('RED')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-white shadow-lg">
-          FORCE RED <span class="block text-[10px] opacity-85 font-normal">Win 2x (₹<span id="stake-RED">0</span>)</span>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-5 gap-2.5">
-        <button onclick="forceNum(0)" class="num-0 py-3 rounded-xl font-black text-white text-base shadow">0</button>
-        <button onclick="forceNum(1)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">1</button>
-        <button onclick="forceNum(2)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">2</button>
-        <button onclick="forceNum(3)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">3</button>
-        <button onclick="forceNum(4)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">4</button>
-        <button onclick="forceNum(5)" class="num-5 py-3 rounded-xl font-black text-white text-base shadow">5</button>
-        <button onclick="forceNum(6)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">6</button>
-        <button onclick="forceNum(7)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">7</button>
-        <button onclick="forceNum(8)" class="bg-rose-600 py-3 rounded-xl font-black text-white text-base shadow">8</button>
-        <button onclick="forceNum(9)" class="bg-emerald-600 py-3 rounded-xl font-black text-white text-base shadow">9</button>
-      </div>
-    </div>
-
-    <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
-  </div>
-
-  <!-- COLOUR LIVE BETS OPTION -->
-  <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-5 space-y-3">
-    <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pb-3">🎲 Colour Trading Live Bets (Current Round)</h2>
-    <div id="liveBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
-      <p class="text-slate-500 text-center py-2">No colour bets in this round.</p>
-    </div>
-  </div>
-
-  <!-- SUPPORT TICKETS -->
-  <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h2 class="text-base font-bold text-amber-400">💬 User Support Tickets</h2>
-      <span class="text-xs text-slate-400 font-mono">Realtime Support</span>
-    </div>
-    <div id="supportTicketsList" class="space-y-3 text-xs max-h-80 overflow-y-auto">
-      <p class="text-slate-500">No support requests.</p>
-    </div>
-  </div>
-
-  <!-- USERS DIRECTORY -->
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-        <p class="text-[11px] text-slate-400">Search users, edit credentials, set balance or delete</p>
-      </div>
-      <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
-    </div>
-
-    <div class="overflow-x-auto max-h-80">
-      <table class="w-full text-left text-xs">
-        <thead>
-          <tr class="text-slate-400 border-b border-slate-800">
-            <th class="pb-2">User ID</th>
-            <th class="pb-2">Name / Mobile</th>
-            <th class="pb-2">Password</th>
-            <th class="pb-2">Secret Code</th>
-            <th class="pb-2">Balance</th>
-            <th class="pb-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- DEPOSIT & WITHDRAW REQUESTS -->
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-    <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3">💳 Deposit & Withdrawal Requests (Separate Searches)</h2>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- DEPOSIT SECTION -->
-      <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
-        <div class="flex justify-between items-center">
-          <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
-          <input id="depositSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Deposit..." class="w-36 sm:w-44 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-        </div>
-        <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
-      </div>
-
-      <!-- WITHDRAW SECTION -->
-      <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
-        <div class="flex justify-between items-center">
-          <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
-          <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Withdraw..." class="w-36 sm:w-44 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-        </div>
-        <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-    let cachedUsers = [];
-    let cachedTransactions = [];
-    let cachedGiftCodes = [];
-
-    socket.emit('admin_init');
-
-    function createGiftCode() {
-      const code = document.getElementById('newGiftCodeInput').value.trim();
-      const amount = Number(document.getElementById('newGiftAmountInput').value);
-      const maxUses = Number(document.getElementById('newGiftMaxUsesInput').value);
-      const durationMinutes = Number(document.getElementById('newGiftDurationInput').value) || 0;
-      if (!code || !amount || !maxUses) return alert('Please fill all required gift code fields!');
-      socket.emit('admin_create_gift_code', { code, amount, maxUses, durationMinutes });
-      document.getElementById('newGiftCodeInput').value = '';
-      document.getElementById('newGiftAmountInput').value = '';
-      document.getElementById('newGiftMaxUsesInput').value = '';
-      document.getElementById('newGiftDurationInput').value = '';
-    }
-
-    function deleteGiftCode(code) {
-      if (confirm(`Delete gift code ${code}?`)) {
-        socket.emit('admin_delete_gift_code', code);
-      }
-    }
-
-    function toggleDepositRule(status) {
-      socket.emit('admin_toggle_deposit_condition', status);
-      alert(status ? 'Recharge rule Enabled!' : 'Recharge rule Disabled!');
-    }
-
-    function updateSocialLinks() {
-      const telegram = document.getElementById('adminTelegramInput').value.trim();
-      const youtube = document.getElementById('adminYoutubeInput').value.trim();
-      const instagram = document.getElementById('adminInstagramInput').value.trim();
-      socket.emit('admin_update_socials', { telegram, youtube, instagram });
-      alert('Social links updated successfully!');
-    }
-
-    function setMode(m) { socket.emit('admin_set_mode', m); }
-    function forceNum(n) { socket.emit('admin_force_num', n); }
-    function forceColour(col) { socket.emit('admin_force_colour', col); }
-    function crashRocketNow() { socket.emit('admin_rocket_crash_now'); }
-    function setNextRocket(val) { socket.emit('admin_rocket_set_next', val); }
-    function setCustomRocketX() {
-      const val = document.getElementById('customRocketXInput').value;
-      if (!val) return alert('Please enter multiplier!');
-      setNextRocket(val);
-    }
-    
-    function setForcedKismat() {
-      const opt = document.getElementById('forcedKismatOptionInput').value;
-      if (!opt) return alert('Enter option 1 to 10');
-      socket.emit('admin_force_kismat', Number(opt));
-      alert(`Forced Kismat Winner Set to Option #${opt}`);
-    }
-
-    function deleteUser(phone) {
-      if (confirm('Delete this user?')) socket.emit('admin_delete_user', phone);
-    }
-
-    function setCustomBalance(phone) {
-      const val = prompt('Enter new custom balance (₹):');
-      if (val !== null && val.trim() !== '') socket.emit('admin_custom_balance', { phone, amount: Number(val) });
-    }
-
-    function editUserCredentials(phone, oldName, oldPass, oldSecret) {
-      const newName = prompt('Enter new Name:', oldName);
-      if (newName === null) return;
-      const newPass = prompt('Enter new Password:', oldPass);
-      if (newPass === null) return;
-      const newSecret = prompt('Enter new Secret Code:', oldSecret);
-      if (newSecret === null) return;
-
-      if (!newName.trim() || !newPass.trim() || !newSecret.trim()) {
-        return alert('Fields cannot be empty!');
+        b.winAmount = 0;
+        b.status = 'LOST';
       }
 
-      socket.emit('admin_update_user_credentials', { 
-        phone, 
-        name: newName.trim(), 
-        password: newPass.trim(), 
-        secretCode: newSecret.trim() 
+      if (won && cachedUsers.has(b.phone)) {
+        const u = cachedUsers.get(b.phone);
+        u.balance = +(u.balance + b.winAmount).toFixed(3);
+        await User.updateOne({ phone: u.phone }, { balance: u.balance });
+        io.emit('user_sync', { user: u });
+      }
+
+      // 2% Bet Commission to Referrer's Invite Wallet
+      if (cachedUsers.has(b.phone)) {
+        const betUser = cachedUsers.get(b.phone);
+        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
+          const referrer = cachedUsers.get(betUser.invitedBy);
+          const commission = +(b.amount * 0.02).toFixed(3);
+          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+          cachedUsers.set(referrer.phone, referrer);
+          io.emit('user_sync', { user: referrer });
+        }
+      }
+
+      await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
+    }
+
+    gameState.history.unshift({ period: gameState.period, number: winNum, colours: winCols });
+    if (gameState.history.length > 20) gameState.history.pop();
+    
+    io.emit('round_settled', { settledBets: currentRoundBets, winNumber: winNum, winColours: winCols, history: gameState.history });
+    gameState.period += 1;
+    gameState.timeLeft = 30;
+    gameState.forcedNumber = null;
+    if (gameState.mode === 'MANUAL') gameState.mode = 'MIN_PAYOUT';
+    currentRoundBets = [];
+  }
+  io.emit('tick', { period: gameState.period, timeLeft: gameState.timeLeft, history: gameState.history });
+  io.emit('admin_update', await getAdminPayload());
+}, 1000);
+
+// Kismat Game Timer
+setInterval(async () => {
+  kismatState.timeLeft -= 1;
+  if (kismatState.timeLeft <= 0) {
+    let winOption = Math.floor(Math.random() * 10) + 1;
+
+    if (forcedKismatOption !== null) {
+      winOption = forcedKismatOption;
+      forcedKismatOption = null;
+    } else {
+      let bettedOptions = new Set();
+      currentKismatBets.forEach(b => {
+        let optNum = parseInt(b.choice.replace('Option #', ''));
+        bettedOptions.add(optNum);
       });
-    }
 
-    function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
-    function resolveTicket(ticketId) { socket.emit('admin_resolve_ticket', ticketId); }
+      let emptyOptions = [];
+      for (let i = 1; i <= 10; i++) {
+        if (!bettedOptions.has(i)) emptyOptions.push(i);
+      }
 
-    function adminReplyTicket(ticketId) {
-      const replyText = prompt('Enter reply for user:');
-      if (replyText && replyText.trim() !== '') {
-        socket.emit('admin_reply_ticket', { ticketId, reply: replyText.trim() });
+      if (emptyOptions.length > 0) {
+        winOption = emptyOptions[Math.floor(Math.random() * emptyOptions.length)];
+      } else {
+        winOption = Math.floor(Math.random() * 10) + 1;
       }
     }
-
-    socket.on('rocket_tick', ({ status, multiplier, betsLiveReturn }) => {
-      const el = document.getElementById('adminRocketMult');
-      if(el) el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
-
-      if (betsLiveReturn && Array.isArray(betsLiveReturn)) {
-        const rocketBetsEl = document.getElementById('adminRocketBetsList');
-        if (rocketBetsEl) {
-          if (betsLiveReturn.length === 0) {
-            rocketBetsEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
-          } else {
-            const sortedRocket = [...betsLiveReturn].sort((a, b) => b.amount - a.amount);
-            rocketBetsEl.innerHTML = sortedRocket.map(rb => `
-              <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                <div>
-                  <strong class="text-white">${rb.userName || 'User'}</strong>
-                  <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone} | Bet: ₹${rb.amount}</span>
-                </div>
-                <div class="text-right">
-                  <span class="font-black ${rb.cashedOut ? 'text-amber-400' : 'text-emerald-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Live: ₹' + (rb.amount * (multiplier || 1)).toFixed(2)}</span>
-                  <span class="block text-[10px] text-slate-400">${rb.cashedOut ? 'Cashed Out' : status}</span>
-                </div>
-              </div>
-            `).join('');
-          }
+    
+    for (const b of currentKismatBets) {
+      if (b.choice === `Option #${winOption}`) {
+        b.status = 'WON';
+        const rawWin = b.amount * 9;
+        const tax = +(rawWin * 0.01).toFixed(3);
+        b.winAmount = +(rawWin - tax).toFixed(3);
+        
+        const u = cachedUsers.get(b.phone);
+        if (u) {
+          u.balance = +(u.balance + b.winAmount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
         }
-      }
-    });
-
-    socket.on('kismat_tick', ({ period, timeLeft }) => {
-      document.getElementById('adminKismatPeriod').innerText = period;
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      document.getElementById('adminKismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    });
-
-    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool, totalRocketClaimed, giftCodes, socialLinks, depositConditionActive }) => {
-      cachedUsers = usersList || [];
-      cachedTransactions = transactions || [];
-      cachedGiftCodes = giftCodes || [];
-
-      if (socialLinks) {
-        document.getElementById('adminTelegramInput').value = socialLinks.telegram || '';
-        document.getElementById('adminYoutubeInput').value = socialLinks.youtube || '';
-        document.getElementById('adminInstagramInput').value = socialLinks.instagram || '';
+      } else {
+        b.status = 'LOST';
+        b.winAmount = 0;
       }
 
-      if (depositConditionActive !== undefined) {
-        const badge = document.getElementById('conditionStatusBadge');
-        if (badge) {
-          badge.innerText = depositConditionActive ? 'STATUS: ON (Deposit Required)' : 'STATUS: OFF (Free Claim)';
-          badge.className = depositConditionActive ? 'px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold' : 'px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full text-xs font-bold';
+      if (cachedUsers.has(b.phone)) {
+        const betUser = cachedUsers.get(b.phone);
+        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
+          const referrer = cachedUsers.get(betUser.invitedBy);
+          const commission = +(b.amount * 0.02).toFixed(3);
+          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+          cachedUsers.set(referrer.phone, referrer);
+          io.emit('user_sync', { user: referrer });
         }
       }
 
-      document.getElementById('totalUsers').innerText = cachedUsers.length;
-      document.getElementById('adminPeriod').innerText = gameState.period;
-      document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
+      await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
+    }
+
+    kismatState.history.unshift({ period: kismatState.period, winOption });
+    if (kismatState.history.length > 20) kismatState.history.pop();
+
+    io.emit('kismat_settled', { settledBets: currentKismatBets, winOption, history: kismatState.history });
+    kismatState.period += 1;
+    kismatState.timeLeft = 150;
+    currentKismatBets = [];
+  }
+  io.emit('kismat_tick', { period: kismatState.period, timeLeft: kismatState.timeLeft, history: kismatState.history });
+  io.emit('admin_update', await getAdminPayload());
+}, 1000);
+
+// Rocket Game Loop
+setInterval(async () => {
+  if (rocketState.status === 'WAITING') {
+    rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
+    if (rocketState.countdown <= 0) {
+      rocketState.status = 'FLYING';
+      rocketState.multiplier = 1.00;
+
+      let totalPool = rocketServiceTotalPool();
+      let maxBet = rocketBets.length > 0 ? Math.max(...rocketBets.map(b => b.amount)) : 0;
+
+      if (rocketState.forcedNextCrash !== null) {
+        rocketState.crashPoint = rocketState.forcedNextCrash;
+        rocketState.forcedNextCrash = null;
+      } else if (totalPool >= 1000) {
+        let targetProfitMultiplier = +(1 + 0.80).toFixed(2);
+        rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
+      } else if (rocketBets.length === 0) {
+        let highChance = Math.random() < 0.20;
+        if (highChance) {
+          rocketState.crashPoint = +(100 + Math.random() * 400).toFixed(2);
+        } else {
+          rocketState.crashPoint = +(5 + Math.random() * 90).toFixed(2);
+        }
+      } else if (maxBet <= 100) {
+        rocketState.crashPoint = +(1.05 + Math.random() * 0.90).toFixed(2);
+      } else {
+        rocketState.crashPoint = +(1.05 + Math.random() * 1.90).toFixed(2);
+      }
+    }
+  } else if (rocketState.status === 'FLYING') {
+    let increment = 0.08; 
+    if (rocketState.multiplier > 5) increment = 0.18;
+    if (rocketState.multiplier > 20) increment = 0.45;
+    if (rocketState.multiplier > 50) increment = 0.55;
+
+    rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
+
+    if (rocketState.multiplier >= rocketState.crashPoint) {
+      rocketState.status = 'CRASHED';
+      rocketState.history.unshift(rocketState.crashPoint);
+      if (rocketState.history.length > 20) rocketState.history.pop();
       
-      const totalPoolEl = document.getElementById('adminTotalRocketPool');
-      if(totalPoolEl) totalPoolEl.innerText = `₹${totalRocketPool || 0}`;
-
-      const totalClaimedEl = document.getElementById('adminTotalRocketClaimed');
-      if(totalClaimedEl) totalClaimedEl.innerText = `₹${totalRocketClaimed || 0}`;
-
-      const giftTable = document.getElementById('adminGiftCodesTableBody');
-      if (giftTable) {
-        giftTable.innerHTML = cachedGiftCodes.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No active codes.</td></tr>` : cachedGiftCodes.map(g => `
-          <tr>
-            <td class="py-2 font-mono font-bold text-amber-400">${g.code}</td>
-            <td class="py-2 font-bold text-emerald-400">₹${g.amount}</td>
-            <td class="py-2 font-mono">${g.usedCount} / ${g.maxUses} ${g.expiresAt ? '<span class="block text-[10px] text-rose-400">Exp: ' + new Date(g.expiresAt).toLocaleTimeString() + '</span>' : ''}</td>
-            <td class="py-2 text-right">
-              <button onclick="deleteGiftCode('${g.code}')" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Delete</button>
-            </td>
-          </tr>
-        `).join('');
+      for (const rb of rocketBets) {
+        if (!rb.cashedOut) {
+          rb.status = 'LOST';
+          rb.winAmount = 0;
+          await Bet.updateOne({ id: rb.id }, { status: 'LOST', winAmount: 0 }, { upsert: true });
+        }
       }
 
-      const claimsTable = document.getElementById('adminGiftClaimsTableBody');
-      if (claimsTable) {
-        let allClaims = [];
-        cachedGiftCodes.forEach(g => {
-          if (g.claims) {
-            g.claims.forEach(c => {
-              allClaims.push({ ...c, code: g.code });
-            });
+      setTimeout(() => {
+        rocketState.status = 'WAITING';
+        rocketState.countdown = 5.0;
+        rocketState.multiplier = 1.00;
+        rocketBets = [];
+      }, 3000);
+    }
+  }
+  io.emit('rocket_tick', { 
+    status: rocketState.status, 
+    countdown: rocketState.countdown, 
+    multiplier: rocketState.multiplier, 
+    history: rocketState.history,
+    betsLiveReturn: rocketBets 
+  });
+}, 100);
+
+io.on('connection', (socket) => {
+  socket.emit('social_links_sync', currentSocialLinks);
+
+  socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
+    try {
+      let existingUser = await User.findOne({ phone });
+      if (existingUser || cachedUsers.has(phone)) {
+        socket.emit('auth_error', 'Phone number already registered![cite: 3]');
+      } else {
+        const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
+        const referralCode = 'RW' + Math.floor(100000 + Math.random() * 900000);
+        
+        let invitedBy = '';
+        if (inviteCode && inviteCode.trim() !== '') {
+          const referrerUser = await User.findOne({ referralCode: inviteCode.trim().toUpperCase() });
+          if (referrerUser) {
+            invitedBy = referrerUser.phone;
           }
+        }
+
+        const newUser = { 
+          userId, 
+          name, 
+          phone, 
+          password, 
+          secretCode: secretCode || '1234', 
+          balance: 10, 
+          checkInDay: 1, 
+          lastCheckInDate: '',
+          referralCode,
+          invitedBy,
+          totalReferrals: 0,
+          inviteBalance: 0,
+          firstDepositTime: null
+        };
+
+        await User.create(newUser);
+        cachedUsers.set(phone, newUser);
+        socket.emit('auth_success', { user: newUser });
+        io.emit('admin_update', await getAdminPayload());
+      }
+    } catch (err) {
+      socket.emit('auth_error', 'Registration failed![cite: 3]');
+    }
+  });
+
+  socket.on('user_login', ({ phone, password }) => {
+    const user = cachedUsers.get(phone);
+    if (!user) {
+      socket.emit('auth_error', 'Account not found![cite: 3]');
+    } else if (user.password !== password) {
+      socket.emit('auth_error', 'Invalid password![cite: 3]');
+    } else {
+      socket.emit('auth_success', { user });
+    }
+  });
+
+  socket.on('forgot_password', async ({ phone, secretCode, newPassword }) => {
+    try {
+      const user = cachedUsers.get(phone);
+      if (!user) {
+        return socket.emit('forgot_password_response', { success: false, message: 'Phone number not found!' });
+      }
+      if (user.secretCode && user.secretCode !== secretCode) {
+        return socket.emit('forgot_password_response', { success: false, message: 'Incorrect Secret Code! Password change denied.' });
+      }
+      user.password = newPassword;
+      await User.updateOne({ phone }, { password: newPassword });
+      cachedUsers.set(phone, user);
+      socket.emit('forgot_password_response', { success: true, message: 'Password updated successfully! Please login.' });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      socket.emit('forgot_password_response', { success: false, message: 'Failed to update password!' });
+    }
+  });
+
+  // Fetch Referral & VIP Level Data
+  socket.on('fetch_referral_data', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return;
+
+      socket.emit('referral_data_response', {
+        referralCode: u.referralCode || 'RW123456',
+        totalReferrals: u.totalReferrals || 0,
+        inviteBalance: u.inviteBalance || 0
+      });
+    } catch (e) {
+      console.log('Referral data error:', e);
+    }
+  });
+
+  // Claim Tier/Milestone Rewards (Bronze to Platinum)
+  socket.on('claim_referral_tier', async ({ phone, tier }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return socket.emit('referral_claim_response', { success: false, message: 'User not found!' });
+
+      let reward = 0;
+      let requiredRefers = 0;
+
+      if (tier === 'Bronze') { requiredRefers = 1; reward = 5; }
+      else if (tier === 'Silver') { requiredRefers = 5; reward = 25; }
+      else if (tier === 'Gold') { requiredRefers = 10; reward = 50; }
+      else if (tier === 'Diamond') { requiredRefers = 20; reward = 100; }
+      else if (tier === 'Platinum') { requiredRefers = 50; reward = 250; }
+
+      if (u.totalReferrals < requiredRefers) {
+        return socket.emit('referral_claim_response', { success: false, message: `Target ${requiredRefers} referrals not reached yet!` });
+      }
+
+      u.inviteBalance = +(u.inviteBalance + reward).toFixed(3);
+      await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
+      cachedUsers.set(phone, u);
+
+      socket.emit('referral_claim_response', { success: true, message: `Successfully claimed ₹${reward} reward!` });
+      socket.emit('user_sync', { user: u });
+    } catch (e) {
+      socket.emit('referral_claim_response', { success: false, message: 'Claim failed!' });
+    }
+  });
+
+  // Refer Withdrawal Request (Min ₹30, 0% Tax, Separate Type)
+  socket.on('refer_withdraw_request', async ({ phone, amount, account }) => {
+    const u = cachedUsers.get(phone);
+    const reqAmt = Number(amount);
+    if (!u || reqAmt < 30) return socket.emit('refer_withdraw_response', { success: false, message: 'Minimum withdrawal is ₹30!' });
+    if (u.inviteBalance < reqAmt) return socket.emit('refer_withdraw_response', { success: false, message: 'Insufficient invite wallet balance!' });
+
+    u.inviteBalance = +(u.inviteBalance - reqAmt).toFixed(3);
+    await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
+
+    const tx = { 
+      id: Date.now(), 
+      phone, 
+      userName: u.name, 
+      type: 'REFER_WITHDRAW', 
+      amount: reqAmt, 
+      tax: 0, 
+      totalDeducted: reqAmt, 
+      details: `Refer Payout To: ${account}`, 
+      status: 'PENDING', 
+      time: new Date().toLocaleTimeString() 
+    };
+    await Transaction.create(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+
+    socket.emit('refer_withdraw_response', { success: true, message: 'Referral withdrawal requested successfully!' });
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  // Check-in status & claim handlers
+  socket.on('fetch_checkin_status', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
+        const lastDate = new Date(u.lastCheckInDate);
+        const currentDate = new Date(todayStr);
+        const diffTime = currentDate - lastDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1) {
+          u.checkInDay = 1;
+          await User.updateOne({ phone }, { checkInDay: 1 });
+        }
+      }
+
+      let checkedToday = u.lastCheckInDate === todayStr;
+
+      socket.emit('checkin_status_response', {
+        checkInDay: u.checkInDay || 1,
+        checkedToday
+      });
+    } catch (e) {
+      console.log('Checkin status error:', e);
+    }
+  });
+
+  socket.on('claim_checkin', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      if (u.lastCheckInDate === todayStr) {
+        return socket.emit('checkin_response', { success: false, message: 'Already checked in today!' });
+      }
+
+      if (u.lastCheckInDate) {
+        const lastDate = new Date(u.lastCheckInDate);
+        const currentDate = new Date(todayStr);
+        const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+        if (diffDays > 1) {
+          u.checkInDay = 1;
+        }
+      }
+
+      let rewardAmount = 0;
+      let currentDay = u.checkInDay || 1;
+
+      if (currentDay >= 1 && currentDay <= 4) {
+        rewardAmount = 2;
+      } else if (currentDay === 5 || currentDay === 6) {
+        rewardAmount = 3;
+      } else if (currentDay === 7) {
+        rewardAmount = Math.floor(Math.random() * 15) + 1;
+      }
+
+      u.balance = +(u.balance + rewardAmount).toFixed(3);
+      u.lastCheckInDate = todayStr;
+
+      if (currentDay >= 7) {
+        u.checkInDay = 1;
+      } else {
+        u.checkInDay += 1;
+      }
+
+      await User.updateOne({ phone }, { 
+        balance: u.balance, 
+        checkInDay: u.checkInDay, 
+        lastCheckInDate: u.lastCheckInDate 
+      });
+
+      cachedUsers.set(phone, u);
+      socket.emit('user_sync', { user: u });
+      socket.emit('checkin_response', { 
+        success: true, 
+        message: `Success! You got ₹${rewardAmount} for Day ${currentDay}!`,
+        reward: rewardAmount
+      });
+
+      socket.emit('checkin_status_response', {
+        checkInDay: u.checkInDay,
+        checkedToday: true
+      });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      console.log('Claim checkin error:', e);
+      socket.emit('checkin_response', { success: false, message: 'Check-in claim failed!' });
+    }
+  });
+
+  socket.on('admin_update_user_credentials', async ({ phone, name, password, secretCode }) => {
+    try {
+      const user = cachedUsers.get(phone);
+      if (user) {
+        user.name = name;
+        user.password = password;
+        user.secretCode = secretCode;
+        await User.updateOne({ phone }, { name, password, secretCode });
+        cachedUsers.set(phone, user);
+        io.emit('admin_update', await getAdminPayload());
+      }
+    } catch (e) {
+      console.log('Error updating user credentials:', e);
+    }
+  });
+
+  socket.on('claim_gift_code', async ({ phone, code }) => {
+    try {
+      const formattedCode = code.trim().toUpperCase();
+      let gift = await GiftCode.findOne({ code: formattedCode });
+      const u = cachedUsers.get(phone);
+
+      if (!u) return socket.emit('gift_code_response', { success: false, message: 'User not found!' });
+      if (!gift) return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
+
+      if (gift.expiresAt && new Date() > new Date(gift.expiresAt)) {
+        await GiftCode.deleteOne({ code: formattedCode });
+        allGiftCodes = await GiftCode.find({});
+        io.emit('admin_update', await getAdminPayload());
+        return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
+      }
+
+      if (global.requireDepositForGift) {
+        const userDeposit = await Transaction.findOne({ 
+          phone: phone, 
+          type: 'DEPOSIT', 
+          status: 'APPROVED'
         });
 
-        claimsTable.innerHTML = allClaims.length === 0 ? `<tr><td colspan="4" class="py-2 text-center text-slate-500">No claims yet.</td></tr>` : allClaims.map(c => `
-          <tr>
-            <td class="py-2"><strong class="text-indigo-300">${c.userId}</strong> - <span class="text-white">${c.userName}</span><span class="block text-[10px] text-amber-400 font-mono">Code: ${c.code}</span></td>
-            <td class="py-2 font-mono text-emerald-300 text-[11px]">${c.phone}</td>
-            <td class="py-2 font-black text-emerald-400">+₹${c.amount}</td>
-            <td class="py-2 text-right font-mono text-[10px] text-slate-400">${c.time}</td>
-          </tr>
-        `).join('');
-      }
-
-      if (kismatState) {
-        document.getElementById('adminKismatPeriod').innerText = kismatState.period;
-        let kGrid = '';
-        for (let i = 1; i <= 10; i++) {
-          const stake = kismatState.stakes ? (kismatState.stakes[i] || 0) : 0;
-          kGrid += `<div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center"><span class="text-sm font-black text-amber-400">Opt #${i}</span><p class="text-xs text-slate-300 mt-1">₹${stake}</p></div>`;
+        if (!userDeposit) {
+          return socket.emit('gift_code_response', { success: false, message: 'Apnar kono approved recharge nei! Age recharge safol (APPROVED) korte hobe.' });
         }
-        document.getElementById('adminKismatOptionsGrid').innerHTML = kGrid;
       }
 
-      const ticketEl = document.getElementById('supportTicketsList');
-      if (ticketEl) {
-        ticketEl.innerHTML = (!supportTickets || supportTickets.length === 0) 
-          ? `<p class="text-slate-500">No support requests.</p>` 
-          : supportTickets.map(t => `
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-              <div class="flex justify-between items-center">
-                <strong class="text-white">${t.userName}</strong> - <span class="text-emerald-400 font-mono font-bold">${t.phone}</span>
-                <span class="font-bold ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
-              </div>
-              <p class="text-slate-300">📝 Ticket: ${t.message}</p>
-              ${t.adminReply ? `<p class="text-indigo-300 font-semibold">👑 Admin Reply: ${t.adminReply}</p>` : ''}
-              <div class="flex gap-2 pt-1">
-                <button onclick="adminReplyTicket(${t.id})" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-white font-bold">Reply</button>
-                ${t.status === 'PENDING' ? `<button onclick="resolveTicket(${t.id})" class="bg-amber-600 hover:bg-amber-500 px-3 py-1 rounded font-bold text-slate-950">Resolve</button>` : ''}
-              </div>
-            </div>
-          `).join('');
+      if (gift.usedBy && gift.usedBy.includes(phone)) {
+        return socket.emit('gift_code_response', { success: false, message: 'You have already claimed this gift code.' });
+      }
+      if (gift.usedCount >= gift.maxUses) {
+        await GiftCode.deleteOne({ code: formattedCode });
+        allGiftCodes = await GiftCode.find({});
+        io.emit('admin_update', await getAdminPayload());
+        return socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
       }
 
-      ['MIN_PAYOUT', 'MANUAL'].forEach(m => {
-        const btn = document.getElementById('mode-' + m);
-        if(btn) btn.className = gameState.mode === m
-          ? 'py-2.5 px-3 rounded-xl text-xs font-black border-2 border-indigo-400 bg-indigo-600 text-white'
-          : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-300';
+      gift.usedCount += 1;
+      gift.usedBy.push(phone);
+      gift.claims.unshift({
+        userId: u.userId || 'USR0000',
+        userName: u.name,
+        phone: u.phone,
+        amount: gift.amount,
+        time: new Date().toLocaleTimeString()
       });
 
-      const banner = document.getElementById('winnerBanner');
-      if(banner) banner.innerText = gameState.mode === 'MANUAL' && gameState.forcedNumber !== null
-        ? `✅ LOCKED WINNER: #${gameState.forcedNumber}`
-        : `Current Mode: Auto Profit`;
-
-      if (summary) {
-        document.getElementById('stake-GREEN').innerText = summary.stakes.GREEN;
-        document.getElementById('stake-VIOLET').innerText = summary.stakes.VIOLET;
-        document.getElementById('stake-RED').innerText = summary.stakes.RED;
-
-        let gridHtml = '';
-        for (let n = 0; n <= 9; n++) {
-          const isSelected = gameState.mode === 'MANUAL' && gameState.forcedNumber === n;
-          gridHtml += `
-            <div class="text-left p-3 rounded-xl border ${isSelected ? 'bg-amber-500/20 border-2 border-amber-400' : 'bg-slate-950 border-slate-800'}">
-              <div class="flex justify-between items-center"><span class="text-lg font-black text-white">#${n}</span>${isSelected ? '<span class="bg-amber-400 text-black text-[10px] font-black px-2 py-0.5 rounded">LOCKED</span>' : ''}</div>
-              <p class="text-[11px] text-slate-400 mt-1">Bet: ₹${summary.stakes[n]}</p>
-              <p class="text-xs font-bold text-amber-300">Payout: ₹${summary.projectedPayouts[n]}</p>
-            </div>
-          `;
-        }
-        document.getElementById('numberGrid').innerHTML = gridHtml;
+      if (gift.usedCount >= gift.maxUses) {
+        await GiftCode.deleteOne({ code: formattedCode });
+      } else {
+        await gift.save();
       }
 
-      renderUsersTable();
+      allGiftCodes = await GiftCode.find({});
+      u.balance = +(u.balance + gift.amount).toFixed(3);
+      await User.updateOne({ phone }, { balance: u.balance });
 
-      const rocketBetsEl = document.getElementById('adminRocketBetsList');
-      if (rocketBetsEl) {
-        if (!rocketBets || rocketBets.length === 0) {
-          rocketBetsEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
-        } else {
-          const sortedRocket = [...rocketBets].sort((a, b) => b.amount - a.amount);
-          rocketBetsEl.innerHTML = sortedRocket.map(rb => `
-            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-              <div>
-                <strong class="text-white">${rb.userName || 'User'}</strong>
-                <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone} | Bet: ₹${rb.amount}</span>
-              </div>
-              <div class="text-right">
-                <span class="font-black ${rb.cashedOut ? 'text-amber-400' : 'text-emerald-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Live: ₹' + (rb.amount * (rocketState.multiplier || 1)).toFixed(2)}</span>
-                <span class="block text-[10px] text-slate-400">${rb.cashedOut ? 'Cashed Out' : rocketState.status}</span>
-              </div>
-            </div>
-          `).join('');
-        }
+      socket.emit('user_sync', { user: u });
+      socket.emit('gift_code_response', { success: true, message: `Successfully redeemed ₹${gift.amount}!`, amount: gift.amount });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (err) {
+      socket.emit('gift_code_response', { success: false, message: 'Gift code expire!' });
+    }
+  });
+
+  socket.on('admin_create_gift_code', async ({ code, amount, maxUses, durationMinutes }) => {
+    try {
+      const fCode = code.trim().toUpperCase();
+      const exists = await GiftCode.findOne({ code: fCode });
+      if (exists) return;
+
+      let expiresAt = null;
+      if (durationMinutes && Number(durationMinutes) > 0) {
+        expiresAt = new Date(Date.now() + Number(durationMinutes) * 60000);
       }
 
-      const betsEl = document.getElementById('liveBetsList');
-      if(betsEl) {
-        betsEl.innerHTML = (!currentBets || currentBets.length === 0)
-          ? `<p class="text-slate-500 text-center py-2">No colour bets in this round.</p>`
-          : currentBets.map(b => `
-            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-              <div>
-                <strong class="text-white">${b.userName || b.phone}</strong>
-                <span class="block text-[10px] text-slate-400 font-mono">Choice: <strong class="text-amber-400">${b.choice}</strong></span>
-              </div>
-              <span class="font-black text-emerald-400">₹${b.amount}</span>
-            </div>
-          `).join('');
-      }
+      await GiftCode.create({ 
+        code: fCode, 
+        amount: Number(amount), 
+        maxUses: Number(maxUses), 
+        expiresAt: expiresAt,
+        usedCount: 0, 
+        usedBy: [], 
+        claims: [] 
+      });
+      allGiftCodes = await GiftCode.find({});
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {}
+  });
 
-      renderTransactions();
+  socket.on('admin_delete_gift_code', async (code) => {
+    try {
+      await GiftCode.deleteOne({ code });
+      allGiftCodes = await GiftCode.find({});
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {}
+  });
+
+  socket.on('admin_update_socials', async (links) => {
+    currentSocialLinks = links || {};
+    
+    await SocialLink.findOneAndUpdate(
+      { key: 'main_links' },
+      { 
+        telegram: currentSocialLinks.telegram, 
+        youtube: currentSocialLinks.youtube, 
+        instagram: currentSocialLinks.instagram 
+      },
+      { upsert: true, new: true }
+    );
+
+    io.emit('social_links_sync', currentSocialLinks);
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('admin_toggle_deposit_condition', async (status) => {
+    global.requireDepositForGift = status;
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
+    if (gameState.timeLeft <= 5) return;
+    const u = cachedUsers.get(phone);
+    const amt = Number(amount);
+    if (!u || amt < 10 || u.balance < amt) return;
+
+    u.balance = +(u.balance - amt).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const betData = { 
+      id: Date.now(), 
+      phone, 
+      game: 'Colour Trading', 
+      userName: u.name, 
+      period: String(gameState.period), 
+      choice, 
+      amount: amt, 
+      multiplier: Number(multiplier), 
+      status: 'PENDING', 
+      winAmount: 0,
+      time: new Date().toLocaleTimeString() 
+    };
+
+    await Bet.create(betData);
+    currentRoundBets.push(betData);
+
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
+    if (kismatState.timeLeft <= 10) return;
+    const u = cachedUsers.get(phone);
+    const amt = 10;
+    if (!u || u.balance < amt) return;
+
+    if (currentKismatBets.find(b => b.phone === phone)) {
+      return socket.emit('auth_error', 'You can bet on only ONE option per round![cite: 3]');
+    }
+
+    u.balance = +(u.balance - amt).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const betData = { 
+      id: Date.now(), 
+      phone, 
+      game: 'Kismat Game', 
+      userName: u.name, 
+      period: String(kismatState.period), 
+      choice: `Option #${option}`, 
+      amount: amt, 
+      multiplier: 9,
+      status: 'PENDING', 
+      winAmount: 0,
+      time: new Date().toLocaleTimeString() 
+    };
+
+    await Bet.create(betData);
+    currentKismatBets.push(betData);
+
+    socket.emit('kismat_bet_confirmed', { balance: u.balance, bet: betData });
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
+    const u = cachedUsers.get(phone);
+    const amt = Number(amount);
+    if (!u || amt < 10 || u.balance < amt) return;
+    if (rocketBets.find(b => b.phone === phone)) return;
+
+    u.balance = +(u.balance - amt).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const rBet = { 
+      id: Date.now(), 
+      phone, 
+      game: 'Rocket Crash', 
+      userName: u.name, 
+      period: 'Flight', 
+      choice: 'Flight Bet', 
+      amount: amt, 
+      cashedOut: false, 
+      status: 'PENDING', 
+      winAmount: 0,
+      time: new Date().toLocaleTimeString() 
+    };
+
+    await Bet.create(rBet);
+    rocketBets.push(rBet);
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('rocket_cashout', async ({ phone }) => {
+    if (rocketState.status !== 'FLYING') return;
+    const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
+    if (!rBet) return;
+    rBet.cashedOut = true;
+    rBet.status = 'WON';
+    rBet.winAmount = +(rBet.amount * rocketState.multiplier * 0.99).toFixed(3);
+    
+    await Bet.updateOne({ id: rBet.id }, { status: 'WON', winAmount: rBet.winAmount });
+
+    const u = cachedUsers.get(phone);
+    if (u) {
+      u.balance = +(u.balance + rBet.winAmount).toFixed(3);
+      await User.updateOne({ phone }, { balance: u.balance });
+      socket.emit('user_sync', { user: u });
+    }
+
+    socket.emit('rocket_cashed_out_success', {
+      betAmount: rBet.amount,
+      multiplier: rocketState.multiplier,
+      winAmount: rBet.winAmount
     });
+    io.emit('admin_update', await getAdminPayload());
+  });
 
-    function renderUsersTable() {
-      const q = (document.getElementById('userSearchInput').value || '').trim().toLowerCase();
-      const filtered = cachedUsers.filter(u => (u.userId && u.userId.toLowerCase().includes(q)) || (u.name && u.name.toLowerCase().includes(q)) || (u.phone && u.phone.toLowerCase().includes(q)));
-      const uBody = document.getElementById('usersTableBody');
-      uBody.innerHTML = filtered.length === 0 ? `<tr><td colspan="6" class="py-4 text-center text-slate-500">No users found.</td></tr>` : filtered.map(u => `
-        <tr>
-          <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
-          <td class="py-2.5"><strong class="text-white block">${u.name}</strong><span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span></td>
-          <td class="py-2.5 font-mono text-amber-300 text-xs">${u.password}</td>
-          <td class="py-2.5 font-mono text-emerald-400 text-xs font-bold">${u.secretCode || '1234'}</td>
-          <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
-          <td class="py-2.5 text-right space-x-1 whitespace-nowrap">
-            <button onclick="editUserCredentials('${u.phone}', '${u.name}', '${u.password}', '${u.secretCode || '1234'}')" class="bg-amber-600 px-2 py-1 rounded text-white font-bold">Edit</button>
-            <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 px-2 py-1 rounded text-white font-bold">Bal</button>
-            <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Del</button>
-          </td>
-        </tr>
-      `).join('');
+  socket.on('fetch_my_bets', async ({ phone }) => {
+    try {
+      const userBets = await Bet.find({ phone: phone }).sort({ id: -1 }).limit(100);
+      socket.emit('my_bets_response', userBets);
+    } catch (e) {
+      socket.emit('my_bets_response', []);
     }
+  });
 
-    function renderTransactions() {
-      const qDep = (document.getElementById('depositSearchInput').value || '').trim().toLowerCase();
-      const qWith = (document.getElementById('withdrawSearchInput').value || '').trim().toLowerCase();
+  socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
+    const depAmt = Number(amount);
+    if (depAmt < 20) return;
 
-      const deps = cachedTransactions.filter(t => t.type === 'DEPOSIT' && ((t.phone && t.phone.toLowerCase().includes(qDep)) || (t.userName && t.userName.toLowerCase().includes(qDep))));
-      const withs = cachedTransactions.filter(t => t.type === 'WITHDRAW' && ((t.phone && t.phone.toLowerCase().includes(qWith)) || (t.userName && t.userName.toLowerCase().includes(qWith))));
+    const u = cachedUsers.get(phone);
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    await Transaction.create(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+    io.emit('admin_update', await getAdminPayload());
+  });
 
-      document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits found.</p>` : deps.map(t => `
-        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-          <div>
-            <span class="font-black text-emerald-400">+₹${t.amount}</span> 
-            <strong class="text-white">${t.userName}</strong>
-            <span class="block text-[10px] text-slate-400 font-mono">${t.details}</span>
-          </div>
-          <div>
-            ${t.status === 'PENDING' ? `
-              <div class="flex gap-1">
-                <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 hover:bg-emerald-500 px-2 py-1 rounded text-white font-bold">Approve</button>
-                <button onclick="processTx(${t.id}, false)" class="bg-rose-600 hover:bg-rose-500 px-2 py-1 rounded text-white font-bold">Reject</button>
-              </div>
-            ` : `
-              <span class="font-bold text-xs px-2.5 py-1 rounded ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${t.status}</span>
-            `}
-          </div>
-        </div>
-      `).join('');
+  socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
+    const u = cachedUsers.get(phone);
+    const requestedAmt = Number(amount);
+    if (!u || requestedAmt < 30) return;
+    const taxAmount = +(requestedAmt * 0.03).toFixed(2);
+    const finalDeduct = +(requestedAmt + taxAmount).toFixed(2);
+    if (u.balance < finalDeduct) return;
 
-      document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals found.</p>` : withs.map(t => `
-        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-          <div>
-            <span class="font-black text-amber-400">Req: ₹${t.amount}</span> 
-            <strong class="text-white">${t.userName}</strong>
-            <span class="block text-[10px] text-rose-300 font-mono">Tax (3%): ₹${t.tax || 0} | Payout: ₹${t.totalDeducted ? (t.amount - (t.tax || 0)) : t.amount}</span>
-            <span class="block text-[10px] text-slate-400 font-mono">${t.details}</span>
-          </div>
-          <div>
-            ${t.status === 'PENDING' ? `
-              <div class="flex gap-1">
-                <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 hover:bg-emerald-500 px-2 py-1 rounded text-white font-bold">Approve</button>
-                <button onclick="processTx(${t.id}, false)" class="bg-rose-600 hover:bg-rose-500 px-2 py-1 rounded text-white font-bold">Reject</button>
-              </div>
-            ` : `
-              <span class="font-bold text-xs px-2.5 py-1 rounded ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${t.status}</span>
-            `}
-          </div>
-        </div>
-      `).join('');
+    u.balance = +(u.balance - finalDeduct).toFixed(3);
+    await User.updateOne({ phone }, { balance: u.balance });
+
+    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    await Transaction.create(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('fetch_user_transactions', async ({ phone }) => {
+    try {
+      const userTxs = await Transaction.find({ phone: phone }).sort({ id: -1 });
+      socket.emit('user_transactions_response', userTxs);
+    } catch (e) {
+      socket.emit('user_transactions_response', []);
     }
-  </script>
-</body>
-</html>
+  });
+
+  socket.on('submit_support_ticket', async ({ phone, name, message }) => {
+    if (!phone || !message) return;
+    const ticket = { id: Date.now(), phone, userName: name || phone, message, adminReply: '', status: 'PENDING', time: new Date().toLocaleTimeString() };
+    await SupportTicket.create(ticket);
+    allSupportTickets.unshift(ticket);
+    
+    io.emit('admin_update', await getAdminPayload());
+    socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
+  });
+
+  socket.on('fetch_user_tickets', async ({ phone }) => {
+    try {
+      const userTickets = allSupportTickets.filter(t => t.phone === phone);
+      socket.emit('support_tickets_response', userTickets);
+    } catch (e) {
+      socket.emit('support_tickets_response', []);
+    }
+  });
+
+  socket.on('admin_process_tx', async ({ txId, approve }) => {
+    const tx = await Transaction.findOne({ id: txId });
+    if (tx && tx.status === 'PENDING') {
+      tx.status = approve ? 'APPROVED' : 'REJECTED';
+      await Transaction.updateOne({ id: txId }, { status: tx.status });
+
+      const u = cachedUsers.get(tx.phone);
+      if (approve && tx.type === 'DEPOSIT') {
+        if (u) {
+          u.balance = +(u.balance + tx.amount).toFixed(3);
+          
+          // 24 Hours ₹20 Recharge Validation for Referrals
+          if (u.invitedBy && !u.firstDepositTime) {
+            const now = new Date();
+            const regTime = new Date(u._id.getTimestamp());
+            const hoursDiff = Math.abs(now - regTime) / 36e5;
+            
+            if (hoursDiff <= 24 && tx.amount >= 20) {
+              u.firstDepositTime = now;
+              const referrer = cachedUsers.get(u.invitedBy);
+              if (referrer) {
+                referrer.totalReferrals += 1;
+                await User.updateOne({ phone: referrer.phone }, { totalReferrals: referrer.totalReferrals });
+                cachedUsers.set(referrer.phone, referrer);
+                io.emit('user_sync', { user: referrer });
+              }
+            }
+          }
+
+          await User.updateOne({ phone: u.phone }, { balance: u.balance, firstDepositTime: u.firstDepositTime });
+          io.emit('user_sync', { user: u });
+        }
+      } else if (!approve && tx.type === 'WITHDRAW') {
+        if (u) {
+          u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
+        }
+      } else if (!approve && tx.type === 'REFER_WITHDRAW') {
+        if (u) {
+          u.inviteBalance = +(u.inviteBalance + tx.amount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { inviteBalance: u.inviteBalance });
+          io.emit('user_sync', { user: u });
+        }
+      }
+
+      allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+      io.emit('admin_update', await getAdminPayload());
+    }
+  });
+
+  socket.on('admin_set_mode', (mode) => {
+    gameState.mode = mode;
+    if (mode === 'MIN_PAYOUT') gameState.forcedNumber = null;
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_num', (num) => {
+    gameState.mode = 'MANUAL';
+    gameState.forcedNumber = Number(num);
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_colour', (col) => {
+    gameState.mode = 'MANUAL';
+    let matching = [];
+    for (let n = 0; n <= 9; n++) {
+      const cols = getColoursForNumber(n);
+      if (cols.includes(col)) matching.push(n);
+    }
+    if (matching.length > 0) {
+      gameState.forcedNumber = matching[Math.floor(Math.random() * matching.length)];
+    }
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_force_kismat', (opt) => {
+    forcedKismatOption = Number(opt);
+  });
+
+  socket.on('admin_rocket_crash_now', () => {
+    if (rocketState.status === 'FLYING') {
+      rocketState.crashPoint = rocketState.multiplier;
+    }
+  });
+
+  socket.on('admin_rocket_set_next', (val) => {
+    rocketState.forcedNextCrash = Number(val);
+    io.emit('admin_update', getAdminPayloadSync());
+  });
+
+  socket.on('admin_delete_user', async (phone) => {
+    await User.deleteOne({ phone });
+    cachedUsers.delete(phone);
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  socket.on('admin_custom_balance', async ({ phone, amount }) => {
+    const u = cachedUsers.get(phone);
+    if (u) {
+      u.balance = Number(amount);
+      await User.updateOne({ phone }, { balance: u.balance });
+      io.emit('user_sync', { user: u });
+      io.emit('admin_update', await getAdminPayload());
+    }
+  });
+
+  socket.on('admin_reply_ticket', async ({ ticketId, reply }) => {
+    const t = allSupportTickets.find(item => item.id === ticketId);
+    if (t) {
+      t.adminReply = reply;
+      t.status = 'RESOLVED';
+      await SupportTicket.updateOne({ id: ticketId }, { adminReply: reply, status: 'RESOLVED' });
+      io.emit('admin_update', await getAdminPayload());
+      io.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === t.phone));
+    }
+  });
+
+  socket.on('admin_resolve_ticket', async (ticketId) => {
+    await SupportTicket.updateOne({ id: ticketId }, { status: 'RESOLVED' });
+    const t = allSupportTickets.find(item => item.id === ticketId);
+    if (t) {
+      t.status = 'RESOLVED';
+      io.emit('admin_update', await getAdminPayload());
+      io.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === t.phone));
+    }
+  });
+
+  socket.on('admin_init', async () => socket.emit('admin_update', await getAdminPayload()));
+});
+
+async function getAdminPayload() {
+  let stakes = { GREEN: 0, VIOLET: 0, RED: 0 };
+  let projectedPayouts = {};
+  for (let n = 0; n <= 9; n++) projectedPayouts[n] = calculatePayoutForNumber(n);
+  for (const b of currentRoundBets) {
+    if (stakes[b.choice] !== undefined) stakes[b.choice] += b.amount;
+    else if (!isNaN(b.choice)) stakes[b.choice] = (stakes[b.choice] || 0) + b.amount;
+  }
+  let kStakes = {};
+  for (const b of currentKismatBets) {
+    const optNum = b.choice.replace('Option #', '');
+    kStakes[optNum] = (kStakes[optNum] || 0) + b.amount;
+  }
+  let totalRocketPool = rocketServiceTotalPool();
+  let totalRocketClaimed = rocketBets.reduce((acc, b) => acc + (b.cashedOut ? (b.winAmount || 0) : 0), 0);
+
+  return {
+    gameState,
+    kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft, stakes: kStakes },
+    rocketState,
+    summary: { stakes, projectedPayouts },
+    supportTickets: allSupportTickets,
+    usersList: Array.from(cachedUsers.values()).reverse(),
+    transactions: allTransactions,
+    currentBets: currentRoundBets,
+    rocketBets,
+    totalRocketPool,
+    totalRocketClaimed: +totalRocketClaimed.toFixed(2),
+    giftCodes: allGiftCodes,
+    socialLinks: currentSocialLinks,
+    depositConditionActive: global.requireDepositForGift || false
+  };
+}
+
+function getAdminPayloadSync() {
+  let totalRocketClaimed = rocketBets.reduce((acc, b) => acc + (b.cashedOut ? (b.winAmount || 0) : 0), 0);
+  return {
+    gameState,
+    kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft },
+    rocketState,
+    supportTickets: allSupportTickets,
+    usersList: Array.from(cachedUsers.values()).reverse(),
+    transactions: allTransactions,
+    currentBets: currentRoundBets,
+    rocketBets,
+    totalRocketPool: rocketServiceTotalPool(),
+    totalRocketClaimed: +totalRocketClaimed.toFixed(2),
+    giftCodes: allGiftCodes,
+    socialLinks: currentSocialLinks,
+    depositConditionActive: global.requireDepositForGift || false
+  };
+}
+
+function rocketServiceTotalPool() {
+  return rocketBets.reduce((acc, b) => acc + b.amount, 0);
+}
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log('✅ Server running on port ' + PORT + '[cite: 3]');
+});
