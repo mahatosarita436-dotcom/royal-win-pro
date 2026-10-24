@@ -169,26 +169,37 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <!-- ROCKET GAME CONTROL -->
-  <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
-        <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
+  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE -->
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- ROCKET CONTROLLER (2 Cols) -->
+    <div class="lg:col-span-2 bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
+          <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
+        </div>
+        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
       </div>
-      <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
+          💥 CRASH ROCKET NOW!
+        </button>
+        <div class="flex gap-2">
+          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
+          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+        </div>
+      </div>
+      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
-        💥 CRASH ROCKET NOW!
-      </button>
-      <div class="flex gap-2">
-        <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
-        <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+    <!-- ROCKET LIVE BETS (1 Col, Sorted by Highest Amount) -->
+    <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-5 space-y-3 flex flex-col">
+      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets (Sorted)</h2>
+      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto flex-1 pr-1">
+        <p class="text-slate-500 text-center py-4">No rocket bets right now.</p>
       </div>
     </div>
-    <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
   </div>
 
   <!-- COLOUR TRADING CONTROL -->
@@ -238,6 +249,14 @@
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
+  <!-- COLOUR LIVE BETS OPTION (ADDED HERE) -->
+  <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-5 space-y-3">
+    <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pb-3">🎲 Colour Trading Live Bets (Current Round)</h2>
+    <div id="liveBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
+      <p class="text-slate-500 text-center py-2">No colour bets in this round.</p>
+    </div>
+  </div>
+
   <!-- SUPPORT TICKETS -->
   <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-4">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -249,42 +268,30 @@
     </div>
   </div>
 
-  <!-- USERS & LIVE BETS -->
-  <div class="grid lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-          <p class="text-[11px] text-slate-400">Search users, edit credentials, set balance or delete</p>
-        </div>
-        <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+  <!-- USERS DIRECTORY -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
+        <p class="text-[11px] text-slate-400">Search users, edit credentials, set balance or delete</p>
       </div>
-
-      <div class="overflow-x-auto max-h-80">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800">
-              <th class="pb-2">User ID</th>
-              <th class="pb-2">Name / Mobile</th>
-              <th class="pb-2">Password</th>
-              <th class="pb-2">Secret Code</th>
-              <th class="pb-2">Balance</th>
-              <th class="pb-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
-        </table>
-      </div>
+      <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets</h2>
-      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-60 overflow-y-auto">
-        <p class="text-slate-500">No rocket bets right now.</p>
-      </div>
-
-      <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pt-3 pb-3">🎲 Colour Live Bets</h2>
-      <div id="liveBetsList" class="space-y-2 text-xs max-h-60 overflow-y-auto"></div>
+    <div class="overflow-x-auto max-h-80">
+      <table class="w-full text-left text-xs">
+        <thead>
+          <tr class="text-slate-400 border-b border-slate-800">
+            <th class="pb-2">User ID</th>
+            <th class="pb-2">Name / Mobile</th>
+            <th class="pb-2">Password</th>
+            <th class="pb-2">Secret Code</th>
+            <th class="pb-2">Balance</th>
+            <th class="pb-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody" class="divide-y divide-slate-800/60"></tbody>
+      </table>
     </div>
   </div>
 
@@ -293,7 +300,7 @@
     <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3">💳 Deposit & Withdrawal Requests (Separate Searches)</h2>
 
     <div class="grid md:grid-cols-2 gap-6">
-      <!-- DEPOSIT SECTION WITH SEPARATE SEARCH -->
+      <!-- DEPOSIT SECTION -->
       <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
         <div class="flex justify-between items-center">
           <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
@@ -302,7 +309,7 @@
         <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
       </div>
 
-      <!-- WITHDRAW SECTION WITH SEPARATE SEARCH -->
+      <!-- WITHDRAW SECTION -->
       <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
         <div class="flex justify-between items-center">
           <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
@@ -545,10 +552,43 @@
 
       renderUsersTable();
 
+      // SORTED ROCKET LIVE BETS (Highest Amount First)[cite: 4]
+      const rocketBetsEl = document.getElementById('adminRocketBetsList');
+      if (rocketBetsEl) {
+        if (!rocketBets || rocketBets.length === 0) {
+          rocketBetsEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
+        } else {
+          const sortedRocket = [...rocketBets].sort((a, b) => b.amount - a.amount);
+          rocketBetsEl.innerHTML = sortedRocket.map(rb => `
+            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div>
+                <strong class="text-white">${rb.userName || 'User'}</strong>
+                <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-black text-emerald-400">₹${rb.amount}</span>
+                <span class="block text-[10px] ${rb.cashedOut ? 'text-emerald-300 font-bold' : 'text-amber-400'}">${rb.cashedOut ? 'Cashed Out' : 'Flying...'}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      // COLOUR LIVE BETS
       const betsEl = document.getElementById('liveBetsList');
-      if(betsEl) betsEl.innerHTML = (!currentBets || currentBets.length === 0)
-        ? `<p class="text-slate-500">No bets in this round.</p>`
-        : currentBets.map(b => `<div class="flex justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800"><span><strong>${b.userName || b.phone}</strong> → <strong class="text-amber-400">${b.choice}</strong></span><span class="font-black text-emerald-400">₹${b.amount}</span></div>`).join('');
+      if(betsEl) {
+        betsEl.innerHTML = (!currentBets || currentBets.length === 0)
+          ? `<p class="text-slate-500 text-center py-2">No colour bets in this round.</p>`
+          : currentBets.map(b => `
+            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              <div>
+                <strong class="text-white">${b.userName || b.phone}</strong>
+                <span class="block text-[10px] text-slate-400 font-mono">Choice: <strong class="text-amber-400">${b.choice}</strong></span>
+              </div>
+              <span class="font-black text-emerald-400">₹${b.amount}</span>
+            </div>
+          `).join('');
+      }
 
       renderTransactions();
     });
@@ -605,7 +645,7 @@
           <div>
             <span class="font-black text-amber-400">Req: ₹${t.amount}</span> 
             <strong class="text-white">${t.userName}</strong>
-            <span class="block text-[10px] text-rose-300 font-mono">Tax: ₹${t.tax || 0} | Payout: ₹${t.totalDeducted ? (t.amount - t.tax) : t.amount}</span>
+            <span class="block text-[10px] text-rose-300 font-mono">Tax (3%): ₹${t.tax || 0} | Payout: ₹${t.totalDeducted ? (t.amount - (t.tax || 0)) : t.amount}</span>
             <span class="block text-[10px] text-slate-400 font-mono">${t.details}</span>
           </div>
           <div>
