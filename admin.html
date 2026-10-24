@@ -297,12 +297,12 @@
 
     <div class="grid md:grid-cols-2 gap-6">
       <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
-        <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
+        <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests (Pending & History)</h3>
         <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
       </div>
 
       <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
-        <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
+        <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests (Pending & History)</h3>
         <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
       </div>
     </div>
@@ -577,14 +577,14 @@
       document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits.</p>` : deps.map(t => `
         <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div><span class="font-black text-emerald-400">+₹${t.amount}</span> <span class="text-white font-bold">${t.userName}</span><span class="block text-[10px] text-slate-400">${t.details}</span></div>
-          <div>${t.status === 'PENDING' ? `<button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button>` : `<span class="font-bold text-indigo-300">${t.status}</span>`}</div>
+          <div>${t.status === 'PENDING' ? `<div class="flex gap-1"><button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button></div>` : `<span class="font-bold text-xs px-2 py-1 rounded ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${t.status}</span>`}</div>
         </div>
       `).join('');
 
       document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals.</p>` : withs.map(t => `
         <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div><span class="font-black text-amber-400">↑₹${t.amount}</span> <span class="text-white font-bold">${t.userName}</span><span class="block text-[10px] text-slate-400">${t.details}</span></div>
-          <div>${t.status === 'PENDING' ? `<button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button>` : `<span class="font-bold text-indigo-300">${t.status}</span>`}</div>
+          <div>${t.status === 'PENDING' ? `<div class="flex gap-1"><button onclick="processTx(${t.id}, true)" class="bg-emerald-600 px-2 py-1 rounded text-white font-bold">Approve</button><button onclick="processTx(${t.id}, false)" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Reject</button></div>` : `<span class="font-bold text-xs px-2 py-1 rounded ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${t.status}</span>`}</div>
         </div>
       `).join('');
     }
