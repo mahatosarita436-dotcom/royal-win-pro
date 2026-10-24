@@ -383,6 +383,23 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ADMIN UPDATE USER CREDENTIALS (Name, Password, Secret Code)
+  socket.on('admin_update_user_credentials', async ({ phone, name, password, secretCode }) => {
+    try {
+      const user = cachedUsers.get(phone);
+      if (user) {
+        user.name = name;
+        user.password = password;
+        user.secretCode = secretCode;
+        await User.updateOne({ phone }, { name, password, secretCode });
+        cachedUsers.set(phone, user);
+        io.emit('admin_update', await getAdminPayload());
+      }
+    } catch (e) {
+      console.log('Error updating user credentials:', e);
+    }
+  });
+
   socket.on('claim_gift_code', async ({ phone, code }) => {
     try {
       const formattedCode = code.trim().toUpperCase();
