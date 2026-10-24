@@ -86,6 +86,15 @@ const giftCodeSchema = new mongoose.Schema({
 });
 const GiftCode = mongoose.model('GiftCode', giftCodeSchema);
 
+// Social Links Schema (Permanent Database Storage)
+const socialSchema = new mongoose.Schema({
+  key: { type: String, default: 'main_links', unique: true },
+  telegram: String,
+  youtube: String,
+  instagram: String
+});
+const SocialLink = mongoose.model('SocialLink', socialSchema);
+
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
 let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
 let currentKismatBets = [];
@@ -108,7 +117,18 @@ async function loadDataFromDB() {
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
     allGiftCodes = await GiftCode.find({});
-    console.log(`✅ Loaded ${cachedUsers.size} users and gift codes from DB.[cite: 3]`);
+    
+    // Database theke permanent social links load kora hocche
+    const savedLinks = await SocialLink.findOne({ key: 'main_links' });
+    if (savedLinks) {
+      currentSocialLinks = {
+        telegram: savedLinks.telegram || '',
+        youtube: savedLinks.youtube || '',
+        instagram: savedLinks.instagram || ''
+      };
+    }
+    
+    console.log(`✅ Loaded ${cachedUsers.size} users and social links from DB.[cite: 3]`);
   } catch (e) {
     console.log('Error loading DB:', e);
   }
@@ -172,7 +192,6 @@ setInterval(async () => {
         io.emit('user_sync', { user: u });
       }
 
-      // Save permanently to DB
       await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
     }
 
@@ -420,7 +439,7 @@ io.on('connection', (socket) => {
         expiresAt = new Date(Date.now() + Number(durationMinutes) * 60000);
       }
 
-      const newCode = await GiftCode.create({ 
+      await GiftCode.create({ 
         code: fCode, 
         amount: Number(amount), 
         maxUses: Number(maxUses), 
@@ -442,8 +461,20 @@ io.on('connection', (socket) => {
     } catch (e) {}
   });
 
+  // Social Links update korle sora-suri MongoDB database-e save hobe
   socket.on('admin_update_socials', async (links) => {
     currentSocialLinks = links || {};
+    
+    await SocialLink.findOneAndUpdate(
+      { key: 'main_links' },
+      { 
+        telegram: currentSocialLinks.telegram, 
+        youtube: currentSocialLinks.youtube, 
+        instagram: currentSocialLinks.instagram 
+      },
+      { upsert: true, new: true }
+    );
+
     io.emit('social_links_sync', currentSocialLinks);
     io.emit('admin_update', await getAdminPayload());
   });
@@ -453,7 +484,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // SAVE BETS PERMANENTLY TO DB
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     const u = cachedUsers.get(phone);
@@ -571,7 +601,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  // FETCH PERMANENT BETS FROM DB
   socket.on('fetch_my_bets', async ({ phone }) => {
     try {
       const userBets = await Bet.find({ phone: phone }).sort({ id: -1 }).limit(100);
@@ -742,7 +771,7 @@ async function getAdminPayload() {
   let kStakes = {};
   for (const b of currentKismatBets) {
     const optNum = b.choice.replace('Option #', '');
-    kStakes[optNum] = (kStakes[optNum] || 0) + b.amount;
+    kStakes[optNum] = (kStasks[optNum] || 0) + b.amount;
   }
   let totalRocketPool = rocketServiceTotalPool();
 
