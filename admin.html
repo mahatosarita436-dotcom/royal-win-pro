@@ -169,14 +169,14 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE -->
+  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE WITH LIVE CLAIM STATS -->
   <div class="grid lg:grid-cols-3 gap-6">
     <!-- ROCKET CONTROLLER (2 Cols) -->
     <div class="lg:col-span-2 bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
-          <p class="text-xs text-slate-400">Total Bets Placed: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong></p>
+          <p class="text-xs text-slate-400">Total Pool: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong> | Claimed Out: <strong class="text-amber-400 font-mono text-sm" id="adminTotalRocketClaimed">₹0</strong></p>
         </div>
         <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
       </div>
@@ -193,7 +193,7 @@
       <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
     </div>
 
-    <!-- ROCKET LIVE BETS (1 Col, Sorted by Highest Amount) -->
+    <!-- ROCKET LIVE BETS (1 Col, Sorted by Highest Amount & Shows Cashout Status) -->
     <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-5 space-y-3 flex flex-col">
       <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets (Sorted)</h2>
       <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto flex-1 pr-1">
@@ -249,7 +249,7 @@
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- COLOUR LIVE BETS OPTION (ADDED HERE) -->
+  <!-- COLOUR LIVE BETS OPTION -->
   <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-5 space-y-3">
     <h2 class="text-base font-bold text-indigo-400 border-b border-slate-800 pb-3">🎲 Colour Trading Live Bets (Current Round)</h2>
     <div id="liveBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
@@ -429,7 +429,7 @@
       document.getElementById('adminKismatTimer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     });
 
-    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool, giftCodes, socialLinks, depositConditionActive }) => {
+    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, currentBets, rocketBets, totalRocketPool, totalRocketClaimed, giftCodes, socialLinks, depositConditionActive }) => {
       cachedUsers = usersList || [];
       cachedTransactions = transactions || [];
       cachedGiftCodes = giftCodes || [];
@@ -451,8 +451,12 @@
       document.getElementById('totalUsers').innerText = cachedUsers.length;
       document.getElementById('adminPeriod').innerText = gameState.period;
       document.getElementById('adminTimer').innerText = `00:${String(gameState.timeLeft).padStart(2, '0')}`;
+      
       const totalPoolEl = document.getElementById('adminTotalRocketPool');
       if(totalPoolEl) totalPoolEl.innerText = `₹${totalRocketPool || 0}`;
+
+      const totalClaimedEl = document.getElementById('adminTotalRocketClaimed');
+      if(totalClaimedEl) totalClaimedEl.innerText = `₹${totalRocketClaimed || 0}`;
 
       const giftTable = document.getElementById('adminGiftCodesTableBody');
       if (giftTable) {
@@ -552,7 +556,7 @@
 
       renderUsersTable();
 
-      // SORTED ROCKET LIVE BETS (Highest Amount First)[cite: 4]
+      // SORTED ROCKET LIVE BETS WITH LIVE CASHOUT/CLAIM AMOUNT
       const rocketBetsEl = document.getElementById('adminRocketBetsList');
       if (rocketBetsEl) {
         if (!rocketBets || rocketBets.length === 0) {
@@ -567,7 +571,7 @@
               </div>
               <div class="text-right">
                 <span class="font-black text-emerald-400">₹${rb.amount}</span>
-                <span class="block text-[10px] ${rb.cashedOut ? 'text-emerald-300 font-bold' : 'text-amber-400'}">${rb.cashedOut ? 'Cashed Out' : 'Flying...'}</span>
+                <span class="block text-[10px] ${rb.cashedOut ? 'text-amber-400 font-bold' : 'text-slate-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Flying...'}</span>
               </div>
             </div>
           `).join('');
