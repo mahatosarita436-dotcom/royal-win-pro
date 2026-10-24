@@ -981,9 +981,10 @@
       }
     });
 
+    // INSTANT BALANCE UPDATE LISTENER FIXED[cite: 8]
     socket.on('user_sync', ({ user }) => {
       if (currentUser && user.phone === currentUser.phone) {
-        currentUser = user;
+        currentUser.balance = user.balance;
         updateBalanceDisplay(user.balance);
       }
     });
