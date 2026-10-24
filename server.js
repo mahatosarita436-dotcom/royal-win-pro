@@ -611,6 +611,7 @@ io.on('connection', (socket) => {
     await Bet.create(rBet);
     rocketBets.push(rBet);
     socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
   });
 
   socket.on('rocket_cashout', async ({ phone }) => {
@@ -635,6 +636,7 @@ io.on('connection', (socket) => {
       multiplier: rocketState.multiplier,
       winAmount: rBet.winAmount
     });
+    io.emit('admin_update', await getAdminPayload());
   });
 
   socket.on('fetch_my_bets', async ({ phone }) => {
