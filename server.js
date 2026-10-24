@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas successfully![cite: 3]'))
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const userSchema = new mongoose.Schema({
@@ -27,7 +27,12 @@ const userSchema = new mongoose.Schema({
   secretCode: { type: String, default: '1234' },
   balance: { type: Number, default: 10 },
   checkInDay: { type: Number, default: 1 },
-  lastCheckInDate: { type: String, default: '' }
+  lastCheckInDate: { type: String, default: '' },
+  referralCode: { type: String, unique: true },
+  invitedBy: { type: String, default: '' },
+  totalReferrals: { type: Number, default: 0 },
+  inviteBalance: { type: Number, default: 0 },
+  firstDepositTime: { type: Date, default: null }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -128,7 +133,7 @@ async function loadDataFromDB() {
       };
     }
     
-    console.log(`✅ Loaded ${cachedUsers.size} users and social links from DB.[cite: 3]`);
+    console.log(`✅ Loaded ${cachedUsers.size} users and social links from DB.`);
   } catch (e) {
     console.log('Error loading DB:', e);
   }
@@ -192,6 +197,19 @@ setInterval(async () => {
         io.emit('user_sync', { user: u });
       }
 
+      // 2% Bet Commission to Referrer's Invite Wallet
+      if (cachedUsers.has(b.phone)) {
+        const betUser = cachedUsers.get(b.phone);
+        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
+          const referrer = cachedUsers.get(betUser.invitedBy);
+          const commission = +(b.amount * 0.02).toFixed(3);
+          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+          cachedUsers.set(referrer.phone, referrer);
+          io.emit('user_sync', { user: referrer });
+        }
+      }
+
       await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
     }
 
@@ -253,6 +271,18 @@ setInterval(async () => {
       } else {
         b.status = 'LOST';
         b.winAmount = 0;
+      }
+
+      if (cachedUsers.has(b.phone)) {
+        const betUser = cachedUsers.get(b.phone);
+        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
+          const referrer = cachedUsers.get(betUser.invitedBy);
+          const commission = +(b.amount * 0.02).toFixed(3);
+          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+          cachedUsers.set(referrer.phone, referrer);
+          io.emit('user_sync', { user: referrer });
+        }
       }
 
       await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
@@ -341,30 +371,55 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  socket.on('user_register', async ({ name, phone, password, secretCode }) => {
+  socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
       if (existingUser || cachedUsers.has(phone)) {
-        socket.emit('auth_error', 'Phone number already registered![cite: 3]');
+        socket.emit('auth_error', 'Phone number already registered!');
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
-        const newUser = { userId, name, phone, password, secretCode: secretCode || '1234', balance: 10, checkInDay: 1, lastCheckInDate: '' };
+        const referralCode = 'RW' + Math.floor(100000 + Math.random() * 900000);
+        
+        let invitedBy = '';
+        if (inviteCode && inviteCode.trim() !== '') {
+          const referrerUser = await User.findOne({ referralCode: inviteCode.trim().toUpperCase() });
+          if (referrerUser) {
+            invitedBy = referrerUser.phone;
+          }
+        }
+
+        const newUser = { 
+          userId, 
+          name, 
+          phone, 
+          password, 
+          secretCode: secretCode || '1234', 
+          balance: 10, 
+          checkInDay: 1, 
+          lastCheckInDate: '',
+          referralCode,
+          invitedBy,
+          totalReferrals: 0,
+          inviteBalance: 0,
+          firstDepositTime: null
+        };
+
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
         io.emit('admin_update', await getAdminPayload());
       }
     } catch (err) {
-      socket.emit('auth_error', 'Registration failed![cite: 3]');
+      socket.emit('auth_error', 'Registration failed!');
     }
   });
 
   socket.on('user_login', ({ phone, password }) => {
     const user = cachedUsers.get(phone);
     if (!user) {
-      socket.emit('auth_error', 'Account not found![cite: 3]');
+      socket.emit('auth_error', 'Account not found!');
     } else if (user.password !== password) {
-      socket.emit('auth_error', 'Invalid password![cite: 3]');
+      socket.emit('auth_error', 'Invalid password!');
     } else {
       socket.emit('auth_success', { user });
     }
@@ -389,7 +444,83 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Check-in status & claim handlers with midnight reset & streak logic
+  // Fetch Referral & VIP Level Data
+  socket.on('fetch_referral_data', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return;
+
+      socket.emit('referral_data_response', {
+        referralCode: u.referralCode || 'RW123456',
+        totalReferrals: u.totalReferrals || 0,
+        inviteBalance: u.inviteBalance || 0
+      });
+    } catch (e) {
+      console.log('Referral data error:', e);
+    }
+  });
+
+  // Claim Tier/Milestone Rewards (Bronze to Platinum)
+  socket.on('claim_referral_tier', async ({ phone, tier }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return socket.emit('referral_claim_response', { success: false, message: 'User not found!' });
+
+      let reward = 0;
+      let requiredRefers = 0;
+
+      if (tier === 'Bronze') { requiredRefers = 1; reward = 5; }
+      else if (tier === 'Silver') { requiredRefers = 5; reward = 25; }
+      else if (tier === 'Gold') { requiredRefers = 10; reward = 50; }
+      else if (tier === 'Diamond') { requiredRefers = 20; reward = 100; }
+      else if (tier === 'Platinum') { requiredRefers = 50; reward = 250; }
+
+      if (u.totalReferrals < requiredRefers) {
+        return socket.emit('referral_claim_response', { success: false, message: `Target ${requiredRefers} referrals not reached yet!` });
+      }
+
+      u.inviteBalance = +(u.inviteBalance + reward).toFixed(3);
+      await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
+      cachedUsers.set(phone, u);
+
+      socket.emit('referral_claim_response', { success: true, message: `Successfully claimed ₹${reward} reward!` });
+      socket.emit('user_sync', { user: u });
+    } catch (e) {
+      socket.emit('referral_claim_response', { success: false, message: 'Claim failed!' });
+    }
+  });
+
+  // Refer Withdrawal Request (Min ₹30, 0% Tax, Separate Type)
+  socket.on('refer_withdraw_request', async ({ phone, amount, account }) => {
+    const u = cachedUsers.get(phone);
+    const reqAmt = Number(amount);
+    if (!u || reqAmt < 30) return socket.emit('refer_withdraw_response', { success: false, message: 'Minimum withdrawal is ₹30!' });
+    if (u.inviteBalance < reqAmt) return socket.emit('refer_withdraw_response', { success: false, message: 'Insufficient invite wallet balance!' });
+
+    u.inviteBalance = +(u.inviteBalance - reqAmt).toFixed(3);
+    await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
+
+    const tx = { 
+      id: Date.now(), 
+      phone, 
+      userName: u.name, 
+      type: 'REFER_WITHDRAW', 
+      amount: reqAmt, 
+      tax: 0, 
+      totalDeducted: reqAmt, 
+      details: `Refer Payout To: ${account}`, 
+      status: 'PENDING', 
+      time: new Date().toLocaleTimeString() 
+    };
+    await Transaction.create(tx);
+    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+
+    socket.emit('refer_withdraw_response', { success: true, message: 'Referral withdrawal requested successfully!' });
+    socket.emit('user_sync', { user: u });
+    io.emit('admin_update', await getAdminPayload());
+  });
+
+  // Check-in status & claim handlers
   socket.on('fetch_checkin_status', async ({ phone }) => {
     try {
       const u = cachedUsers.get(phone);
@@ -659,7 +790,7 @@ io.on('connection', (socket) => {
     if (!u || u.balance < amt) return;
 
     if (currentKismatBets.find(b => b.phone === phone)) {
-      return socket.emit('auth_error', 'You can bet on only ONE option per round![cite: 3]');
+      return socket.emit('auth_error', 'You can bet on only ONE option per round!');
     }
 
     u.balance = +(u.balance - amt).toFixed(3);
@@ -817,13 +948,38 @@ io.on('connection', (socket) => {
       if (approve && tx.type === 'DEPOSIT') {
         if (u) {
           u.balance = +(u.balance + tx.amount).toFixed(3);
-          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          
+          // 24 Hours ₹20 Recharge Validation for Referrals
+          if (u.invitedBy && !u.firstDepositTime) {
+            const now = new Date();
+            const regTime = new Date(u._id.getTimestamp());
+            const hoursDiff = Math.abs(now - regTime) / 36e5;
+            
+            if (hoursDiff <= 24 && tx.amount >= 20) {
+              u.firstDepositTime = now;
+              const referrer = cachedUsers.get(u.invitedBy);
+              if (referrer) {
+                referrer.totalReferrals += 1;
+                await User.updateOne({ phone: referrer.phone }, { totalReferrals: referrer.totalReferrals });
+                cachedUsers.set(referrer.phone, referrer);
+                io.emit('user_sync', { user: referrer });
+              }
+            }
+          }
+
+          await User.updateOne({ phone: u.phone }, { balance: u.balance, firstDepositTime: u.firstDepositTime });
           io.emit('user_sync', { user: u });
         }
       } else if (!approve && tx.type === 'WITHDRAW') {
         if (u) {
           u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
           await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          io.emit('user_sync', { user: u });
+        }
+      } else if (!approve && tx.type === 'REFER_WITHDRAW') {
+        if (u) {
+          u.inviteBalance = +(u.inviteBalance + tx.amount).toFixed(3);
+          await User.updateOne({ phone: u.phone }, { inviteBalance: u.inviteBalance });
           io.emit('user_sync', { user: u });
         }
       }
@@ -972,5 +1128,5 @@ function rocketServiceTotalPool() {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log('✅ Server running on port ' + PORT + '[cite: 3]');
+  console.log('✅ Server running on port ' + PORT);
 });
