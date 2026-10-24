@@ -697,8 +697,19 @@ io.on('connection', (socket) => {
     const ticket = { id: Date.now(), phone, userName: name || phone, message, adminReply: '', status: 'PENDING', time: new Date().toLocaleTimeString() };
     await SupportTicket.create(ticket);
     allSupportTickets.unshift(ticket);
-    socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
+    
+    // Broadcast updated tickets to specific user and admin
     io.emit('admin_update', await getAdminPayload());
+    socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
+  });
+
+  socket.on('fetch_user_tickets', async ({ phone }) => {
+    try {
+      const userTickets = allSupportTickets.filter(t => t.phone === phone);
+      socket.emit('support_tickets_response', userTickets);
+    } catch (e) {
+      socket.emit('support_tickets_response', []);
+    }
   });
 
   socket.on('admin_process_tx', async ({ txId, approve }) => {
@@ -791,14 +802,20 @@ io.on('connection', (socket) => {
       t.status = 'RESOLVED';
       await SupportTicket.updateOne({ id: ticketId }, { adminReply: reply, status: 'RESOLVED' });
       io.emit('admin_update', await getAdminPayload());
+      
+      // Also broadcast to specific user client
+      io.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === t.phone));
     }
   });
 
   socket.on('admin_resolve_ticket', async (ticketId) => {
     await SupportTicket.updateOne({ id: ticketId }, { status: 'RESOLVED' });
     const t = allSupportTickets.find(item => item.id === ticketId);
-    if (t) t.status = 'RESOLVED';
-    io.emit('admin_update', await getAdminPayload());
+    if (t) {
+      t.status = 'RESOLVED';
+      io.emit('admin_update', await getAdminPayload());
+      io.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === t.phone));
+    }
   });
 
   socket.on('admin_init', async () => socket.emit('admin_update', await getAdminPayload()));
