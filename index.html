@@ -102,10 +102,10 @@
         </div>
       </div>
 
-      <!-- DAILY CHECK-IN BUTTON -->
+      <!-- CHECK-IN BUTTON (Cleaned & Unique) -->
       <div>
-        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-slate-950 font-black py-3 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-sm active:scale-95 transition">
-          <span>🎁</span> Daily Check-in & Mystery Box (Win up to ₹15)
+        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-sm active:scale-95 transition tracking-wide border border-indigo-400/30">
+          <span>📅</span> Check-in
         </button>
       </div>
 
@@ -279,24 +279,24 @@
     </div>
   </div>
 
-  <!-- DAILY CHECK-IN MODAL -->
-  <div id="checkinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-3xl space-y-4 border-2 border-amber-500/50 shadow-2xl relative">
+  <!-- CHECK-IN MODAL (Clean, Unique & Modern) -->
+  <div id="checkinModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 w-full max-w-md p-6 rounded-3xl space-y-5 border border-indigo-500/40 shadow-2xl relative animate-pop">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div>
-          <h3 class="font-black text-amber-400 text-lg">📅 Daily Check-in Rewards</h3>
-          <p class="text-[11px] text-slate-400">Rat 12 tay reset hobe. Ekdin miss korle Day 1 theke shuru hobe!</p>
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎁</span>
+          <h3 class="font-black text-white text-lg tracking-wide">Check-in</h3>
         </div>
-        <button onclick="document.getElementById('checkinModal').classList.add('hidden')" class="bg-slate-800 text-white w-8 h-8 rounded-full font-bold">✕</button>
+        <button onclick="document.getElementById('checkinModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center">✕</button>
       </div>
 
-      <!-- 7 Days Grid UI -->
+      <!-- Unique 7 Days Grid UI -->
       <div id="checkinDaysGrid" class="grid grid-cols-4 gap-2.5">
-        <!-- Generated dynamically by JS -->
+        <!-- Dynamically rendered -->
       </div>
 
-      <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg active:scale-95 transition">
-        CLAIM TODAY'S REWARD
+      <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl active:scale-95 transition text-sm tracking-wider uppercase">
+        Check-in
       </button>
     </div>
   </div>
@@ -485,16 +485,16 @@
       
       let html = '';
       for (let i = 1; i <= 7; i++) {
-        let rewardText = i <= 4 ? '₹2' : i <= 6 ? '₹3' : '🎁 Mystery Box (₹1-15)';
+        let rewardText = i <= 4 ? '₹2' : i <= 6 ? '₹3' : '🎁 Box';
         let isCompleted = i < clientCheckInDay || (i === clientCheckInDay && clientCheckedToday);
         let isCurrent = i === clientCheckInDay && !clientCheckedToday;
 
         html += `
-          <div class="bg-slate-950 p-3 rounded-2xl border ${isCurrent ? 'border-amber-400 bg-amber-500/10 animate-pulse' : isCompleted ? 'border-emerald-500/40 opacity-70' : 'border-slate-800'} text-center flex flex-col justify-between">
+          <div class="bg-slate-950/80 p-3 rounded-2xl border ${isCurrent ? 'border-indigo-400 bg-indigo-500/20 shadow-lg scale-105' : isCompleted ? 'border-emerald-500/40 opacity-60' : 'border-slate-800'} text-center flex flex-col justify-between transition-all">
             <span class="text-[10px] font-bold text-slate-400">Day ${i}</span>
-            <span class="text-sm font-black ${i === 7 ? 'text-amber-300' : 'text-emerald-400'} my-1">${rewardText}</span>
-            <span class="text-[9px] font-bold uppercase ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-amber-400' : 'text-slate-500'}">
-              ${isCompleted ? '✓ Claimed' : isCurrent ? 'Available' : 'Locked'}
+            <span class="text-sm font-black ${i === 7 ? 'text-amber-400' : 'text-emerald-400'} my-1">${rewardText}</span>
+            <span class="text-[9px] font-extrabold uppercase ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-indigo-300 animate-pulse' : 'text-slate-500'}">
+              ${isCompleted ? '✓ Done' : isCurrent ? 'Active' : 'Locked'}
             </span>
           </div>
         `;
@@ -502,13 +502,13 @@
       grid.innerHTML = html;
 
       if (clientCheckedToday) {
-        claimBtn.innerText = 'ALREADY CLAIMED TODAY (Come back at 12 AM)';
+        claimBtn.innerText = 'Check-in';
         claimBtn.disabled = true;
-        claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-xl cursor-not-allowed';
+        claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl cursor-not-allowed uppercase text-sm tracking-wider';
       } else {
-        claimBtn.innerText = clientCheckInDay === 7 ? '🎁 OPEN MYSTERY BOX & CLAIM!' : `CLAIM DAY ${clientCheckInDay} REWARD`;
+        claimBtn.innerText = clientCheckInDay === 7 ? 'Check-in' : 'Check-in';
         claimBtn.disabled = false;
-        claimBtn.className = 'w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg active:scale-95 transition';
+        claimBtn.className = 'w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl active:scale-95 transition text-sm tracking-wider uppercase';
       }
     }
 
