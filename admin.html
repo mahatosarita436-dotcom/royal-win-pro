@@ -255,7 +255,7 @@
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-          <p class="text-[11px] text-slate-400">Search users, view passwords & secret codes, set balance or delete</p>
+          <p class="text-[11px] text-slate-400">Search users, edit credentials, set balance or delete</p>
         </div>
         <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       </div>
@@ -373,6 +373,26 @@
     function setCustomBalance(phone) {
       const val = prompt('Enter new custom balance (₹):');
       if (val !== null && val.trim() !== '') socket.emit('admin_custom_balance', { phone, amount: Number(val) });
+    }
+
+    function editUserCredentials(phone, oldName, oldPass, oldSecret) {
+      const newName = prompt('Enter new Name:', oldName);
+      if (newName === null) return;
+      const newPass = prompt('Enter new Password:', oldPass);
+      if (newPass === null) return;
+      const newSecret = prompt('Enter new Secret Code:', oldSecret);
+      if (newSecret === null) return;
+
+      if (!newName.trim() || !newPass.trim() || !newSecret.trim()) {
+        return alert('Fields cannot be empty!');
+      }
+
+      socket.emit('admin_update_user_credentials', { 
+        phone, 
+        name: newName.trim(), 
+        password: newPass.trim(), 
+        secretCode: newSecret.trim() 
+      });
     }
 
     function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
@@ -537,11 +557,12 @@
           <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
           <td class="py-2.5"><strong class="text-white block">${u.name}</strong><span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span></td>
           <td class="py-2.5 font-mono text-amber-300 text-xs">${u.password}</td>
-          <td class="py-2.5 font-mono text-emerald-400 text-xs font-bold">${u.secretCode || 'N/A'}</td>
+          <td class="py-2.5 font-mono text-emerald-400 text-xs font-bold">${u.secretCode || '1234'}</td>
           <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
-          <td class="py-2.5 text-right space-x-1">
-            <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 px-2.5 py-1 rounded text-white font-bold">Balance</button>
-            <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 px-2.5 py-1 rounded text-white font-bold">Delete</button>
+          <td class="py-2.5 text-right space-x-1 whitespace-nowrap">
+            <button onclick="editUserCredentials('${u.phone}', '${u.name}', '${u.password}', '${u.secretCode || '1234'}')" class="bg-amber-600 px-2 py-1 rounded text-white font-bold">Edit</button>
+            <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 px-2 py-1 rounded text-white font-bold">Bal</button>
+            <button onclick="deleteUser('${u.phone}')" class="bg-rose-600 px-2 py-1 rounded text-white font-bold">Del</button>
           </td>
         </tr>
       `).join('');
