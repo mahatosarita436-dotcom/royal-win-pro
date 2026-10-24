@@ -329,7 +329,13 @@ setInterval(async () => {
       }, 3000);
     }
   }
-  io.emit('rocket_tick', { status: rocketState.status, countdown: rocketState.countdown, multiplier: rocketState.multiplier, history: rocketState.history });
+  io.emit('rocket_tick', { 
+    status: rocketState.status, 
+    countdown: rocketState.countdown, 
+    multiplier: rocketState.multiplier, 
+    history: rocketState.history,
+    betsLiveReturn: rocketBets 
+  });
 }, 100);
 
 io.on('connection', (socket) => {
