@@ -39,14 +39,19 @@
 
     <p id="authError" class="text-xs text-rose-400 text-center hidden font-bold"></p>
 
+    <!-- LOGIN FORM -->
     <div id="loginForm" class="space-y-3">
       <input id="loginPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
       <input id="loginPass" type="password" placeholder="Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
+      <div class="text-right">
+        <button type="button" onclick="showForgotModal()" class="text-xs text-indigo-400 hover:underline font-bold">Forgot Password?</button>
+      </div>
       <button type="button" onclick="submitLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
         LOGIN TO PLAY
       </button>
     </div>
 
+    <!-- REGISTER FORM -->
     <div id="registerForm" class="space-y-3 hidden">
       <input id="regName" type="text" placeholder="Full Name" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
       <input id="regPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
@@ -54,6 +59,18 @@
       <button type="button" onclick="submitRegister()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
         CREATE ACCOUNT (₹10 BONUS)
       </button>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD MODAL -->
+  <div id="forgotModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
+      <h3 class="font-bold text-indigo-400 text-base">Reset Password</h3>
+      <p class="text-xs text-slate-400">Enter your registered mobile number and set a new password.</p>
+      <input id="forgotPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none" />
+      <input id="forgotNewPass" type="password" placeholder="New Password" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none" />
+      <button onclick="submitForgotPassword()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-2.5 rounded-xl text-xs">Update Password</button>
+      <button onclick="hideForgotModal()" class="w-full text-xs text-slate-400 pt-1">Back to Login</button>
     </div>
   </div>
 
@@ -163,7 +180,7 @@
           <p id="kismatPeriod" class="text-lg font-mono font-black text-white">--</p>
         </div>
         <div class="text-right">
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Timer</span>
+          <span class="text-[11px] text-amber-400 uppercase font-bold">Timer</span>
           <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">02:30</div>
         </div>
       </div>
@@ -377,10 +394,16 @@
   </div>
 
   <div id="withdrawModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700">
-      <h3 class="font-bold text-amber-400">↑ Withdraw Balance (3% Tax)</h3>
+    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold text-amber-400 text-center">↑ Withdraw Balance (3% Tax)</h3>
       <input id="withAmount" type="number" min="30" placeholder="Amount (Min ₹30)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withAccount" type="text" placeholder="UPI ID / Bank A/C" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      
+      <input id="withBankUserName" type="text" placeholder="Bank User Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="withBankName" type="text" placeholder="Bank Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="withAcNo" type="text" placeholder="Account Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="withAcNoConfirm" type="text" placeholder="Confirm Account Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="withIfsc" type="text" placeholder="IFSC Code" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white uppercase" />
+      
       <button onclick="sendWithdraw()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl">Request Payout</button>
       <button onclick="document.getElementById('withdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
     </div>
@@ -408,6 +431,30 @@
     function openSocialsModal() {
       document.getElementById('socialsModal').classList.remove('hidden');
     }
+
+    function showForgotModal() {
+      document.getElementById('forgotModal').classList.remove('hidden');
+    }
+
+    function hideForgotModal() {
+      document.getElementById('forgotModal').classList.add('hidden');
+    }
+
+    function submitForgotPassword() {
+      const phone = document.getElementById('forgotPhone').value.trim();
+      const newPassword = document.getElementById('forgotNewPass').value.trim();
+      if (!phone || !newPassword) return alert('Please enter phone and new password!');
+      socket.emit('forgot_password', { phone, newPassword });
+    }
+
+    socket.on('forgot_password_response', ({ success, message }) => {
+      alert(message);
+      if (success) {
+        hideForgotModal();
+        document.getElementById('forgotPhone').value = '';
+        document.getElementById('forgotNewPass').value = '';
+      }
+    });
 
     function copyOrOpenLink(type) {
       const url = currentSocialLinks[type];
@@ -929,11 +976,40 @@
 
     function sendWithdraw() {
       const amount = Number(document.getElementById('withAmount').value);
-      const account = document.getElementById('withAccount').value;
-      if (!amount || !account) return alert('Fill all fields');
-      if (amount < 30) return alert('Minimum withdrawal is ₹30!');
-      socket.emit('withdraw_request', { phone: currentUser.phone, name: currentUser.name, amount, account });
+      const bankUserName = document.getElementById('withBankUserName').value.trim();
+      const bankName = document.getElementById('withBankName').value.trim();
+      const acNo = document.getElementById('withAcNo').value.trim();
+      const acNoConfirm = document.getElementById('withAcNoConfirm').value.trim();
+      const ifsc = document.getElementById('withIfsc').value.trim();
+
+      if (!amount || !bankUserName || !bankName || !acNo || !acNoConfirm || !ifsc) {
+        return alert('Sob gulo field fill korun!');
+      }
+      if (amount < 30) {
+        return alert('Minimum withdrawal is ₹30!');
+      }
+      if (acNo !== acNoConfirm) {
+        return alert('Account numbers do not match!');
+      }
+
+      const accountDetails = `Name: ${bankUserName} | Bank: ${bankName} | A/C: ${acNo} | IFSC: ${ifsc}`;
+
+      socket.emit('withdraw_request', { 
+        phone: currentUser.phone, 
+        name: currentUser.name, 
+        amount, 
+        account: accountDetails 
+      });
+
       document.getElementById('withdrawModal').classList.add('hidden');
+      
+      document.getElementById('withAmount').value = '';
+      document.getElementById('withBankUserName').value = '';
+      document.getElementById('withBankName').value = '';
+      document.getElementById('withAcNo').value = '';
+      document.getElementById('withAcNoConfirm').value = '';
+      document.getElementById('withIfsc').value = '';
+
       alert('Withdrawal request submitted successfully!');
       setTimeout(() => socket.emit('fetch_user_transactions', { phone: currentUser.phone }), 500);
     }
