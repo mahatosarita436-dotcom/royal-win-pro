@@ -421,7 +421,6 @@
       const el = document.getElementById('adminRocketMult');
       if(el) el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
 
-      // Live update rocket bets list with live return amounts if flying
       if (betsLiveReturn && Array.isArray(betsLiveReturn)) {
         const rocketBetsEl = document.getElementById('adminRocketBetsList');
         if (rocketBetsEl) {
@@ -580,7 +579,6 @@
 
       renderUsersTable();
 
-      // SORTED ROCKET LIVE BETS WITH LIVE RETURN
       const rocketBetsEl = document.getElementById('adminRocketBetsList');
       if (rocketBetsEl) {
         if (!rocketBets || rocketBets.length === 0) {
@@ -602,7 +600,6 @@
         }
       }
 
-      // COLOUR LIVE BETS
       const betsEl = document.getElementById('liveBetsList');
       if(betsEl) {
         betsEl.innerHTML = (!currentBets || currentBets.length === 0)
