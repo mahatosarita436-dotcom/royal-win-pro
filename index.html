@@ -668,6 +668,7 @@
       updateBalanceDisplay(user.balance);
       socket.emit('fetch_my_bets', { phone: user.phone });
       socket.emit('fetch_user_transactions', { phone: user.phone });
+      socket.emit('fetch_user_tickets', { phone: user.phone });
     });
 
     socket.on('auth_error', (msg) => { alert(msg); });
@@ -708,12 +709,16 @@
 
     function openSupportModal() {
       document.getElementById('supportModal').classList.remove('hidden');
-      socket.emit('fetch_user_tickets', { phone: currentUser.phone });
+      if (currentUser) {
+        socket.emit('fetch_user_tickets', { phone: currentUser.phone });
+      }
     }
 
     function openTransactionModal() {
       document.getElementById('transactionModal').classList.remove('hidden');
-      socket.emit('fetch_user_transactions', { phone: currentUser.phone });
+      if (currentUser) {
+        socket.emit('fetch_user_transactions', { phone: currentUser.phone });
+      }
     }
 
     function switchTxTab(tab) {
@@ -754,7 +759,9 @@
       activeGameFilter = gameName;
       document.getElementById('myBetsModalTitle').innerText = `📊 My ${gameName} Bet History`;
       document.getElementById('myBetsModal').classList.remove('hidden');
-      socket.emit('fetch_my_bets', { phone: currentUser.phone });
+      if (currentUser) {
+        socket.emit('fetch_my_bets', { phone: currentUser.phone });
+      }
     }
 
     socket.on('my_bets_response', (bets) => {
@@ -790,8 +797,9 @@
     socket.on('support_tickets_response', (tickets) => {
       allUserTickets = tickets || [];
       const listEl = document.getElementById('userTicketsHistoryList');
+      if (!listEl) return;
       if (allUserTickets.length === 0) {
-        listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No tickets found.</p>`;
+        listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No tickets found.</p>";`;
         return;
       }
       listEl.innerHTML = allUserTickets.map(t => `
