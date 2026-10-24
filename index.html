@@ -7,221 +7,250 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { background-color: #070a14; color: #f8fafc; font-family: system-ui, sans-serif; }
+    body { background-color: #030712; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
     .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
     .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
-    .win-ribbon { background: linear-gradient(90deg, #ff5722, #ff8a50, #ff5722); box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5); }
+    .win-ribbon { background: linear-gradient(90deg, #f97316, #fbbf24, #f97316); box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
     @keyframes popIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      80% { transform: scale(1.06); opacity: 1; }
+      0% { transform: scale(0.8); opacity: 0; }
+      80% { transform: scale(1.03); opacity: 1; }
       100% { transform: scale(1); opacity: 1; }
     }
-    .animate-pop { animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-pop { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
   </style>
 </head>
-<body class="min-h-screen flex justify-center items-start bg-slate-950 pb-20">
+<body class="min-h-screen flex justify-center items-start bg-[#020617] pb-24">
 
   <!-- AUTH SCREEN -->
-  <div id="authScreen" class="w-full max-w-md bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-5 shadow-2xl mt-12 mx-4">
-    <div class="text-center">
-      <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-        3-in-1 Gaming Arena (₹10 Joining Bonus)
+  <div id="authScreen" class="w-full max-w-md bg-[#0b0f19] p-7 rounded-[28px] border border-slate-800/80 space-y-6 shadow-2xl mt-10 mx-4 relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="text-center relative z-10">
+      <span class="px-3.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+        ✨ Welcome Bonus ₹10 Active
       </span>
-      <h2 class="text-3xl font-black mt-2 bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
+      <h2 class="text-3xl font-black mt-3 bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent tracking-tight">
         ROYAL WIN PRO
       </h2>
     </div>
 
-    <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold cursor-pointer">
-      <button type="button" onclick="switchAuthTab('login')" id="tabLoginBtn" class="py-2.5 rounded-lg bg-indigo-600 text-white transition">Login</button>
-      <button type="button" onclick="switchAuthTab('register')" id="tabRegBtn" class="py-2.5 rounded-lg text-slate-400 transition">Register</button>
+    <div class="grid grid-cols-2 bg-[#05070d] p-1.5 rounded-2xl border border-slate-800/80 text-xs font-bold relative z-10">
+      <button type="button" onclick="switchAuthTab('login')" id="tabLoginBtn" class="py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all">Login</button>
+      <button type="button" onclick="switchAuthTab('register')" id="tabRegBtn" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">Register</button>
     </div>
 
-    <p id="authError" class="text-xs text-rose-400 text-center hidden font-bold"></p>
+    <p id="authError" class="text-xs text-rose-400 text-center hidden font-bold bg-rose-500/10 py-2 rounded-xl border border-rose-500/20"></p>
 
     <!-- LOGIN FORM -->
-    <div id="loginForm" class="space-y-3">
-      <input id="loginPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="loginPass" type="password" placeholder="Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <div class="text-right">
-        <button type="button" onclick="showForgotModal()" class="text-xs text-indigo-400 hover:underline font-bold">Forgot Password?</button>
+    <div id="loginForm" class="space-y-3.5 relative z-10">
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold text-slate-400 ml-1">Mobile Number</label>
+        <input id="loginPhone" type="text" placeholder="Enter Mobile Number" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" />
       </div>
-      <button type="button" onclick="submitLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold text-slate-400 ml-1">Password</label>
+        <input id="loginPass" type="password" placeholder="Enter Password" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" />
+      </div>
+      <div class="text-right pt-1">
+        <button type="button" onclick="showForgotModal()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold tracking-wide">Forgot Password?</button>
+      </div>
+      <button type="button" onclick="submitLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all">
         LOGIN TO PLAY
       </button>
     </div>
 
     <!-- REGISTER FORM -->
-    <div id="registerForm" class="space-y-3 hidden">
-      <input id="regName" type="text" placeholder="Full Name" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="regPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="regPass" type="password" placeholder="Create Password" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white focus:border-indigo-500 outline-none" />
-      <input id="regSecret" type="text" placeholder="Secret Code (For Password Reset Security)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-emerald-400 focus:border-indigo-500 outline-none font-mono" />
-      <button type="button" onclick="submitRegister()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95 transition">
+    <div id="registerForm" class="space-y-3.5 hidden relative z-10">
+      <div class="space-y-1">
+        <input id="regName" type="text" placeholder="Full Name" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all" />
+      </div>
+      <div class="space-y-1">
+        <input id="regPhone" type="text" placeholder="Mobile Number" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all" />
+      </div>
+      <div class="space-y-1">
+        <input id="regPass" type="password" placeholder="Create Password" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all" />
+      </div>
+      <div class="space-y-1">
+        <input id="regSecret" type="text" placeholder="Secret Code (For Reset Security)" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm text-emerald-400 focus:border-indigo-500 outline-none font-mono transition-all" />
+      </div>
+      <button type="button" onclick="submitRegister()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 active:scale-[0.98] transition-all">
         CREATE ACCOUNT (₹10 BONUS)
       </button>
     </div>
   </div>
 
-  <!-- FORGOT PASSWORD MODAL WITH SECRET CODE -->
-  <div id="forgotModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
-      <h3 class="font-bold text-indigo-400 text-base">Secure Password Reset</h3>
-      <p class="text-xs text-slate-400">Enter your registered mobile number and your secret code to change password.</p>
-      <input id="forgotPhone" type="text" placeholder="Mobile Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none" />
-      <input id="forgotSecret" type="text" placeholder="Your Secret Code" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-emerald-400 outline-none font-mono" />
-      <input id="forgotNewPass" type="password" placeholder="New Password" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white outline-none" />
-      <button onclick="submitForgotPassword()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-2.5 rounded-xl text-xs">Verify & Update Password</button>
-      <button onclick="hideForgotModal()" class="w-full text-xs text-slate-400 pt-1">Back to Login</button>
+  <!-- FORGOT PASSWORD MODAL -->
+  <div id="forgotModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-3xl space-y-4 border border-slate-800 text-center shadow-2xl animate-pop">
+      <div class="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold border border-indigo-500/20">🔐</div>
+      <div>
+        <h3 class="font-black text-white text-base">Secure Password Reset</h3>
+        <p class="text-xs text-slate-400 mt-1">Enter your registered mobile number and your secret code.</p>
+      </div>
+      <div class="space-y-2.5">
+        <input id="forgotPhone" type="text" placeholder="Mobile Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-indigo-500" />
+        <input id="forgotSecret" type="text" placeholder="Secret Code" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-emerald-400 outline-none font-mono focus:border-indigo-500" />
+        <input id="forgotNewPass" type="password" placeholder="New Password" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-indigo-500" />
+      </div>
+      <div class="space-y-2 pt-1">
+        <button onclick="submitForgotPassword()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-2xl text-xs shadow-lg shadow-indigo-600/30 transition-all">Verify & Update</button>
+        <button onclick="hideForgotModal()" class="w-full text-xs text-slate-400 hover:text-white py-1 transition-all">Back to Login</button>
+      </div>
     </div>
   </div>
 
   <!-- MAIN GAME CONTAINER -->
-  <div id="gameScreen" class="hidden w-full max-w-md bg-slate-900 min-h-screen shadow-2xl border-x border-slate-800 flex flex-col pb-16">
-    <header class="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center sticky top-0 z-20">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-        <h1 class="text-base font-black tracking-wider bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-400 bg-clip-text text-transparent">
+  <div id="gameScreen" class="hidden w-full max-w-md bg-[#070a14] min-h-screen shadow-2xl border-x border-slate-800/60 flex flex-col pb-24 relative">
+    <header class="p-4 bg-[#0b0f19]/90 backdrop-blur-md border-b border-slate-800/80 flex justify-between items-center sticky top-0 z-30">
+      <div class="flex items-center gap-2.5">
+        <div class="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399] animate-pulse"></div>
+        <h1 class="text-sm font-black tracking-wider bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
           ROYAL WIN PRO
         </h1>
       </div>
-      <span id="userInfo" class="text-[11px] font-mono text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700"></span>
+      <span id="userInfo" class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"></span>
     </header>
 
-    <div class="p-4 space-y-3">
-      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-4 rounded-2xl border border-indigo-500/40 shadow-xl space-y-3">
-        <div class="flex justify-between items-center">
+    <div class="p-4 space-y-3.5">
+      <!-- Balance Card -->
+      <div class="bg-gradient-to-br from-[#0e1628] via-[#0b0f19] to-[#070a14] p-5 rounded-[24px] border border-indigo-500/30 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-indigo-600/10 rounded-full blur-2xl"></div>
+        <div class="flex justify-between items-center relative z-10">
           <div>
-            <p class="text-[11px] uppercase tracking-wider text-indigo-300 font-semibold">Total Balance</p>
-            <h2 class="text-3xl font-black text-white">₹<span id="userBalance">0.00</span></h2>
+            <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-extrabold">Total Balance</p>
+            <h2 class="text-3xl font-black text-white mt-0.5 tracking-tight">₹<span id="userBalance">0.00</span></h2>
           </div>
           <div class="flex gap-2">
-            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">+ Deposit</button>
-            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">↑ Withdraw</button>
+            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">+ Deposit</button>
+            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all">↑ Withdraw</button>
           </div>
         </div>
       </div>
 
-      <!-- CHECK-IN BUTTON (Cleaned & Unique) -->
+      <!-- CHECK-IN BUTTON -->
       <div>
-        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-sm active:scale-95 transition tracking-wide border border-indigo-400/30">
-          <span>📅</span> Check-in
+        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2.5 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
+          <span class="text-base">📅</span> Check-in
         </button>
       </div>
 
       <!-- REDEEM GIFT CODE BOX -->
-      <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex gap-2">
-        <input id="userGiftCodeInput" type="text" placeholder="Enter Gift Code..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono outline-none" />
-        <button onclick="claimGiftCode()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow">Redeem</button>
+      <div class="bg-[#0b0f19] p-3.5 rounded-2xl border border-slate-800/80 flex gap-2.5 shadow-inner">
+        <input id="userGiftCodeInput" type="text" placeholder="Enter Gift Code..." class="w-full bg-[#05070d] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white uppercase font-mono outline-none focus:border-indigo-500 transition-all" />
+        <button onclick="claimGiftCode()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all">Redeem</button>
       </div>
 
       <div>
-        <button onclick="openTransactionModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-indigo-400 font-bold py-2.5 rounded-xl border border-indigo-500/30 text-xs shadow">
-          📜 Txn History
+        <button onclick="openTransactionModal()" class="w-full bg-[#0b0f19] hover:bg-[#111827] text-indigo-400 font-bold py-3 rounded-2xl border border-indigo-500/20 text-xs shadow-md transition-all flex items-center justify-center gap-2">
+          <span>📜</span> View Transaction History
         </button>
       </div>
     </div>
 
     <!-- GAME SWITCH TABS -->
-    <div class="px-4 mb-4">
-      <div class="grid grid-cols-3 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-black">
-        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow">🎨 Colour</button>
-        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🎴 KISMAT</button>
-        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white">🚀 Rocket</button>
+    <div class="px-4 mb-3">
+      <div class="grid grid-cols-3 bg-[#0b0f19] p-1.5 rounded-2xl border border-slate-800/80 text-xs font-black shadow-inner">
+        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md transition-all">🎨 Colour</button>
+        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🎴 KISMAT</button>
+        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🚀 Rocket</button>
       </div>
     </div>
 
     <!-- GAME 1: COLOUR -->
     <div id="section-colour" class="px-4 space-y-4">
-      <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl flex justify-between items-center">
+      <div class="bg-[#0b0f19] border border-slate-800/80 p-4 rounded-2xl flex justify-between items-center shadow-md">
         <div>
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Period ID</span>
-          <p id="periodId" class="text-lg font-mono font-black text-white">--</p>
+          <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Period ID</span>
+          <p id="periodId" class="text-base font-mono font-black text-white mt-0.5">--</p>
         </div>
         <div class="text-right">
-          <span class="text-[11px] text-slate-400 uppercase font-bold">Count Down</span>
-          <div id="timerDisplay" class="text-2xl font-mono font-black text-emerald-400">00:30</div>
+          <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Count Down</span>
+          <div id="timerDisplay" class="text-2xl font-mono font-black text-emerald-400 mt-0.5">00:30</div>
         </div>
       </div>
 
       <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Colour History (Last 20)</span>
-        <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold underline">📊 My Colour Bets</button>
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Colour History (Last 20)</span>
+        <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold hover:underline">📊 My Colour Bets</button>
       </div>
       <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
 
-      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div id="colourLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-xl">
-          Betting Locked for this round!
+      <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
+        <div id="colourLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-lg tracking-wider">
+          🔒 Betting Locked for this round!
         </div>
-        <div class="grid grid-cols-3 gap-3">
-          <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN GREEN <span class="block text-[10px] opacity-80 font-normal">Win 2x</span>
+        <div class="grid grid-cols-3 gap-2.5">
+          <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
+            JOIN GREEN <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
           </button>
-          <button onclick="openUniqueBetDrawer('VIOLET', 4.5, 'from-purple-600 to-indigo-600')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN VIOLET <span class="block text-[10px] opacity-80 font-normal">Win 4.5x</span>
+          <button onclick="openUniqueBetDrawer('VIOLET', 4.5, 'from-purple-600 to-indigo-600')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
+            JOIN VIOLET <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 4.5x</span>
           </button>
-          <button onclick="openUniqueBetDrawer('RED', 2, 'from-rose-600 to-red-600')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition">
-            JOIN RED <span class="block text-[10px] opacity-80 font-normal">Win 2x</span>
+          <button onclick="openUniqueBetDrawer('RED', 2, 'from-rose-600 to-red-600')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-rose-500/20 active:scale-95 transition-all">
+            JOIN RED <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
           </button>
         </div>
 
-        <div class="grid grid-cols-5 gap-2.5 pt-1">
-          <button onclick="openUniqueBetDrawer('0', 9, 'from-rose-600 to-purple-600')" class="num-0 py-2.5 rounded-xl font-black text-base shadow active:scale-95">0</button>
-          <button onclick="openUniqueBetDrawer('1', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">1</button>
-          <button onclick="openUniqueBetDrawer('2', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">2</button>
-          <button onclick="openUniqueBetDrawer('3', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">3</button>
-          <button onclick="openUniqueBetDrawer('4', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">4</button>
-          <button onclick="openUniqueBetDrawer('5', 9, 'from-emerald-600 to-purple-600')" class="num-5 py-2.5 rounded-xl font-black text-base shadow active:scale-95">5</button>
-          <button onclick="openUniqueBetDrawer('6', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">6</button>
-          <button onclick="openUniqueBetDrawer('7', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">7</button>
-          <button onclick="openUniqueBetDrawer('8', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">8</button>
-          <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-2.5 rounded-xl font-black text-base shadow active:scale-95">9</button>
+        <div class="grid grid-cols-5 gap-2 pt-1">
+          <button onclick="openUniqueBetDrawer('0', 9, 'from-rose-600 to-purple-600')" class="num-0 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">0</button>
+          <button onclick="openUniqueBetDrawer('1', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">1</button>
+          <button onclick="openUniqueBetDrawer('2', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">2</button>
+          <button onclick="openUniqueBetDrawer('3', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">3</button>
+          <button onclick="openUniqueBetDrawer('4', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">4</button>
+          <button onclick="openUniqueBetDrawer('5', 9, 'from-emerald-600 to-purple-600')" class="num-5 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">5</button>
+          <button onclick="openUniqueBetDrawer('6', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">6</button>
+          <button onclick="openUniqueBetDrawer('7', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">7</button>
+          <button onclick="openUniqueBetDrawer('8', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">8</button>
+          <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">9</button>
         </div>
       </div>
     </div>
 
     <!-- GAME 2: KISMAT -->
     <div id="section-kismat" class="hidden px-4 space-y-4">
-      <div class="bg-slate-800/90 border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center">
+      <div class="bg-[#0b0f19] border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center shadow-md">
         <div>
-          <span class="text-[11px] text-amber-400 uppercase font-bold">🎴 LUCKY CARDS KISMAT (2:30 Min)</span>
-          <p id="kismatPeriod" class="text-lg font-mono font-black text-white">--</p>
+          <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">🎴 LUCKY CARDS KISMAT (2:30 Min)</span>
+          <p id="kismatPeriod" class="text-base font-mono font-black text-white mt-0.5">--</p>
         </div>
         <div class="text-right">
-          <span class="text-[11px] text-amber-400 uppercase font-bold">Timer</span>
-          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400">02:30</div>
+          <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">Timer</span>
+          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400 mt-0.5">02:30</div>
         </div>
       </div>
 
       <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cards History (Last 20)</span>
-        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold underline">📊 My Card Bets</button>
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cards History (Last 20)</span>
+        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold hover:underline">📊 My Card Bets</button>
       </div>
       <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
 
-      <div class="relative bg-slate-800/40 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-xl text-center px-4">
-          Betting Locked (Last 10s)!
+      <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
+        <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-base text-center px-4 tracking-wider">
+          🔒 Betting Locked (Last 10s)!
         </div>
         <p class="text-xs text-slate-300 font-bold text-center">Choose 1 Lucky Card out of 10. Fixed Bet: ₹10, Win ₹90 (9x Return).</p>
         
-        <div class="grid grid-cols-5 gap-2.5">
-          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-4 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition">🎴 Card 1</button>
-          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 2</button>
-          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 3</button>
-          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 4</button>
-          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 5</button>
-          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 6</button>
-          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 7</button>
-          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-slate-950 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 8</button>
-          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 9</button>
-          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition">🎴 Card 10</button>
+        <div class="grid grid-cols-5 gap-2">
+          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-3.5 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition-all">Card 1</button>
+          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 2</button>
+          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 3</button>
+          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 4</button>
+          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 5</button>
+          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 6</button>
+          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 7</button>
+          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 8</button>
+          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 9</button>
+          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 10</button>
         </div>
 
-        <div class="space-y-2 pt-2">
-          <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white text-center" />
-          <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
+        <div class="space-y-2.5 pt-1">
+          <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white text-center shadow-inner" />
+          <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all">
             CONFIRM BET (₹10) ON <span id="selectedKismatOptLabel">Card 1</span>
           </button>
         </div>
@@ -231,165 +260,162 @@
     <!-- GAME 3: ROCKET -->
     <div id="section-rocket" class="hidden px-4 space-y-4">
       <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rocket History (Last 20)</span>
-        <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold underline">📊 My Rocket Bets</button>
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Rocket History (Last 20)</span>
+        <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold hover:underline">📊 My Rocket Bets</button>
       </div>
       <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono whitespace-nowrap"></div>
 
-      <div class="relative bg-gradient-to-b from-slate-950 via-indigo-950/60 to-slate-950 border border-indigo-500/40 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
+      <div class="relative bg-gradient-to-b from-[#05070d] via-indigo-950/40 to-[#05070d] border border-indigo-500/30 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
         <canvas id="rocketCanvas" width="380" height="260" class="absolute inset-0 w-full h-full"></canvas>
         <div class="relative z-10 text-center pointer-events-none">
-          <p id="rocketStatusText" class="text-xs font-bold uppercase tracking-widest text-indigo-300">Next Flight In</p>
+          <p id="rocketStatusText" class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-300">Next Flight In</p>
           <h2 id="rocketMultiplierDisplay" class="text-6xl font-black font-mono text-white drop-shadow-lg mt-1">1.00x</h2>
         </div>
       </div>
 
-      <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 space-y-3">
+      <div class="bg-[#0b0f19] border border-slate-800/80 rounded-2xl p-4 space-y-3.5 shadow-xl">
         <div class="flex justify-between items-center">
           <span class="text-xs text-slate-300 font-bold">Bet Amount (Min ₹10)</span>
           <div class="flex gap-1.5">
-            <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-black">2x</button>
-            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹10</button>
-            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹50</button>
-            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-slate-900 px-2 py-1 rounded-lg text-xs font-bold border border-slate-700">₹100</button>
+            <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-xl text-xs font-black shadow-md">2x</button>
+            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹10</button>
+            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹50</button>
+            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹100</button>
           </div>
         </div>
-        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white outline-none focus:border-indigo-500 transition-all" />
 
-        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-lg">
+        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all uppercase tracking-wider">
           🚀 PLACE BET (Min ₹10)
         </button>
       </div>
     </div>
 
     <!-- BOTTOM FIXED NAVIGATION BAR -->
-    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-slate-950 border-t border-slate-800 py-3 px-6 flex justify-around items-center z-40">
-      <button onclick="switchGame('colour')" class="flex flex-col items-center text-emerald-400 font-bold text-xs">
+    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0b0f19]/95 backdrop-blur-md border-t border-slate-800/80 py-3.5 px-6 flex justify-around items-center z-40 shadow-2xl">
+      <button onclick="switchGame('colour')" class="flex flex-col items-center text-emerald-400 font-bold text-xs gap-0.5">
         <span class="text-base">🎮</span>
         <span>Games</span>
       </button>
-      <button onclick="openSupportModal()" class="flex flex-col items-center text-amber-400 font-bold text-xs">
+      <button onclick="openSupportModal()" class="flex flex-col items-center text-amber-400 font-bold text-xs gap-0.5">
         <span class="text-base">💬</span>
         <span>Support</span>
       </button>
-      <button onclick="openSocialsModal()" class="flex flex-col items-center text-indigo-400 font-bold text-xs">
+      <button onclick="openSocialsModal()" class="flex flex-col items-center text-indigo-400 font-bold text-xs gap-0.5">
         <span class="text-base">📢</span>
-        <span>Join Channels</span>
+        <span>Channels</span>
       </button>
     </div>
   </div>
 
-  <!-- CHECK-IN MODAL (Clean, Unique & Modern) -->
+  <!-- CHECK-IN MODAL (Ultra Modern UI) -->
   <div id="checkinModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 w-full max-w-md p-6 rounded-3xl space-y-5 border border-indigo-500/40 shadow-2xl relative animate-pop">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
+    <div class="bg-gradient-to-b from-[#0b0f19] via-[#0b0f19] to-indigo-950 w-full max-w-md p-6 rounded-[28px] space-y-5 border border-indigo-500/40 shadow-2xl relative animate-pop">
+      <div class="flex justify-between items-center border-b border-slate-800/80 pb-3.5">
+        <div class="flex items-center gap-2.5">
           <span class="text-xl">🎁</span>
-          <h3 class="font-black text-white text-lg tracking-wide">Check-in</h3>
+          <h3 class="font-black text-white text-base tracking-wide">Check-in</h3>
         </div>
-        <button onclick="document.getElementById('checkinModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center">✕</button>
+        <button onclick="document.getElementById('checkinModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center transition-all">✕</button>
       </div>
 
-      <!-- Unique 7 Days Grid UI -->
-      <div id="checkinDaysGrid" class="grid grid-cols-4 gap-2.5">
-        <!-- Dynamically rendered -->
-      </div>
+      <div id="checkinDaysGrid" class="grid grid-cols-4 gap-2.5"></div>
 
-      <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl active:scale-95 transition text-sm tracking-wider uppercase">
+      <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-indigo-600/30 active:scale-95 transition-all text-xs tracking-widest uppercase">
         Check-in
       </button>
     </div>
   </div>
 
   <!-- SOCIAL LINKS POPUP MODAL -->
-  <div id="socialsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-4 border border-slate-700 text-center">
-      <h3 class="font-bold text-indigo-400 text-base">📢 Join Our Official Channels</h3>
-      <p class="text-xs text-slate-400">Click below to copy or visit our social links.</p>
+  <div id="socialsModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-slate-800 text-center shadow-2xl animate-pop">
+      <h3 class="font-black text-indigo-400 text-base">📢 Official Channels</h3>
+      <p class="text-xs text-slate-400">Join our social media handles for daily updates & codes.</p>
       
       <div class="space-y-2.5 text-xs">
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center">
           <span class="text-sky-400 font-bold">Telegram</span>
-          <button onclick="copyOrOpenLink('telegram')" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+          <button onclick="copyOrOpenLink('telegram')" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-xl font-bold shadow-md">Open</button>
         </div>
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center">
           <span class="text-rose-400 font-bold">YouTube</span>
-          <button onclick="copyOrOpenLink('youtube')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+          <button onclick="copyOrOpenLink('youtube')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl font-bold shadow-md">Open</button>
         </div>
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center">
           <span class="text-purple-400 font-bold">Instagram</span>
-          <button onclick="copyOrOpenLink('instagram')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold">Open / Copy</button>
+          <button onclick="copyOrOpenLink('instagram')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-xl font-bold shadow-md">Open</button>
         </div>
       </div>
 
-      <button onclick="document.getElementById('socialsModal').classList.add('hidden')" class="w-full bg-slate-800 py-2.5 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+      <button onclick="document.getElementById('socialsModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
     </div>
   </div>
 
   <!-- SUPPORT MODAL -->
-  <div id="supportModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
-      <h3 class="font-bold text-amber-400 text-base">💬 Submit Support Ticket</h3>
-      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+  <div id="supportModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-md p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl animate-pop">
+      <h3 class="font-black text-amber-400 text-base">💬 Submit Support Ticket</h3>
+      <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 space-y-2.5">
         <input id="supportPhone" type="hidden" />
-        <textarea id="supportMessage" rows="3" placeholder="Describe your issue or complaint..." class="w-full bg-slate-900 p-2 rounded-lg border border-slate-700 text-xs text-white outline-none"></textarea>
-        <button onclick="sendSupportTicket()" class="w-full bg-amber-500 text-slate-950 font-black py-2 rounded-lg text-xs">Submit Ticket</button>
+        <textarea id="supportMessage" rows="3" placeholder="Describe your issue or complaint..." class="w-full bg-[#0b0f19] p-3 rounded-xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500 transition-all"></textarea>
+        <button onclick="sendSupportTicket()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs shadow-md shadow-amber-500/20 transition-all">Submit Ticket</button>
       </div>
-      <div id="userTicketsHistoryList" class="space-y-3 overflow-y-auto flex-1 text-xs pr-1">
+      <div id="userTicketsHistoryList" class="space-y-2.5 overflow-y-auto flex-1 text-xs pr-1">
         <p class="text-slate-500 text-center py-4">Loading tickets...</p>
       </div>
-      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+      <button onclick="document.getElementById('supportModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
     </div>
   </div>
 
   <!-- TRANSACTION HISTORY MODAL -->
-  <div id="transactionModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-        <h3 class="font-bold text-indigo-400 text-base">📜 Transaction History</h3>
-        <div class="flex gap-1 bg-slate-950 p-1 rounded-lg text-xs font-bold">
-          <button onclick="switchTxTab('deposit')" id="txTabDepBtn" class="px-3 py-1 rounded bg-indigo-600 text-white">Deposit</button>
-          <button onclick="switchTxTab('withdraw')" id="txTabWithBtn" class="px-3 py-1 rounded text-slate-400">Withdraw</button>
+  <div id="transactionModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-md p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl animate-pop">
+      <div class="flex justify-between items-center border-b border-slate-800/80 pb-3">
+        <h3 class="font-black text-indigo-400 text-base">📜 Transaction History</h3>
+        <div class="flex gap-1 bg-[#05070d] p-1 rounded-xl text-xs font-bold border border-slate-800">
+          <button onclick="switchTxTab('deposit')" id="txTabDepBtn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all">Deposit</button>
+          <button onclick="switchTxTab('withdraw')" id="txTabWithBtn" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">Withdraw</button>
         </div>
       </div>
-      <div id="userTxHistoryList" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1">
+      <div id="userTxHistoryList" class="space-y-2.5 overflow-y-auto flex-1 text-xs pr-1">
         <p class="text-slate-500 text-center py-4">Loading transactions...</p>
       </div>
-      <button onclick="document.getElementById('transactionModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+      <button onclick="document.getElementById('transactionModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
     </div>
   </div>
 
   <!-- MY BET HISTORY MODAL -->
-  <div id="myBetsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-md p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] flex flex-col">
-      <h3 id="myBetsModalTitle" class="font-bold text-indigo-400 text-base">📊 My Bet History</h3>
-      <div id="myBetsHistoryList" class="space-y-2 overflow-y-auto flex-1 text-xs pr-1">
+  <div id="myBetsModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-md p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl animate-pop">
+      <h3 id="myBetsModalTitle" class="font-black text-indigo-400 text-base">📊 My Bet History</h3>
+      <div id="myBetsHistoryList" class="space-y-2.5 overflow-y-auto flex-1 text-xs pr-1">
         <p class="text-slate-500 text-center py-4">No bets found.</p>
       </div>
-      <button onclick="document.getElementById('myBetsModal').classList.add('hidden')" class="w-full bg-slate-800 py-2 rounded-xl text-xs text-slate-300 font-bold">Close</button>
+      <button onclick="document.getElementById('myBetsModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
     </div>
   </div>
 
   <!-- UNIQUE BET DRAWER -->
-  <div id="uniqueBetDrawer" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-end justify-center">
-    <div class="bg-slate-900 w-full max-w-md rounded-t-3xl border-t-2 border-emerald-400 overflow-hidden shadow-2xl animate-pop">
-      <div id="drawerHeader" class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex justify-between items-center">
+  <div id="uniqueBetDrawer" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-40 flex items-end justify-center">
+    <div class="bg-[#0b0f19] w-full max-w-md rounded-t-[32px] border-t-2 border-emerald-400 overflow-hidden shadow-2xl animate-pop">
+      <div id="drawerHeader" class="bg-gradient-to-r from-emerald-600 to-teal-500 p-4.5 flex justify-between items-center shadow-md">
         <div>
-          <span class="text-[10px] uppercase tracking-widest font-black text-white/80">Bet Slip (1% Tax)</span>
-          <h3 class="text-xl font-black text-white">BET ON: <span id="drawerTargetName">GREEN</span></h3>
+          <span class="text-[10px] uppercase tracking-widest font-extrabold text-white/80">Bet Slip (1% Tax)</span>
+          <h3 class="text-xl font-black text-white mt-0.5">BET ON: <span id="drawerTargetName">GREEN</span></h3>
         </div>
-        <button onclick="closeUniqueBetDrawer()" class="bg-black/30 text-white w-8 h-8 rounded-full font-bold">✕</button>
+        <button onclick="closeUniqueBetDrawer()" class="bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center transition-all">✕</button>
       </div>
 
-      <div class="p-5 space-y-5">
+      <div class="p-6 space-y-5">
         <div>
           <div class="flex justify-between items-center mb-2">
-            <p class="text-xs font-bold text-slate-400 uppercase">Select or Enter Bet (Min ₹10)</p>
-            <button onclick="doubleColourBet()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-black">2x Double</button>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Select or Enter Bet (Min ₹10)</p>
+            <button onclick="doubleColourBet()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-xl text-xs font-black shadow-md transition-all">2x Double</button>
           </div>
-          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white" />
+          <input id="customColourBetInput" type="number" min="10" value="10" oninput="updateDrawerCalculation()" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-white outline-none focus:border-indigo-500 transition-all" />
         </div>
-        <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black py-3.5 rounded-2xl text-base shadow-xl">
+        <button onclick="confirmUniqueColourBet()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-400 hover:opacity-95 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all">
           ⚡ CONFIRM ORDER ₹<span id="drawerConfirmBtnAmt">10</span>
         </button>
       </div>
@@ -397,53 +423,57 @@
   </div>
 
   <!-- RESULT POPUP -->
-  <div id="photoWinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-3xl p-5 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
+  <div id="photoWinModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-[#fffdf7] text-slate-900 w-full max-w-xs rounded-[32px] p-6 shadow-2xl border-4 border-amber-400 text-center relative animate-pop">
       <div id="winPopupRibbon" class="win-ribbon text-white font-black text-3xl tracking-widest py-2 px-8 rounded-2xl mx-auto shadow-lg uppercase">WIN</div>
       
-      <div id="cashoutDetailsBox" class="hidden text-xs text-slate-700 bg-amber-100 p-2.5 rounded-xl my-2 space-y-1 font-mono font-bold">
+      <div id="cashoutDetailsBox" class="hidden text-xs text-slate-700 bg-amber-100 p-3 rounded-2xl my-3 space-y-1 font-mono font-bold">
         <p>Bet: ₹<span id="popupBetAmt">0</span></p>
         <p>Multiplier: <span id="popupMult">0</span>x</p>
       </div>
 
-      <h2 class="text-3xl font-black text-slate-900 mt-3">+₹<span id="winPopupAmount">0.00</span></h2>
-      <p id="winPopupGameName" class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">WINNER (1% Tax Applied)</p>
-      <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black py-2.5 rounded-xl shadow-md mt-4">CONTINUE</button>
+      <h2 class="text-4xl font-black text-slate-900 mt-4">+₹<span id="winPopupAmount">0.00</span></h2>
+      <p id="winPopupGameName" class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 mt-1">WINNER (1% Tax Applied)</p>
+      <button onclick="document.getElementById('photoWinModal').classList.add('hidden')" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-orange-500/20 mt-5 transition-all">CONTINUE</button>
     </div>
   </div>
 
-  <!-- DEPOSIT & WITHDRAW -->
-  <div id="depositModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 text-center">
-      <h3 class="font-bold text-emerald-400">Scan QR to Deposit</h3>
-      <img src="qr.png" alt="QR" class="w-48 h-48 object-contain mx-auto bg-white p-2 rounded-xl" />
-      <input id="depAmount" type="number" min="20" placeholder="Amount (Min ₹20)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="depUtr" type="text" placeholder="UTR Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm font-mono text-white" />
-      <button onclick="sendDeposit()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl">Submit</button>
-      <button onclick="document.getElementById('depositModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
+  <!-- DEPOSIT MODAL -->
+  <div id="depositModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-slate-800 text-center shadow-2xl animate-pop">
+      <h3 class="font-black text-emerald-400 text-base">Scan QR to Deposit</h3>
+      <img src="qr.png" alt="QR" class="w-48 h-48 object-contain mx-auto bg-white p-3 rounded-2xl shadow-md" />
+      <div class="space-y-2.5 pt-1">
+        <input id="depAmount" type="number" min="20" placeholder="Amount (Min ₹20)" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+        <input id="depUtr" type="text" placeholder="UTR Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs font-mono text-white outline-none focus:border-emerald-500" />
+      </div>
+      <button onclick="sendDeposit()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-lg shadow-emerald-500/20 transition-all">Submit Deposit</button>
+      <button onclick="document.getElementById('depositModal').classList.add('hidden')" class="w-full text-xs text-slate-400 hover:text-white py-1">Cancel</button>
     </div>
   </div>
 
-  <div id="withdrawModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] overflow-y-auto">
-      <h3 class="font-bold text-amber-400 text-center">↑ Withdraw Balance (3% Tax)</h3>
-      <input id="withAmount" type="number" min="30" oninput="calculateWithdrawTax()" placeholder="Amount (Min ₹30)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+  <!-- WITHDRAW MODAL -->
+  <div id="withdrawModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] overflow-y-auto shadow-2xl animate-pop">
+      <h3 class="font-black text-amber-400 text-center text-base">↑ Withdraw Balance (3% Tax)</h3>
+      <input id="withAmount" type="number" min="30" oninput="calculateWithdrawTax()" placeholder="Amount (Min ₹30)" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500" />
       
-      <!-- Live Tax Calculation Info Box -->
-      <div class="bg-slate-950 p-3 rounded-xl border border-amber-500/30 text-xs space-y-1 font-mono text-slate-300">
+      <div class="bg-[#05070d] p-3.5 rounded-2xl border border-amber-500/30 text-xs space-y-1.5 font-mono text-slate-300 shadow-inner">
         <div class="flex justify-between"><span>Requested:</span> <span class="text-white">₹<span id="calcReq">0</span></span></div>
         <div class="flex justify-between"><span>3% Tax:</span> <span class="text-rose-400">-₹<span id="calcTax">0</span></span></div>
-        <div class="flex justify-between border-t border-slate-800 pt-1 font-bold"><span>You Will Get:</span> <span class="text-emerald-400">₹<span id="calcFinal">0</span></span></div>
+        <div class="flex justify-between border-t border-slate-800/80 pt-1.5 font-bold"><span>You Will Get:</span> <span class="text-emerald-400">₹<span id="calcFinal">0</span></span></div>
       </div>
 
-      <input id="withBankUserName" type="text" placeholder="Bank User Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withBankName" type="text" placeholder="Bank Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withAcNo" type="text" placeholder="Account Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withAcNoConfirm" type="text" placeholder="Confirm Account Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
-      <input id="withIfsc" type="text" placeholder="IFSC Code" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white uppercase" />
+      <div class="space-y-2.5 pt-1">
+        <input id="withBankUserName" type="text" placeholder="Bank User Name" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500" />
+        <input id="withBankName" type="text" placeholder="Bank Name" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500" />
+        <input id="withAcNo" type="text" placeholder="Account Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500" />
+        <input id="withAcNoConfirm" type="text" placeholder="Confirm Account Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-amber-500" />
+        <input id="withIfsc" type="text" placeholder="IFSC Code" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white uppercase outline-none focus:border-amber-500 font-mono" />
+      </div>
       
-      <button onclick="sendWithdraw()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl">Request Payout</button>
-      <button onclick="document.getElementById('withdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400">Cancel</button>
+      <button onclick="sendWithdraw()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-lg shadow-amber-500/20 transition-all mt-2">Request Payout</button>
+      <button onclick="document.getElementById('withdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400 hover:text-white py-1">Cancel</button>
     </div>
   </div>
 
@@ -462,7 +492,6 @@
     let activeGameFilter = 'Colour Trading';
     let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
 
-    // Check-in client variables
     let clientCheckInDay = 1;
     let clientCheckedToday = false;
 
@@ -490,7 +519,7 @@
         let isCurrent = i === clientCheckInDay && !clientCheckedToday;
 
         html += `
-          <div class="bg-slate-950/80 p-3 rounded-2xl border ${isCurrent ? 'border-indigo-400 bg-indigo-500/20 shadow-lg scale-105' : isCompleted ? 'border-emerald-500/40 opacity-60' : 'border-slate-800'} text-center flex flex-col justify-between transition-all">
+          <div class="bg-[#05070d] p-3 rounded-2xl border ${isCurrent ? 'border-indigo-400 bg-indigo-500/20 shadow-lg scale-105' : isCompleted ? 'border-emerald-500/40 opacity-60' : 'border-slate-800'} text-center flex flex-col justify-between transition-all">
             <span class="text-[10px] font-bold text-slate-400">Day ${i}</span>
             <span class="text-sm font-black ${i === 7 ? 'text-amber-400' : 'text-emerald-400'} my-1">${rewardText}</span>
             <span class="text-[9px] font-extrabold uppercase ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-indigo-300 animate-pulse' : 'text-slate-500'}">
@@ -504,11 +533,11 @@
       if (clientCheckedToday) {
         claimBtn.innerText = 'Check-in';
         claimBtn.disabled = true;
-        claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl cursor-not-allowed uppercase text-sm tracking-wider';
+        claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl cursor-not-allowed uppercase text-xs tracking-wider';
       } else {
-        claimBtn.innerText = clientCheckInDay === 7 ? 'Check-in' : 'Check-in';
+        claimBtn.innerText = 'Check-in';
         claimBtn.disabled = false;
-        claimBtn.className = 'w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl active:scale-95 transition text-sm tracking-wider uppercase';
+        claimBtn.className = 'w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-indigo-600/30 active:scale-95 transition-all text-xs tracking-widest uppercase';
       }
     }
 
@@ -730,8 +759,8 @@
     function switchAuthTab(tab) {
       document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
       document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
-      document.getElementById('tabLoginBtn').className = tab === 'login' ? 'py-2.5 rounded-lg bg-indigo-600 text-white' : 'py-2.5 rounded-lg text-slate-400';
-      document.getElementById('tabRegBtn').className = tab === 'register' ? 'py-2.5 rounded-lg bg-indigo-600 text-white' : 'py-2.5 rounded-lg text-slate-400';
+      document.getElementById('tabLoginBtn').className = tab === 'login' ? 'py-2.5 rounded-xl bg-indigo-600 text-white shadow-md' : 'py-2.5 rounded-xl text-slate-400 hover:text-white';
+      document.getElementById('tabRegBtn').className = tab === 'register' ? 'py-2.5 rounded-xl bg-indigo-600 text-white shadow-md' : 'py-2.5 rounded-xl text-slate-400 hover:text-white';
     }
 
     function submitRegister() {
@@ -768,7 +797,7 @@
       ['colour', 'kismat', 'rocket'].forEach(g => {
         document.getElementById('section-' + g).classList.toggle('hidden', g !== game);
         document.getElementById('tab-' + g).className = g === game
-          ? 'py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow font-black'
+          ? 'py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md font-black'
           : 'py-2.5 rounded-xl text-slate-400 hover:text-white font-bold';
       });
     }
@@ -779,9 +808,9 @@
       for (let i = 1; i <= 10; i++) {
         const btn = document.getElementById('kopt-' + i);
         if (i === opt) {
-          btn.className = 'kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-4 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition';
+          btn.className = 'kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-3.5 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition-all';
         } else {
-          btn.className = 'kismat-btn bg-slate-900 border border-slate-700 py-4 rounded-xl font-black text-slate-300 text-xs shadow-lg active:scale-95 transition';
+          btn.className = 'kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all';
         }
       }
     }
@@ -814,8 +843,8 @@
 
     function switchTxTab(tab) {
       activeTxTab = tab;
-      document.getElementById('txTabDepBtn').className = tab === 'deposit' ? 'px-3 py-1 rounded bg-indigo-600 text-white' : 'px-3 py-1 rounded text-slate-400';
-      document.getElementById('txTabWithBtn').className = tab === 'withdraw' ? 'px-3 py-1 rounded bg-indigo-600 text-white' : 'px-3 py-1 rounded text-slate-400';
+      document.getElementById('txTabDepBtn').className = tab === 'deposit' ? 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm' : 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white';
+      document.getElementById('txTabWithBtn').className = tab === 'withdraw' ? 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm' : 'px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white';
       renderUserTransactions();
     }
 
@@ -834,13 +863,13 @@
       }
 
       listEl.innerHTML = filtered.map(t => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-sm">
           <div>
             <strong class="${t.type === 'DEPOSIT' ? 'text-emerald-400' : 'text-amber-400'}">${t.type} : ₹${t.amount}</strong>
-            <p class="text-slate-400 text-[11px]">${t.details || ''} (${t.time || ''})</p>
+            <p class="text-slate-400 text-[11px] mt-0.5">${t.details || ''} (${t.time || ''})</p>
           </div>
           <div class="text-right">
-            <span class="font-bold uppercase text-[11px] ${t.status === 'APPROVED' ? 'text-emerald-400' : t.status === 'REJECTED' ? 'text-rose-400' : 'text-amber-400'}">${t.status}</span>
+            <span class="font-bold uppercase text-[11px] px-2.5 py-1 rounded-lg ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : t.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${t.status}</span>
           </div>
         </div>
       `).join('');
@@ -865,14 +894,14 @@
         return;
       }
       listEl.innerHTML = filteredBets.map(b => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-sm">
           <div>
             <strong class="text-white">${b.period ? 'Period: ' + b.period : 'Rocket Flight'}</strong>
-            <p class="text-slate-300">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> | Amt: ₹${b.amount}</p>
+            <p class="text-slate-300 mt-0.5">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> | Amt: ₹${b.amount}</p>
           </div>
           <div class="text-right">
-            <span class="font-bold uppercase ${b.status === 'WON' ? 'text-emerald-400' : b.status === 'LOST' ? 'text-rose-400' : 'text-amber-400'}">${b.status || 'PENDING'}</span>
-            ${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px]">+₹${b.winAmount}</span>` : ''}
+            <span class="font-bold uppercase px-2.5 py-1 rounded-lg ${b.status === 'WON' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : b.status === 'LOST' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${b.status || 'PENDING'}</span>
+            ${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px] mt-1">+₹${b.winAmount}</span>` : ''}
           </div>
         </div>
       `).join('');
@@ -894,13 +923,13 @@
         return;
       }
       listEl.innerHTML = allUserTickets.map(t => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+        <div class="bg-[#0b0f19] p-3.5 rounded-2xl border border-slate-800 space-y-1.5 shadow-sm">
           <div class="flex justify-between items-center text-[10px] text-slate-400">
             <span>Ticket ID: #${t.id}</span>
-            <span class="font-bold uppercase ${t.status === 'RESOLVED' ? 'text-indigo-400' : 'text-amber-400'}">${t.status}</span>
+            <span class="font-bold uppercase px-2 py-0.5 rounded ${t.status === 'RESOLVED' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${t.status}</span>
           </div>
-          <p class="text-white font-medium">📝 ${t.message}</p>
-          ${t.adminReply ? `<div class="bg-indigo-950/50 p-2 rounded-lg border border-indigo-500/30 text-indigo-200 mt-1">👑 Admin Reply: ${t.adminReply}</div>` : ''}
+          <p class="text-white font-medium text-xs">📝 ${t.message}</p>
+          ${t.adminReply ? `<div class="bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-500/30 text-indigo-200 mt-1 text-[11px]">👑 Admin Reply: ${t.adminReply}</div>` : ''}
         </div>
       `).join('');
     });
@@ -909,7 +938,7 @@
       drawerChoice = choice;
       drawerMult = mult;
       document.getElementById('drawerTargetName').innerText = choice;
-      document.getElementById('drawerHeader').className = `bg-gradient-to-r ${gradClass} p-4 flex justify-between items-center`;
+      document.getElementById('drawerHeader').className = `bg-gradient-to-r ${gradClass} p-4.5 flex justify-between items-center shadow-md`;
       document.getElementById('customColourBetInput').value = 10;
       updateDrawerCalculation();
       document.getElementById('uniqueBetDrawer').classList.remove('hidden');
@@ -980,7 +1009,7 @@
         
         if (myRocketBet && !myRocketBet.cashedOut) {
           const liveWinAmt = (myRocketBet.amount * multiplier).toFixed(2);
-          btn.innerHTML = `💰 CASH OUT NOW <span class="block text-xs font-mono font-bold text-amber-300">Live Return: ₹${liveWinAmt}</span>`;
+          btn.innerHTML = `💰 CASH OUT NOW <span class="block text-[11px] font-mono font-bold text-amber-300 mt-0.5">Live Return: ₹${liveWinAmt}</span>`;
         } else {
           btn.innerText = '🚀 FLYING...';
         }
@@ -990,7 +1019,7 @@
         btn.innerText = '🚀 BET FOR NEXT FLIGHT';
         myRocketBet = null;
       }
-      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-emerald-400 font-bold">${h.toFixed(2)}x</span>`).join('');
+      document.getElementById('rocketHistoryBar').innerHTML = (history || []).slice(0, 20).map(h => `<span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] border border-slate-800 text-emerald-400 font-bold shadow-sm">${h.toFixed(2)}x</span>`).join('');
     }
 
     function showPopupResult(type, title, amount, betAmt = null, mult = null) {
@@ -1018,7 +1047,7 @@
     socket.on('round_settled', ({ settledBets, history }) => {
       if (history) {
         document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
+          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-indigo-300 font-bold border border-slate-800 shadow-sm">#${h.number}</span>
         `).join('');
       }
       if (!currentUser) return;
@@ -1033,7 +1062,7 @@
     socket.on('kismat_settled', ({ settledBets, history }) => {
       if (history) {
         document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Card ${h.winOption}</span>
+          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-amber-400 font-bold border border-slate-800 shadow-sm">Card ${h.winOption}</span>
         `).join('');
       }
       if (!currentUser) return;
@@ -1050,7 +1079,7 @@
 
       if (history) {
         document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-indigo-300 font-bold border border-slate-700">#${h.number}</span>
+          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-indigo-300 font-bold border border-slate-800 shadow-sm">#${h.number}</span>
         `).join('');
       }
     });
@@ -1067,7 +1096,7 @@
 
       if (history) {
         document.getElementById('kismatHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2 py-1 rounded bg-slate-950 text-amber-400 font-bold border border-slate-700">Card ${h.winOption}</span>
+          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-amber-400 font-bold border border-slate-800 shadow-sm">Card ${h.winOption}</span>
         `).join('');
       }
     });
