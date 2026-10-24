@@ -54,7 +54,6 @@ const supportSchema = new mongoose.Schema({
 });
 const SupportTicket = mongoose.model('SupportTicket', supportSchema);
 
-// Permanent Bet History Schema
 const betSchema = new mongoose.Schema({
   id: Number,
   phone: String,
@@ -87,7 +86,6 @@ const giftCodeSchema = new mongoose.Schema({
 });
 const GiftCode = mongoose.model('GiftCode', giftCodeSchema);
 
-// Social Links Schema (Permanent Database Storage)
 const socialSchema = new mongoose.Schema({
   key: { type: String, default: 'main_links', unique: true },
   telegram: String,
@@ -698,7 +696,6 @@ io.on('connection', (socket) => {
     await SupportTicket.create(ticket);
     allSupportTickets.unshift(ticket);
     
-    // Broadcast updated tickets to specific user and admin
     io.emit('admin_update', await getAdminPayload());
     socket.emit('support_tickets_response', allSupportTickets.filter(t => t.phone === phone));
   });
@@ -718,15 +715,14 @@ io.on('connection', (socket) => {
       tx.status = approve ? 'APPROVED' : 'REJECTED';
       await Transaction.updateOne({ id: txId }, { status: tx.status });
 
+      const u = cachedUsers.get(tx.phone);
       if (approve && tx.type === 'DEPOSIT') {
-        const u = cachedUsers.get(tx.phone);
         if (u) {
           u.balance = +(u.balance + tx.amount).toFixed(3);
           await User.updateOne({ phone: u.phone }, { balance: u.balance });
           io.emit('user_sync', { user: u });
         }
       } else if (!approve && tx.type === 'WITHDRAW') {
-        const u = cachedUsers.get(tx.phone);
         if (u) {
           u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
           await User.updateOne({ phone: u.phone }, { balance: u.balance });
@@ -785,12 +781,15 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // ADMIN CUSTOM BALANCE FIX: BROADCASTS INSTANT UPDATE TO USER CLIENT[cite: 8]
   socket.on('admin_custom_balance', async ({ phone, amount }) => {
     const u = cachedUsers.get(phone);
     if (u) {
       u.balance = Number(amount);
       await User.updateOne({ phone }, { balance: u.balance });
-      socket.emit('user_sync', { user: u });
+      
+      // Send instant update to the specific user session & admin panel
+      io.emit('user_sync', { user: u });
       io.emit('admin_update', await getAdminPayload());
     }
   });
@@ -802,8 +801,6 @@ io.on('connection', (socket) => {
       t.status = 'RESOLVED';
       await SupportTicket.updateOne({ id: ticketId }, { adminReply: reply, status: 'RESOLVED' });
       io.emit('admin_update', await getAdminPayload());
-      
-      // Also broadcast to specific user client
       io.emit('support_tickets_response', allSupportTickets.filter(item => item.phone === t.phone));
     }
   });
