@@ -71,7 +71,7 @@
       </button>
     </div>
 
-    <!-- REGISTER FORM (WITH INVITE CODE FIELD) -->
+    <!-- REGISTER FORM -->
     <div id="registerForm" class="space-y-3.5 hidden relative z-10">
       <div class="space-y-1">
         <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Full Name</label>
@@ -330,21 +330,27 @@
           </button>
         </div>
 
-        <!-- Referral Link Share Box -->
-        <div class="bg-[#05070d] p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 mt-2">
-          <input id="myReferralLinkInput" type="text" readonly class="bg-transparent text-xs text-indigo-300 font-mono w-full outline-none px-1" />
-          <button onclick="copyReferralLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs shrink-0 shadow">Copy Link</button>
+        <!-- Referral Link Share Box & VIP Referral Option Button -->
+        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800 space-y-2.5 text-left mt-2">
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold uppercase">Your Invite Code</label>
+            <div class="flex items-center justify-between gap-2 mt-1">
+              <input id="myReferralCodeInput" type="text" readonly class="bg-slate-950 border border-slate-800 text-xs text-emerald-400 font-mono font-bold w-full rounded-xl px-3 py-2 outline-none" />
+              <button onclick="copyReferralCode()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 shadow">Copy Code</button>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold uppercase">Your Referral Link</label>
+            <div class="flex items-center justify-between gap-2 mt-1">
+              <input id="myReferralLinkInput" type="text" readonly class="bg-slate-950 border border-slate-800 text-xs text-indigo-300 font-mono w-full rounded-xl px-3 py-2 outline-none" />
+              <button onclick="copyReferralLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 shadow">Copy Link</button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- VIP LEVELS & REWARDS (Bronze to Platinum) -->
-      <div class="bg-[#0b0f19] border border-slate-800/80 p-5 rounded-[24px] space-y-3 shadow-xl">
-        <h3 class="text-xs font-black text-amber-400 uppercase tracking-widest">🏆 VIP Referral Milestones</h3>
-        <p class="text-[11px] text-slate-400">Invited user must deposit min ₹20 within 24 hours of registration.</p>
-
-        <div id="vipLevelsList" class="space-y-2.5 pt-1">
-          <!-- Rendered via JS -->
-        </div>
+        <button onclick="openVipModal()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3 rounded-xl text-xs shadow-lg uppercase tracking-wider">
+          🏆 View VIP Referral Levels & Rewards
+        </button>
       </div>
     </div>
 
@@ -369,18 +375,36 @@
     </div>
   </div>
 
-  <!-- REFERRAL WITHDRAW MODAL (Min ₹30, 0% Tax) -->
+  <!-- VIP REFERRAL LEVELS MODAL -->
+  <div id="vipModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-amber-500/40 max-h-[90vh] overflow-y-auto shadow-2xl animate-pop">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-black text-amber-400 text-base">🏆 VIP Referral Milestones</h3>
+        <button onclick="document.getElementById('vipModal').classList.add('hidden')" class="bg-slate-800 text-white w-7 h-7 rounded-full font-bold flex items-center justify-center">✕</button>
+      </div>
+      <p class="text-[11px] text-slate-400">Invited user must deposit min ₹20 within 24 hours of registration.</p>
+      <div id="vipLevelsList" class="space-y-2.5"></div>
+      <button onclick="document.getElementById('vipModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold">Close</button>
+    </div>
+  </div>
+
+  <!-- REFERRAL WITHDRAW MODAL (Integer Amounts Only) -->
   <div id="referWithdrawModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-emerald-500/40 shadow-2xl animate-pop text-center">
-      <h3 class="font-black text-emerald-400 text-base">Withdraw Referral Earnings</h3>
-      <p class="text-xs text-slate-400">Minimum withdrawal: ₹30 | 0% Tax Deduction</p>
+    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-3.5 border border-emerald-500/40 max-h-[90vh] overflow-y-auto shadow-2xl animate-pop">
+      <h3 class="font-black text-emerald-400 text-center text-base">Withdraw Referral Earnings (0% Tax)</h3>
+      <p class="text-xs text-slate-400 text-center">Min ₹30 | Integers only (e.g. 30, 45, 100)</p>
       
-      <div class="space-y-2.5 text-left pt-1">
-        <input id="refWithAmount" type="number" min="30" placeholder="Amount (Min ₹30)" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
-        <input id="refWithAccount" type="text" placeholder="Bank Account / UPI Details" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+      <input id="refWithAmount" type="number" step="1" min="30" placeholder="Amount (e.g. 30, 50)" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+      
+      <div class="space-y-2.5 pt-1">
+        <input id="refWithBankUserName" type="text" placeholder="Bank User Name" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+        <input id="refWithBankName" type="text" placeholder="Bank Name" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+        <input id="refWithAcNo" type="text" placeholder="Account Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+        <input id="refWithAcNoConfirm" type="text" placeholder="Confirm Account Number" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
+        <input id="refWithIfsc" type="text" placeholder="IFSC Code" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white uppercase outline-none focus:border-emerald-500 font-mono" />
       </div>
 
-      <button onclick="sendReferWithdraw()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-lg shadow-emerald-500/20 transition-all">Request Payout</button>
+      <button onclick="sendReferWithdraw()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-lg shadow-emerald-500/20 transition-all mt-2">Request Payout</button>
       <button onclick="document.getElementById('referWithdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400 hover:text-white py-1">Cancel</button>
     </div>
   </div>
@@ -586,16 +610,18 @@
 
     socket.on('referral_data_response', ({ referralCode, totalReferrals, inviteBalance }) => {
       document.getElementById('inviteWalletBalance').innerText = Number(inviteBalance).toFixed(2);
+      document.getElementById('myReferralCodeInput').value = referralCode;
       const refLink = `${window.location.origin}/index.html?ref=${referralCode}`;
       document.getElementById('myReferralLinkInput').value = refLink;
 
-      // Render VIP Tiers (Bronze to Platinum)
+      // Render VIP Tiers (Bronze to Master)
       const tiers = [
         { name: 'Bronze', target: 1, reward: 5 },
         { name: 'Silver', target: 5, reward: 25 },
         { name: 'Gold', target: 10, reward: 50 },
         { name: 'Diamond', target: 20, reward: 100 },
-        { name: 'Platinum', target: 50, reward: 250 }
+        { name: 'Platinum', target: 50, reward: 250 },
+        { name: 'Master', target: 100, reward: 500 }
       ];
 
       let html = '';
@@ -619,6 +645,10 @@
       document.getElementById('vipLevelsList').innerHTML = html;
     });
 
+    function openVipModal() {
+      document.getElementById('vipModal').classList.remove('hidden');
+    }
+
     function claimTierReward(tierName) {
       if (!currentUser) return;
       socket.emit('claim_referral_tier', { phone: currentUser.phone, tier: tierName });
@@ -630,6 +660,14 @@
         socket.emit('fetch_referral_data', { phone: currentUser.phone });
       }
     });
+
+    function copyReferralCode() {
+      const input = document.getElementById('myReferralCodeInput');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value);
+      alert('Invite code copied to clipboard!');
+    }
 
     function copyReferralLink() {
       const input = document.getElementById('myReferralLinkInput');
@@ -644,15 +682,34 @@
     }
 
     function sendReferWithdraw() {
-      const amount = Number(document.getElementById('refWithAmount').value);
-      const account = document.getElementById('refWithAccount').value.trim();
-      if (!amount || !account) return alert('Please fill all fields!');
-      if (amount < 30) return alert('Minimum withdrawal is ₹30!');
+      const rawAmt = document.getElementById('refWithAmount').value;
+      const amount = Number(rawAmt);
+      const bankUserName = document.getElementById('refWithBankUserName').value.trim();
+      const bankName = document.getElementById('refWithBankName').value.trim();
+      const acNo = document.getElementById('refWithAcNo').value.trim();
+      const acNoConfirm = document.getElementById('refWithAcNoConfirm').value.trim();
+      const ifsc = document.getElementById('refWithIfsc').value.trim();
 
-      socket.emit('refer_withdraw_request', { phone: currentUser.phone, amount, account });
+      if (!amount || !bankUserName || !bankName || !acNo || !acNoConfirm || !ifsc) {
+        return alert('Please fill all fields!');
+      }
+      if (!Number.isInteger(amount) || amount < 30) {
+        return alert('Minimum withdrawal is ₹30 and must be an integer (e.g. 30, 35, 100)! Decimals like 1.25 are not allowed.');
+      }
+      if (acNo !== acNoConfirm) {
+        return alert('Account numbers do not match!');
+      }
+
+      const accountDetails = `Name: ${bankUserName} | Bank: ${bankName} | A/C: ${acNo} | IFSC: ${ifsc}`;
+
+      socket.emit('refer_withdraw_request', { phone: currentUser.phone, amount, account: accountDetails });
       document.getElementById('referWithdrawModal').classList.add('hidden');
       document.getElementById('refWithAmount').value = '';
-      document.getElementById('refWithAccount').value = '';
+      document.getElementById('refWithBankUserName').value = '';
+      document.getElementById('refWithBankName').value = '';
+      document.getElementById('refWithAcNo').value = '';
+      document.getElementById('refWithAcNoConfirm').value = '';
+      document.getElementById('refWithIfsc').value = '';
     }
 
     socket.on('refer_withdraw_response', ({ success, message }) => {
