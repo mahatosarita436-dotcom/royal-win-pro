@@ -398,8 +398,15 @@
   <div id="withdrawModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-3 border border-slate-700 max-h-[90vh] overflow-y-auto">
       <h3 class="font-bold text-amber-400 text-center">↑ Withdraw Balance (3% Tax)</h3>
-      <input id="withAmount" type="number" min="30" placeholder="Amount (Min ₹30)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
+      <input id="withAmount" type="number" min="30" oninput="calculateWithdrawTax()" placeholder="Amount (Min ₹30)" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
       
+      <!-- Live Tax Calculation Info Box -->
+      <div class="bg-slate-950 p-3 rounded-xl border border-amber-500/30 text-xs space-y-1 font-mono text-slate-300">
+        <div class="flex justify-between"><span>Requested:</span> <span class="text-white">₹<span id="calcReq">0</span></span></div>
+        <div class="flex justify-between"><span>3% Tax:</span> <span class="text-rose-400">-₹<span id="calcTax">0</span></span></div>
+        <div class="flex justify-between border-t border-slate-800 pt-1 font-bold"><span>You Will Get:</span> <span class="text-emerald-400">₹<span id="calcFinal">0</span></span></div>
+      </div>
+
       <input id="withBankUserName" type="text" placeholder="Bank User Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
       <input id="withBankName" type="text" placeholder="Bank Name" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
       <input id="withAcNo" type="text" placeholder="Account Number" class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-700 text-sm text-white" />
@@ -459,6 +466,15 @@
         document.getElementById('forgotNewPass').value = '';
       }
     });
+
+    function calculateWithdrawTax() {
+      const amt = Number(document.getElementById('withAmount').value) || 0;
+      const tax = +(amt * 0.03).toFixed(2);
+      const finalGet = +(amt - tax).toFixed(2);
+      document.getElementById('calcReq').innerText = amt;
+      document.getElementById('calcTax').innerText = tax;
+      document.getElementById('calcFinal').innerText = Math.max(0, finalGet);
+    }
 
     function copyOrOpenLink(type) {
       const url = currentSocialLinks[type];
