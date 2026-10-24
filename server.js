@@ -25,7 +25,9 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, unique: true },
   password: String,
   secretCode: { type: String, default: '1234' },
-  balance: { type: Number, default: 10 }
+  balance: { type: Number, default: 10 },
+  checkInDay: { type: Number, default: 1 },
+  lastCheckInDate: { type: String, default: '' }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -346,7 +348,7 @@ io.on('connection', (socket) => {
         socket.emit('auth_error', 'Phone number already registered![cite: 3]');
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
-        const newUser = { userId, name, phone, password, secretCode: secretCode || '1234', balance: 10 };
+        const newUser = { userId, name, phone, password, secretCode: secretCode || '1234', balance: 10, checkInDay: 1, lastCheckInDate: '' };
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
@@ -384,6 +386,91 @@ io.on('connection', (socket) => {
       io.emit('admin_update', await getAdminPayload());
     } catch (e) {
       socket.emit('forgot_password_response', { success: false, message: 'Failed to update password!' });
+    }
+  });
+
+  // Check-in status & claim listeners
+  socket.on('fetch_checkin_status', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      let checkedToday = u.lastCheckInDate === todayStr;
+
+      socket.emit('checkin_status_response', {
+        checkInDay: u.checkInDay || 1,
+        checkedToday
+      });
+    } catch (e) {
+      console.log('Checkin status error:', e);
+    }
+  });
+
+  socket.on('claim_checkin', async ({ phone }) => {
+    try {
+      const u = cachedUsers.get(phone);
+      if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
+
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+
+      if (u.lastCheckInDate === todayStr) {
+        return socket.emit('checkin_response', { success: false, message: 'Apni ajker check-in already claim korechen! Rat 12 tar por abar korte parben.' });
+      }
+
+      if (u.lastCheckInDate) {
+        const lastDate = new Date(u.lastCheckInDate);
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        if (diffDays > 2) {
+          u.checkInDay = 1;
+        }
+      }
+
+      let rewardAmount = 0;
+      let currentDay = u.checkInDay || 1;
+
+      if (currentDay >= 1 && currentDay <= 4) {
+        rewardAmount = 2;
+      } else if (currentDay === 5 || currentDay === 6) {
+        rewardAmount = 3;
+      } else if (currentDay === 7) {
+        rewardAmount = Math.floor(Math.random() * 15) + 1;
+      }
+
+      u.balance = +(u.balance + rewardAmount).toFixed(3);
+      u.lastCheckInDate = todayStr;
+
+      if (currentDay >= 7) {
+        u.checkInDay = 1;
+      } else {
+        u.checkInDay += 1;
+      }
+
+      await User.updateOne({ phone }, { 
+        balance: u.balance, 
+        checkInDay: u.checkInDay, 
+        lastCheckInDate: u.lastCheckInDate 
+      });
+
+      cachedUsers.set(phone, u);
+      socket.emit('user_sync', { user: u });
+      socket.emit('checkin_response', { 
+        success: true, 
+        message: `Abhinandan! Apni Day ${currentDay}- er check-in reward hisebe ₹${rewardAmount} pelen!`,
+        reward: rewardAmount
+      });
+
+      socket.emit('checkin_status_response', {
+        checkInDay: u.checkInDay,
+        checkedToday: true
+      });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      console.log('Claim checkin error:', e);
+      socket.emit('checkin_response', { success: false, message: 'Check-in claim failed!' });
     }
   });
 
@@ -781,14 +868,11 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // ADMIN CUSTOM BALANCE FIX: BROADCASTS INSTANT UPDATE TO USER CLIENT[cite: 8]
   socket.on('admin_custom_balance', async ({ phone, amount }) => {
     const u = cachedUsers.get(phone);
     if (u) {
       u.balance = Number(amount);
       await User.updateOne({ phone }, { balance: u.balance });
-      
-      // Send instant update to the specific user session & admin panel
       io.emit('user_sync', { user: u });
       io.emit('admin_update', await getAdminPayload());
     }
