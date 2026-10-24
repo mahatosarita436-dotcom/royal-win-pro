@@ -270,7 +270,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop
+// Rocket Game Loop (Speed Increased)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -301,9 +301,10 @@ setInterval(async () => {
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    let increment = 0.03;
-    if (rocketState.multiplier > 5) increment = 0.08;
-    if (rocketState.multiplier > 20) increment = 0.25;
+    // Rocket Speed Increased Here
+    let increment = 0.08; 
+    if (rocketState.multiplier > 5) increment = 0.18;
+    if (rocketState.multiplier > 20) increment = 0.45;
 
     rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
 
@@ -461,7 +462,7 @@ io.on('connection', (socket) => {
     } catch (e) {}
   });
 
-  // Social Links update korle sora-suri MongoDB database-e save hobe
+  // Social Links update and save to MongoDB permanently
   socket.on('admin_update_socials', async (links) => {
     currentSocialLinks = links || {};
     
@@ -771,7 +772,7 @@ async function getAdminPayload() {
   let kStakes = {};
   for (const b of currentKismatBets) {
     const optNum = b.choice.replace('Option #', '');
-    kStakes[optNum] = (kStasks[optNum] || 0) + b.amount;
+    kStakes[optNum] = (kStakes[optNum] || 0) + b.amount;
   }
   let totalRocketPool = rocketServiceTotalPool();
 
