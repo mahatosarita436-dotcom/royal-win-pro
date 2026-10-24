@@ -255,7 +255,7 @@
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-bold text-emerald-400">👥 Registered Users Directory</h2>
-          <p class="text-[11px] text-slate-400">Search users, view passwords, set custom balance or delete</p>
+          <p class="text-[11px] text-slate-400">Search users, view passwords & secret codes, set balance or delete</p>
         </div>
         <input id="userSearchInput" type="text" oninput="renderUsersTable()" placeholder="🔍 Search Name/Phone..." class="w-full sm:w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
       </div>
@@ -267,6 +267,7 @@
               <th class="pb-2">User ID</th>
               <th class="pb-2">Name / Mobile</th>
               <th class="pb-2">Password</th>
+              <th class="pb-2">Secret Code</th>
               <th class="pb-2">Balance</th>
               <th class="pb-2 text-right">Actions</th>
             </tr>
@@ -531,11 +532,12 @@
       const q = (document.getElementById('userSearchInput').value || '').trim().toLowerCase();
       const filtered = cachedUsers.filter(u => (u.userId && u.userId.toLowerCase().includes(q)) || (u.name && u.name.toLowerCase().includes(q)) || (u.phone && u.phone.toLowerCase().includes(q)));
       const uBody = document.getElementById('usersTableBody');
-      uBody.innerHTML = filtered.length === 0 ? `<tr><td colspan="5" class="py-4 text-center text-slate-500">No users found.</td></tr>` : filtered.map(u => `
+      uBody.innerHTML = filtered.length === 0 ? `<tr><td colspan="6" class="py-4 text-center text-slate-500">No users found.</td></tr>` : filtered.map(u => `
         <tr>
           <td class="py-2.5 font-mono text-indigo-400 font-bold">${u.userId}</td>
           <td class="py-2.5"><strong class="text-white block">${u.name}</strong><span class="font-mono text-emerald-300 text-[11px]">${u.phone}</span></td>
           <td class="py-2.5 font-mono text-amber-300 text-xs">${u.password}</td>
+          <td class="py-2.5 font-mono text-emerald-400 text-xs font-bold">${u.secretCode || 'N/A'}</td>
           <td class="py-2.5 font-black text-amber-400">₹${u.balance.toFixed(2)}</td>
           <td class="py-2.5 text-right space-x-1">
             <button onclick="setCustomBalance('${u.phone}')" class="bg-indigo-600 px-2.5 py-1 rounded text-white font-bold">Balance</button>
