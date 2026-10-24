@@ -460,7 +460,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Claim Tier/Milestone Rewards (Bronze to Master)
+  // Claim Tier/Milestone Rewards (Bronze to Platinum)
   socket.on('claim_referral_tier', async ({ phone, tier }) => {
     try {
       const u = cachedUsers.get(phone);
@@ -474,7 +474,6 @@ io.on('connection', (socket) => {
       else if (tier === 'Gold') { requiredRefers = 10; reward = 50; }
       else if (tier === 'Diamond') { requiredRefers = 20; reward = 100; }
       else if (tier === 'Platinum') { requiredRefers = 50; reward = 250; }
-      else if (tier === 'Master') { requiredRefers = 100; reward = 500; }
 
       if (u.totalReferrals < requiredRefers) {
         return socket.emit('referral_claim_response', { success: false, message: `Target ${requiredRefers} referrals not reached yet!` });
@@ -491,13 +490,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Refer Withdrawal Request (Integer amounts only, Min ₹30, 0% Tax)
+  // Refer Withdrawal Request (Min ₹30, 0% Tax, Separate Type)
   socket.on('refer_withdraw_request', async ({ phone, amount, account }) => {
     const u = cachedUsers.get(phone);
     const reqAmt = Number(amount);
-    if (!u || !Number.isInteger(reqAmt) || reqAmt < 30) {
-      return socket.emit('refer_withdraw_response', { success: false, message: 'Minimum withdrawal is ₹30 and must be an integer (e.g. 30, 31, 40)! Decimals like 1.25 not allowed.' });
-    }
+    if (!u || reqAmt < 30) return socket.emit('refer_withdraw_response', { success: false, message: 'Minimum withdrawal is ₹30!' });
     if (u.inviteBalance < reqAmt) return socket.emit('refer_withdraw_response', { success: false, message: 'Insufficient invite wallet balance!' });
 
     u.inviteBalance = +(u.inviteBalance - reqAmt).toFixed(3);
@@ -511,7 +508,7 @@ io.on('connection', (socket) => {
       amount: reqAmt, 
       tax: 0, 
       totalDeducted: reqAmt, 
-      details: account, 
+      details: `Refer Payout To: ${account}`, 
       status: 'PENDING', 
       time: new Date().toLocaleTimeString() 
     };
@@ -906,7 +903,7 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - finalDeduct).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: account, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     socket.emit('user_sync', { user: u });
