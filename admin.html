@@ -85,6 +85,38 @@
     <button onclick="updateSocialLinks()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow">Update Social Links</button>
   </div>
 
+  <!-- GIFT CODE MANAGER PANEL -->
+  <div class="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-base font-black text-emerald-400">🎁 Gift / Redeem Code Manager</h2>
+        <p class="text-xs text-slate-400">Create promo codes, set timers and track claims.</p>
+      </div>
+    </div>
+    
+    <div class="bg-slate-950 border border-purple-500/30 rounded-xl p-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="text-xs font-black text-purple-400">⚙️ Recharge Rule for Gift Codes</h3>
+          <p class="text-[11px] text-slate-400">When enabled, users must have an approved deposit to claim codes.</p>
+        </div>
+        <span id="conditionStatusBadge" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full text-xs font-bold">STATUS: OFF (Free Claim)</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="toggleDepositRule(true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">Enable Rule (Require Approved Deposit)</button>
+        <button onclick="toggleDepositRule(false)" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs">Disable Rule (Free for Everyone)</button>
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-5 gap-3 pt-2">
+      <input id="newGiftCodeInput" type="text" placeholder="Code (e.g. BONUS50)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white uppercase font-mono" />
+      <input id="newGiftAmountInput" type="number" placeholder="Amount (₹)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <input id="newGiftMaxUsesInput" type="number" placeholder="Max Uses (People)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <input id="newGiftDurationInput" type="number" placeholder="Expiry Timer (Minutes)" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+      <button onclick="createGiftCode()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2 rounded-xl text-xs shadow">Create Code</button>
+    </div>
+  </div>
+
   <!-- KISMAT GAME CONTROL PANEL -->
   <div class="bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-5 space-y-4">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -100,26 +132,35 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <!-- ROCKET GAME CONTROL -->
-  <div class="bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <div>
-        <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
-        <p class="text-xs text-slate-400">Total Pool: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong> | Claimed Out: <strong class="text-amber-400 font-mono text-sm" id="adminTotalRocketClaimed">₹0</strong></p>
+  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE -->
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-black text-rose-400">🚀 Rocket Crash Custom Controller</h2>
+          <p class="text-xs text-slate-400">Total Pool: <strong class="text-emerald-400 font-mono text-sm" id="adminTotalRocketPool">₹0</strong> | Claimed Out: <strong class="text-amber-400 font-mono text-sm" id="adminTotalRocketClaimed">₹0</strong></p>
+        </div>
+        <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
       </div>
-      <span id="adminRocketMult" class="font-mono text-2xl font-black text-emerald-400">1.00x</span>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
+          💥 CRASH ROCKET NOW!
+        </button>
+        <div class="flex gap-2">
+          <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
+          <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+        </div>
+      </div>
+      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl shadow-lg active:scale-95">
-        💥 CRASH ROCKET NOW!
-      </button>
-      <div class="flex gap-2">
-        <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs text-white" />
-        <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Set X</button>
+    <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-5 space-y-3 flex flex-col">
+      <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets (Sorted)</h2>
+      <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto flex-1 pr-1">
+        <p class="text-slate-500 text-center py-4">No rocket bets right now.</p>
       </div>
     </div>
-    <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
   </div>
 
   <!-- COLOUR TRADING CONTROL -->
@@ -169,31 +210,29 @@
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- DEPOSIT REQUESTS -->
-  <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 space-y-3">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h3 class="text-base font-bold text-emerald-400">📥 Deposit Requests</h3>
-      <input id="depositSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Deposit..." class="w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white" />
-    </div>
-    <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
-  </div>
+  <!-- DEPOSIT, WITHDRAW & REFER WITHDRAW REQUESTS -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3">💳 Deposit, Withdrawal & Refer Withdrawal Requests</h2>
 
-  <!-- WITHDRAWAL REQUESTS -->
-  <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-3">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h3 class="text-base font-bold text-amber-400">📤 Withdrawal Requests (Main Balance)</h3>
-      <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Withdraw..." class="w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white" />
-    </div>
-    <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
-  </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- DEPOSIT SECTION -->
+      <div class="bg-slate-950/60 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-emerald-400">📥 Deposit Requests</h3>
+        <div id="depositList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
+      </div>
 
-  <!-- REFER WITHDRAWAL REQUESTS -->
-  <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-5 space-y-3">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h3 class="text-base font-bold text-purple-400">🤝 Refer Withdrawal Requests (0% Tax)</h3>
-      <input id="referWithdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Refer Withdraw..." class="w-48 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white" />
+      <!-- WITHDRAW SECTION -->
+      <div class="bg-slate-950/60 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-amber-400">📤 Withdrawal Requests</h3>
+        <div id="withdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
+      </div>
+
+      <!-- REFER WITHDRAW SECTION -->
+      <div class="bg-slate-950/60 border border-purple-500/30 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-purple-400">🤝 Refer Withdrawal (0% Tax)</h3>
+        <div id="referWithdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
+      </div>
     </div>
-    <div id="referWithdrawList" class="space-y-2 text-xs max-h-72 overflow-y-auto"></div>
   </div>
 
   <!-- USERS DIRECTORY -->
@@ -288,9 +327,10 @@
 
     function processTx(txId, approve) { socket.emit('admin_process_tx', { txId, approve }); }
 
-    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, usersList, socialLinks }) => {
+    socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, usersList, giftCodes, socialLinks }) => {
       cachedUsers = usersList || [];
       cachedTransactions = transactions || [];
+      cachedGiftCodes = giftCodes || [];
 
       if (socialLinks) {
         document.getElementById('adminTelegramInput').value = socialLinks.telegram || '';
@@ -356,19 +396,15 @@
     }
 
     function renderTransactions() {
-      const qDep = (document.getElementById('depositSearchInput').value || '').trim().toLowerCase();
-      const qWith = (document.getElementById('withdrawSearchInput').value || '').trim().toLowerCase();
-      const qReferWith = (document.getElementById('referWithdrawSearchInput').value || '').trim().toLowerCase();
-
-      const deps = cachedTransactions.filter(t => t.type === 'DEPOSIT' && ((t.phone && t.phone.toLowerCase().includes(qDep)) || (t.userName && t.userName.toLowerCase().includes(qDep))));
-      const withs = cachedTransactions.filter(t => t.type === 'WITHDRAW' && ((t.phone && t.phone.toLowerCase().includes(qWith)) || (t.userName && t.userName.toLowerCase().includes(qWith))));
-      const referWiths = cachedTransactions.filter(t => t.type === 'REFER_WITHDRAW' && ((t.phone && t.phone.toLowerCase().includes(qReferWith)) || (t.userName && t.userName.toLowerCase().includes(qReferWith))));
+      const deps = cachedTransactions.filter(t => t.type === 'DEPOSIT');
+      const withs = cachedTransactions.filter(t => t.type === 'WITHDRAW');
+      const referWiths = cachedTransactions.filter(t => t.type === 'REFER_WITHDRAW');
 
       document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500">No deposits found.</p>` : deps.map(t => `
-        <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div>
-            <span class="font-black text-emerald-400">+₹${t.amount}</span> <strong class="text-white">${t.userName}</strong> (${t.phone})
-            <span class="block text-[11px] text-slate-300 font-mono mt-0.5">${t.details}</span>
+            <span class="font-black text-emerald-400">+₹${t.amount}</span> <strong class="text-white">${t.userName}</strong>
+            <span class="block text-[10px] text-slate-400 font-mono">${t.details}</span>
           </div>
           <div>
             ${t.status === 'PENDING' ? `
@@ -382,11 +418,10 @@
       `).join('');
 
       document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500">No withdrawals found.</p>` : withs.map(t => `
-        <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div>
-            <span class="font-black text-amber-400">Req: ₹${t.amount}</span> <strong class="text-white">${t.userName}</strong> (${t.phone})
-            <span class="block text-[11px] text-rose-300 font-mono">Tax: ₹${t.tax || 0} | Payout: ₹${t.totalDeducted ? (t.amount - (t.tax || 0)) : t.amount}</span>
-            <span class="block text-[11px] text-slate-300 font-mono mt-0.5">🏦 Bank Details: ${t.details}</span>
+            <span class="font-black text-amber-400">Req: ₹${t.amount}</span> <strong class="text-white">${t.userName}</strong>
+            <span class="block text-[10px] text-rose-300 font-mono">Tax: ₹${t.tax || 0}</span>
           </div>
           <div>
             ${t.status === 'PENDING' ? `
@@ -399,12 +434,11 @@
         </div>
       `).join('');
 
-      document.getElementById('referWithdrawList').innerHTML = referWiths.length === 0 ? `<p class="text-slate-500">No refer withdrawals found.</p>` : referWiths.map(t => `
-        <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
+      document.getElementById('referWithdrawList').innerHTML = referWiths.length === 0 ? `<p class="text-slate-500">No refer withdrawals.</p>` : referWiths.map(t => `
+        <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
           <div>
-            <span class="font-black text-purple-400">Refer Payout: ₹${t.amount}</span> <strong class="text-white">${t.userName}</strong> (${t.phone})
-            <span class="block text-[11px] text-emerald-400 font-mono">0% Tax</span>
-            <span class="block text-[11px] text-slate-300 font-mono mt-0.5">🏦 Bank Details: ${t.details}</span>
+            <span class="font-black text-purple-400">Refer Payout: ₹${t.amount}</span> <strong class="text-white">${t.userName}</strong>
+            <span class="block text-[10px] text-emerald-400 font-mono">0% Tax | ${t.details}</span>
           </div>
           <div>
             ${t.status === 'PENDING' ? `
