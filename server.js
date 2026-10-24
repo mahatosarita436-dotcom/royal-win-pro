@@ -269,7 +269,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop (Speed Updated with >50x condition)
+// Rocket Game Loop
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -300,7 +300,6 @@ setInterval(async () => {
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    // Rocket Speed Increments (Added >50x -> 0.55 condition)
     let increment = 0.08; 
     if (rocketState.multiplier > 5) increment = 0.18;
     if (rocketState.multiplier > 20) increment = 0.45;
@@ -346,6 +345,7 @@ io.on('connection', (socket) => {
         await User.create(newUser);
         cachedUsers.set(phone, newUser);
         socket.emit('auth_success', { user: newUser });
+        io.emit('admin_update', await getAdminPayload());
       }
     } catch (err) {
       socket.emit('auth_error', 'Registration failed![cite: 3]');
@@ -360,6 +360,22 @@ io.on('connection', (socket) => {
       socket.emit('auth_error', 'Invalid password![cite: 3]');
     } else {
       socket.emit('auth_success', { user });
+    }
+  });
+
+  socket.on('forgot_password', async ({ phone, newPassword }) => {
+    try {
+      const user = cachedUsers.get(phone);
+      if (!user) {
+        return socket.emit('forgot_password_response', { success: false, message: 'Phone number not found!' });
+      }
+      user.password = newPassword;
+      await User.updateOne({ phone }, { password: newPassword });
+      cachedUsers.set(phone, user);
+      socket.emit('forgot_password_response', { success: true, message: 'Password updated successfully! Please login.' });
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {
+      socket.emit('forgot_password_response', { success: false, message: 'Failed to update password!' });
     }
   });
 
