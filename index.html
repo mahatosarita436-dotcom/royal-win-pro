@@ -24,12 +24,13 @@
 </head>
 <body class="min-h-screen flex justify-center items-start bg-[#020617] pb-24">
 
-  <!-- AUTH SCREEN WITH LOGO -->
+  <!-- AUTH SCREEN WITH UNIQUE DESIGN & LOGO -->
   <div id="authScreen" class="w-full max-w-md bg-gradient-to-b from-[#0b0f19] to-[#05070d] p-8 rounded-[36px] border border-indigo-500/30 space-y-6 shadow-[0_0_50px_rgba(79,70,229,0.15)] mt-8 mx-4 relative overflow-hidden">
     <div class="absolute -top-32 -right-32 w-56 h-56 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-32 -left-32 w-56 h-56 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="text-center relative z-10 space-y-3">
+      <!-- LOGO IMAGE DISPLAY -->
       <div class="relative w-24 h-24 mx-auto rounded-3xl p-1.5 bg-gradient-to-tr from-amber-500 via-indigo-500 to-emerald-400 shadow-xl shadow-indigo-500/20">
         <img src="logo.png" alt="Royal Win Pro Logo" class="w-full h-full object-cover rounded-[22px] bg-[#0b0f19]" />
       </div>
@@ -56,12 +57,12 @@
         <label class="text-[11px] font-extrabold text-indigo-300 ml-1 tracking-wider uppercase">Mobile Number</label>
         <div class="relative">
           <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 text-xs font-bold">+91</span>
-          <input id="loginPhone" type="text" placeholder="Enter Mobile Number" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-indigo-500 outline-none shadow-inner" />
+          <input id="loginPhone" type="text" placeholder="Enter Mobile Number" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-inner" />
         </div>
       </div>
       <div class="space-y-1.5">
         <label class="text-[11px] font-extrabold text-indigo-300 ml-1 tracking-wider uppercase">Password</label>
-        <input id="loginPass" type="password" placeholder="Enter Password" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:border-indigo-500 outline-none shadow-inner" />
+        <input id="loginPass" type="password" placeholder="Enter Password" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-inner" />
       </div>
       <div class="text-right pt-0.5">
         <button type="button" onclick="showForgotModal()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold tracking-wide">Forgot Password?</button>
@@ -71,27 +72,23 @@
       </button>
     </div>
 
-    <!-- REGISTER FORM (WITH INVITE CODE FIELD) -->
+    <!-- REGISTER FORM -->
     <div id="registerForm" class="space-y-3.5 hidden relative z-10">
       <div class="space-y-1">
         <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Full Name</label>
-        <input id="regName" type="text" placeholder="Enter Full Name" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none shadow-inner" />
+        <input id="regName" type="text" placeholder="Enter Full Name" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all shadow-inner" />
       </div>
       <div class="space-y-1">
         <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Mobile Number</label>
-        <input id="regPhone" type="text" placeholder="Enter Mobile Number" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none shadow-inner" />
+        <input id="regPhone" type="text" placeholder="Enter Mobile Number" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all shadow-inner" />
       </div>
       <div class="space-y-1">
         <label class="text-[10px] font-bold text-slate-400 ml-1 uppercase">Password</label>
-        <input id="regPass" type="password" placeholder="Create Password" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none shadow-inner" />
+        <input id="regPass" type="password" placeholder="Create Password" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all shadow-inner" />
       </div>
       <div class="space-y-1">
         <label class="text-[10px] font-bold text-emerald-400 ml-1 uppercase">Secret Code (For Reset Security)</label>
-        <input id="regSecret" type="text" placeholder="Enter Secret Code" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-emerald-400 focus:border-indigo-500 outline-none font-mono shadow-inner" />
-      </div>
-      <div class="space-y-1">
-        <label class="text-[10px] font-bold text-indigo-400 ml-1 uppercase">Invite Code (Optional)</label>
-        <input id="regInviteCode" type="text" placeholder="Enter Referral Code" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-indigo-300 focus:border-indigo-500 outline-none font-mono uppercase shadow-inner" />
+        <input id="regSecret" type="text" placeholder="Enter Secret Code" class="w-full bg-[#03050a] border border-slate-800/80 rounded-2xl px-4 py-3 text-sm text-emerald-400 focus:border-indigo-500 outline-none font-mono transition-all shadow-inner" />
       </div>
       <button type="button" onclick="submitRegister()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition-all tracking-wide text-sm mt-1">
         CREATE ACCOUNT (₹10 BONUS)
@@ -99,7 +96,7 @@
     </div>
   </div>
 
-  <!-- FORGOT PASSWORD MODAL -->
+  <!-- FORGOT PASSWORD MODAL (UNIQUE REDESIGN) -->
   <div id="forgotModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-[#0b0f19] w-full max-w-sm p-7 rounded-[32px] space-y-4 border border-indigo-500/30 text-center shadow-2xl animate-pop relative overflow-hidden">
       <div class="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl"></div>
@@ -133,8 +130,8 @@
       <span id="userInfo" class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"></span>
     </header>
 
-    <!-- SECTION 1: GAMES ARENA -->
-    <div id="view-games" class="p-4 space-y-3.5">
+    <div class="p-4 space-y-3.5">
+      <!-- Balance Card -->
       <div class="bg-gradient-to-br from-[#0e1628] via-[#0b0f19] to-[#070a14] p-5 rounded-[24px] border border-indigo-500/30 shadow-xl relative overflow-hidden">
         <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-indigo-600/10 rounded-full blur-2xl"></div>
         <div class="flex justify-between items-center relative z-10">
@@ -167,221 +164,162 @@
           <span>📜</span> View Transaction History
         </button>
       </div>
+    </div>
 
-      <!-- GAME SWITCH TABS -->
-      <div class="pt-2 mb-2">
-        <div class="grid grid-cols-3 bg-[#0b0f19] p-1.5 rounded-2xl border border-slate-800/80 text-xs font-black shadow-inner">
-          <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md transition-all">🎨 Colour</button>
-          <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🎴 KISMAT</button>
-          <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🚀 Rocket</button>
+    <!-- GAME SWITCH TABS -->
+    <div class="px-4 mb-3">
+      <div class="grid grid-cols-3 bg-[#0b0f19] p-1.5 rounded-2xl border border-slate-800/80 text-xs font-black shadow-inner">
+        <button onclick="switchGame('colour')" id="tab-colour" class="py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md transition-all">🎨 Colour</button>
+        <button onclick="switchGame('kismat')" id="tab-kismat" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🎴 KISMAT</button>
+        <button onclick="switchGame('rocket')" id="tab-rocket" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition-all">🚀 Rocket</button>
+      </div>
+    </div>
+
+    <!-- GAME 1: COLOUR -->
+    <div id="section-colour" class="px-4 space-y-4">
+      <div class="bg-[#0b0f19] border border-slate-800/80 p-4 rounded-2xl flex justify-between items-center shadow-md">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Period ID</span>
+          <p id="periodId" class="text-base font-mono font-black text-white mt-0.5">--</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Count Down</span>
+          <div id="timerDisplay" class="text-2xl font-mono font-black text-emerald-400 mt-0.5">00:30</div>
         </div>
       </div>
 
-      <!-- GAME 1: COLOUR -->
-      <div id="section-colour" class="space-y-4">
-        <div class="bg-[#0b0f19] border border-slate-800/80 p-4 rounded-2xl flex justify-between items-center shadow-md">
-          <div>
-            <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Period ID</span>
-            <p id="periodId" class="text-base font-mono font-black text-white mt-0.5">--</p>
-          </div>
-          <div class="text-right">
-            <span class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Count Down</span>
-            <div id="timerDisplay" class="text-2xl font-mono font-black text-emerald-400 mt-0.5">00:30</div>
-          </div>
-        </div>
-
-        <div class="flex justify-between items-center px-1">
-          <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Colour History (Last 20)</span>
-          <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold hover:underline">📊 My Colour Bets</button>
-        </div>
-        <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
-
-        <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
-          <div id="colourLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-lg tracking-wider">
-            🔒 Betting Locked for this round!
-          </div>
-          <div class="grid grid-cols-3 gap-2.5">
-            <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
-              JOIN GREEN <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
-            </button>
-            <button onclick="openUniqueBetDrawer('VIOLET', 4.5, 'from-purple-600 to-indigo-600')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
-              JOIN VIOLET <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 4.5x</span>
-            </button>
-            <button onclick="openUniqueBetDrawer('RED', 2, 'from-rose-600 to-red-600')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-rose-500/20 active:scale-95 transition-all">
-              JOIN RED <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
-            </button>
-          </div>
-
-          <div class="grid grid-cols-5 gap-2 pt-1">
-            <button onclick="openUniqueBetDrawer('0', 9, 'from-rose-600 to-purple-600')" class="num-0 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">0</button>
-            <button onclick="openUniqueBetDrawer('1', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">1</button>
-            <button onclick="openUniqueBetDrawer('2', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">2</button>
-            <button onclick="openUniqueBetDrawer('3', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">3</button>
-            <button onclick="openUniqueBetDrawer('4', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">4</button>
-            <button onclick="openUniqueBetDrawer('5', 9, 'from-emerald-600 to-purple-600')" class="num-5 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">5</button>
-            <button onclick="openUniqueBetDrawer('6', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">6</button>
-            <button onclick="openUniqueBetDrawer('7', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">7</button>
-            <button onclick="openUniqueBetDrawer('8', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">8</button>
-            <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">9</button>
-          </div>
-        </div>
+      <div class="flex justify-between items-center px-1">
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Colour History (Last 20)</span>
+        <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold hover:underline">📊 My Colour Bets</button>
       </div>
+      <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
 
-      <!-- GAME 2: KISMAT -->
-      <div id="section-kismat" class="hidden space-y-4">
-        <div class="bg-[#0b0f19] border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center shadow-md">
-          <div>
-            <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">🎴 LUCKY CARDS KISMAT (2:30 Min)</span>
-            <p id="kismatPeriod" class="text-base font-mono font-black text-white mt-0.5">--</p>
-          </div>
-          <div class="text-right">
-            <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">Timer</span>
-            <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400 mt-0.5">02:30</div>
-          </div>
+      <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
+        <div id="colourLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-lg tracking-wider">
+          🔒 Betting Locked for this round!
         </div>
-
-        <div class="flex justify-between items-center px-1">
-          <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cards History (Last 20)</span>
-          <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold hover:underline">📊 My Card Bets</button>
-        </div>
-        <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
-
-        <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
-          <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-base text-center px-4 tracking-wider">
-            🔒 Betting Locked (Last 10s)!
-          </div>
-          <p class="text-xs text-slate-300 font-bold text-center">Choose 1 Lucky Card out of 10. Fixed Bet: ₹10, Win ₹90 (9x Return).</p>
-          
-          <div class="grid grid-cols-5 gap-2">
-            <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-3.5 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition-all">Card 1</button>
-            <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 2</button>
-            <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 3</button>
-            <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 4</button>
-            <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 5</button>
-            <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 6</button>
-            <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 7</button>
-            <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 8</button>
-            <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 9</button>
-            <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 10</button>
-          </div>
-
-          <div class="space-y-2.5 pt-1">
-            <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white text-center shadow-inner" />
-            <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all">
-              CONFIRM BET (₹10) ON <span id="selectedKismatOptLabel">Card 1</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- GAME 3: ROCKET -->
-      <div id="section-rocket" class="hidden space-y-4">
-        <div class="flex justify-between items-center px-1">
-          <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Rocket History (Last 20)</span>
-          <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold hover:underline">📊 My Rocket Bets</button>
-        </div>
-        <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono whitespace-nowrap"></div>
-
-        <div class="relative bg-gradient-to-b from-[#05070d] via-indigo-950/40 to-[#05070d] border border-indigo-500/30 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
-          <canvas id="rocketCanvas" width="380" height="260" class="absolute inset-0 w-full h-full"></canvas>
-          <div class="relative z-10 text-center pointer-events-none">
-            <p id="rocketStatusText" class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-300">Next Flight In</p>
-            <h2 id="rocketMultiplierDisplay" class="text-6xl font-black font-mono text-white drop-shadow-lg mt-1">1.00x</h2>
-          </div>
-        </div>
-
-        <div class="bg-[#0b0f19] border border-slate-800/80 rounded-2xl p-4 space-y-3.5 shadow-xl">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-slate-300 font-bold">Bet Amount (Min ₹10)</span>
-            <div class="flex gap-1.5">
-              <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-xl text-xs font-black shadow-md">2x</button>
-              <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹10</button>
-              <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹50</button>
-              <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹100</button>
-            </div>
-          </div>
-          <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white outline-none focus:border-indigo-500 transition-all" />
-
-          <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all uppercase tracking-wider">
-            🚀 PLACE BET (Min ₹10)
+        <div class="grid grid-cols-3 gap-2.5">
+          <button onclick="openUniqueBetDrawer('GREEN', 2, 'from-emerald-600 to-teal-500')" class="bg-gradient-to-b from-emerald-500 to-emerald-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
+            JOIN GREEN <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
           </button>
+          <button onclick="openUniqueBetDrawer('VIOLET', 4.5, 'from-purple-600 to-indigo-600')" class="bg-gradient-to-b from-purple-500 to-purple-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
+            JOIN VIOLET <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 4.5x</span>
+          </button>
+          <button onclick="openUniqueBetDrawer('RED', 2, 'from-rose-600 to-red-600')" class="bg-gradient-to-b from-rose-500 to-rose-700 py-3.5 rounded-2xl font-black text-xs shadow-lg shadow-rose-500/20 active:scale-95 transition-all">
+            JOIN RED <span class="block text-[9px] opacity-80 font-normal mt-0.5">Win 2x</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2 pt-1">
+          <button onclick="openUniqueBetDrawer('0', 9, 'from-rose-600 to-purple-600')" class="num-0 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">0</button>
+          <button onclick="openUniqueBetDrawer('1', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">1</button>
+          <button onclick="openUniqueBetDrawer('2', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">2</button>
+          <button onclick="openUniqueBetDrawer('3', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">3</button>
+          <button onclick="openUniqueBetDrawer('4', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">4</button>
+          <button onclick="openUniqueBetDrawer('5', 9, 'from-emerald-600 to-purple-600')" class="num-5 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">5</button>
+          <button onclick="openUniqueBetDrawer('6', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">6</button>
+          <button onclick="openUniqueBetDrawer('7', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">7</button>
+          <button onclick="openUniqueBetDrawer('8', 9, 'from-rose-600 to-red-600')" class="bg-rose-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">8</button>
+          <button onclick="openUniqueBetDrawer('9', 9, 'from-emerald-600 to-teal-500')" class="bg-emerald-600 py-3 rounded-xl font-black text-sm shadow-md active:scale-95 transition-transform">9</button>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: DEDICATED INVITE & EARN PAGE -->
-    <div id="view-invite" class="p-4 space-y-4 hidden">
-      <div class="bg-gradient-to-br from-[#1e1b4b] via-[#0b0f19] to-[#070a14] p-6 rounded-[28px] border border-indigo-500/40 shadow-2xl text-center relative overflow-hidden space-y-3">
-        <div class="absolute -right-12 -top-12 w-40 h-40 bg-purple-600/20 rounded-full blur-3xl"></div>
-        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
-          🤝 Refer & Earn Rewards
-        </span>
-        <h2 class="text-2xl font-black text-white">Invite Friends & Earn Cash</h2>
-        <p class="text-xs text-slate-300">Share your link. Get 2% bet commission and level milestone rewards!</p>
+    <!-- GAME 2: KISMAT -->
+    <div id="section-kismat" class="hidden px-4 space-y-4">
+      <div class="bg-[#0b0f19] border border-amber-500/30 p-4 rounded-2xl flex justify-between items-center shadow-md">
+        <div>
+          <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">🎴 LUCKY CARDS KISMAT (2:30 Min)</span>
+          <p id="kismatPeriod" class="text-base font-mono font-black text-white mt-0.5">--</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-amber-400 uppercase font-extrabold tracking-wider">Timer</span>
+          <div id="kismatTimer" class="text-2xl font-mono font-black text-amber-400 mt-0.5">02:30</div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center px-1">
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Cards History (Last 20)</span>
+        <button onclick="openMyBetsModal('Kismat Game')" class="text-xs text-amber-400 font-bold hover:underline">📊 My Card Bets</button>
+      </div>
+      <div id="kismatHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
+
+      <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
+        <div id="kismatLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-amber-500 font-black text-base text-center px-4 tracking-wider">
+          🔒 Betting Locked (Last 10s)!
+        </div>
+        <p class="text-xs text-slate-300 font-bold text-center">Choose 1 Lucky Card out of 10. Fixed Bet: ₹10, Win ₹90 (9x Return).</p>
         
-        <!-- Invite Wallet Card -->
-        <div class="bg-[#05070d]/80 p-4 rounded-2xl border border-indigo-500/30 mt-3 flex justify-between items-center shadow-inner">
-          <div class="text-left">
-            <span class="text-[10px] text-indigo-300 uppercase font-bold">Invite Wallet Balance</span>
-            <h3 class="text-2xl font-black text-emerald-400">₹<span id="inviteWalletBalance">0.00</span></h3>
-          </div>
-          <button onclick="openReferWithdrawModal()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-md">
-            Withdraw Refer
+        <div class="grid grid-cols-5 gap-2">
+          <button onclick="selectKismatOption(1)" id="kopt-1" class="kismat-btn bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-400 py-3.5 rounded-xl font-black text-white text-xs shadow-lg active:scale-95 transition-all">Card 1</button>
+          <button onclick="selectKismatOption(2)" id="kopt-2" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 2</button>
+          <button onclick="selectKismatOption(3)" id="kopt-3" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 3</button>
+          <button onclick="selectKismatOption(4)" id="kopt-4" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 4</button>
+          <button onclick="selectKismatOption(5)" id="kopt-5" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 5</button>
+          <button onclick="selectKismatOption(6)" id="kopt-6" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 6</button>
+          <button onclick="selectKismatOption(7)" id="kopt-7" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 7</button>
+          <button onclick="selectKismatOption(8)" id="kopt-8" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 8</button>
+          <button onclick="selectKismatOption(9)" id="kopt-9" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 9</button>
+          <button onclick="selectKismatOption(10)" id="kopt-10" class="kismat-btn bg-[#05070d] border border-slate-800 py-3.5 rounded-xl font-black text-slate-300 text-xs shadow-md active:scale-95 transition-all">Card 10</button>
+        </div>
+
+        <div class="space-y-2.5 pt-1">
+          <input id="kismatBetInput" type="number" readonly value="10" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white text-center shadow-inner" />
+          <button onclick="confirmKismatBet()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all">
+            CONFIRM BET (₹10) ON <span id="selectedKismatOptLabel">Card 1</span>
           </button>
-        </div>
-
-        <!-- Referral Link Share Box -->
-        <div class="bg-[#05070d] p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 mt-2">
-          <input id="myReferralLinkInput" type="text" readonly class="bg-transparent text-xs text-indigo-300 font-mono w-full outline-none px-1" />
-          <button onclick="copyReferralLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs shrink-0 shadow">Copy Link</button>
-        </div>
-      </div>
-
-      <!-- VIP LEVELS & REWARDS (Bronze to Platinum) -->
-      <div class="bg-[#0b0f19] border border-slate-800/80 p-5 rounded-[24px] space-y-3 shadow-xl">
-        <h3 class="text-xs font-black text-amber-400 uppercase tracking-widest">🏆 VIP Referral Milestones</h3>
-        <p class="text-[11px] text-slate-400">Invited user must deposit min ₹20 within 24 hours of registration.</p>
-
-        <div id="vipLevelsList" class="space-y-2.5 pt-1">
-          <!-- Rendered via JS -->
         </div>
       </div>
     </div>
 
-    <!-- BOTTOM FIXED NAVIGATION BAR (4 Options) -->
+    <!-- GAME 3: ROCKET -->
+    <div id="section-rocket" class="hidden px-4 space-y-4">
+      <div class="flex justify-between items-center px-1">
+        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Rocket History (Last 20)</span>
+        <button onclick="openMyBetsModal('Rocket Crash')" class="text-xs text-rose-400 font-bold hover:underline">📊 My Rocket Bets</button>
+      </div>
+      <div id="rocketHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-[11px] font-mono whitespace-nowrap"></div>
+
+      <div class="relative bg-gradient-to-b from-[#05070d] via-indigo-950/40 to-[#05070d] border border-indigo-500/30 rounded-2xl h-64 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
+        <canvas id="rocketCanvas" width="380" height="260" class="absolute inset-0 w-full h-full"></canvas>
+        <div class="relative z-10 text-center pointer-events-none">
+          <p id="rocketStatusText" class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-300">Next Flight In</p>
+          <h2 id="rocketMultiplierDisplay" class="text-6xl font-black font-mono text-white drop-shadow-lg mt-1">1.00x</h2>
+        </div>
+      </div>
+
+      <div class="bg-[#0b0f19] border border-slate-800/80 rounded-2xl p-4 space-y-3.5 shadow-xl">
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-300 font-bold">Bet Amount (Min ₹10)</span>
+          <div class="flex gap-1.5">
+            <button onclick="doubleRocketBet()" class="bg-indigo-600 text-white px-2.5 py-1 rounded-xl text-xs font-black shadow-md">2x</button>
+            <button onclick="document.getElementById('rocketBetInput').value=10" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹10</button>
+            <button onclick="document.getElementById('rocketBetInput').value=50" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹50</button>
+            <button onclick="document.getElementById('rocketBetInput').value=100" class="bg-[#05070d] px-2.5 py-1 rounded-xl text-xs font-bold border border-slate-800">₹100</button>
+          </div>
+        </div>
+        <input id="rocketBetInput" type="number" min="10" value="10" placeholder="Enter Custom Bet" class="w-full bg-[#05070d] border border-slate-800 rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white outline-none focus:border-indigo-500 transition-all" />
+
+        <button id="rocketActionBtn" onclick="handleRocketAction()" class="w-full bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all uppercase tracking-wider">
+          🚀 PLACE BET (Min ₹10)
+        </button>
+      </div>
+    </div>
+
+    <!-- BOTTOM FIXED NAVIGATION BAR -->
     <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#0b0f19]/95 backdrop-blur-md border-t border-slate-800/80 py-3.5 px-6 flex justify-around items-center z-40 shadow-2xl">
-      <button onclick="switchMainView('games')" id="nav-games" class="flex flex-col items-center text-emerald-400 font-bold text-xs gap-0.5 transition-all">
+      <button onclick="switchGame('colour')" class="flex flex-col items-center text-emerald-400 font-bold text-xs gap-0.5">
         <span class="text-base">🎮</span>
         <span>Games</span>
       </button>
-      <button onclick="switchMainView('invite')" id="nav-invite" class="flex flex-col items-center text-slate-400 hover:text-white font-bold text-xs gap-0.5 transition-all">
-        <span class="text-base">🤝</span>
-        <span>Invite</span>
-      </button>
-      <button onclick="openSupportModal()" class="flex flex-col items-center text-amber-400 font-bold text-xs gap-0.5 transition-all">
+      <button onclick="openSupportModal()" class="flex flex-col items-center text-amber-400 font-bold text-xs gap-0.5">
         <span class="text-base">💬</span>
         <span>Support</span>
       </button>
-      <button onclick="openSocialsModal()" class="flex flex-col items-center text-indigo-400 font-bold text-xs gap-0.5 transition-all">
+      <button onclick="openSocialsModal()" class="flex flex-col items-center text-indigo-400 font-bold text-xs gap-0.5">
         <span class="text-base">📢</span>
         <span>Channels</span>
       </button>
-    </div>
-  </div>
-
-  <!-- REFERRAL WITHDRAW MODAL (Min ₹30, 0% Tax) -->
-  <div id="referWithdrawModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-emerald-500/40 shadow-2xl animate-pop text-center">
-      <h3 class="font-black text-emerald-400 text-base">Withdraw Referral Earnings</h3>
-      <p class="text-xs text-slate-400">Minimum withdrawal: ₹30 | 0% Tax Deduction</p>
-      
-      <div class="space-y-2.5 text-left pt-1">
-        <input id="refWithAmount" type="number" min="30" placeholder="Amount (Min ₹30)" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
-        <input id="refWithAccount" type="text" placeholder="Bank Account / UPI Details" class="w-full bg-[#05070d] p-3 rounded-2xl border border-slate-800 text-xs text-white outline-none focus:border-emerald-500" />
-      </div>
-
-      <button onclick="sendReferWithdraw()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-lg shadow-emerald-500/20 transition-all">Request Payout</button>
-      <button onclick="document.getElementById('referWithdrawModal').classList.add('hidden')" class="w-full text-xs text-slate-400 hover:text-white py-1">Cancel</button>
     </div>
   </div>
 
@@ -571,106 +509,6 @@
 
     let clientCheckInDay = 1;
     let clientCheckedToday = false;
-
-    function switchMainView(view) {
-      document.getElementById('view-games').classList.toggle('hidden', view !== 'games');
-      document.getElementById('view-invite').classList.toggle('hidden', view !== 'invite');
-      
-      document.getElementById('nav-games').className = view === 'games' ? 'flex flex-col items-center text-emerald-400 font-bold text-xs gap-0.5 transition-all' : 'flex flex-col items-center text-slate-400 hover:text-white font-bold text-xs gap-0.5 transition-all';
-      document.getElementById('nav-invite').className = view === 'invite' ? 'flex flex-col items-center text-emerald-400 font-bold text-xs gap-0.5 transition-all' : 'flex flex-col items-center text-slate-400 hover:text-white font-bold text-xs gap-0.5 transition-all';
-
-      if (view === 'invite' && currentUser) {
-        socket.emit('fetch_referral_data', { phone: currentUser.phone });
-      }
-    }
-
-    socket.on('referral_data_response', ({ referralCode, totalReferrals, inviteBalance }) => {
-      document.getElementById('inviteWalletBalance').innerText = Number(inviteBalance).toFixed(2);
-      const refLink = `${window.location.origin}/index.html?ref=${referralCode}`;
-      document.getElementById('myReferralLinkInput').value = refLink;
-
-      // Render VIP Tiers (Bronze to Platinum)
-      const tiers = [
-        { name: 'Bronze', target: 1, reward: 5 },
-        { name: 'Silver', target: 5, reward: 25 },
-        { name: 'Gold', target: 10, reward: 50 },
-        { name: 'Diamond', target: 20, reward: 100 },
-        { name: 'Platinum', target: 50, reward: 250 }
-      ];
-
-      let html = '';
-      tiers.forEach(t => {
-        let unlocked = totalReferrals >= t.target;
-        html += `
-          <div class="bg-[#05070d] p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
-            <div>
-              <strong class="text-white text-xs">${t.name} (${t.target} Refers)</strong>
-              <span class="block text-[10px] text-emerald-400">Reward: ₹${t.reward}</span>
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-400 mr-2">${totalReferrals}/${t.target}</span>
-              <button onclick="claimTierReward('${t.name}')" class="${unlocked ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'} px-3 py-1.5 rounded-xl font-bold text-xs">
-                ${unlocked ? 'Claim' : 'Locked'}
-              </button>
-            </div>
-          </div>
-        `;
-      });
-      document.getElementById('vipLevelsList').innerHTML = html;
-    });
-
-    function claimTierReward(tierName) {
-      if (!currentUser) return;
-      socket.emit('claim_referral_tier', { phone: currentUser.phone, tier: tierName });
-    }
-
-    socket.on('referral_claim_response', ({ success, message }) => {
-      alert(message);
-      if (success && currentUser) {
-        socket.emit('fetch_referral_data', { phone: currentUser.phone });
-      }
-    });
-
-    function copyReferralLink() {
-      const input = document.getElementById('myReferralLinkInput');
-      input.select();
-      input.setSelectionRange(0, 99999);
-      navigator.clipboard.writeText(input.value);
-      alert('Referral link copied to clipboard!');
-    }
-
-    function openReferWithdrawModal() {
-      document.getElementById('referWithdrawModal').classList.remove('hidden');
-    }
-
-    function sendReferWithdraw() {
-      const amount = Number(document.getElementById('refWithAmount').value);
-      const account = document.getElementById('refWithAccount').value.trim();
-      if (!amount || !account) return alert('Please fill all fields!');
-      if (amount < 30) return alert('Minimum withdrawal is ₹30!');
-
-      socket.emit('refer_withdraw_request', { phone: currentUser.phone, amount, account });
-      document.getElementById('referWithdrawModal').classList.add('hidden');
-      document.getElementById('refWithAmount').value = '';
-      document.getElementById('refWithAccount').value = '';
-    }
-
-    socket.on('refer_withdraw_response', ({ success, message }) => {
-      alert(message);
-      if (success && currentUser) {
-        socket.emit('fetch_referral_data', { phone: currentUser.phone });
-      }
-    });
-
-    // Auto grab ?ref= code on load
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const refCode = urlParams.get('ref');
-      if (refCode) {
-        document.getElementById('regInviteCode').value = refCode;
-        switchAuthTab('register');
-      }
-    });
 
     function openCheckinModal() {
       document.getElementById('checkinModal').classList.remove('hidden');
@@ -945,9 +783,8 @@
       const phone = document.getElementById('regPhone').value.trim();
       const password = document.getElementById('regPass').value.trim();
       const secretCode = document.getElementById('regSecret').value.trim();
-      const inviteCode = document.getElementById('regInviteCode').value.trim();
-      if (!name || !phone || !password || !secretCode) return alert('Please fill all required fields including Secret Code!');
-      socket.emit('user_register', { name, phone, password, secretCode, inviteCode });
+      if (!name || !phone || !password || !secretCode) return alert('Please fill all fields including Secret Code!');
+      socket.emit('user_register', { name, phone, password, secretCode });
     }
 
     function submitLogin() {
