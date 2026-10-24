@@ -383,7 +383,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ADMIN UPDATE USER CREDENTIALS (Name, Password, Secret Code)
   socket.on('admin_update_user_credentials', async ({ phone, name, password, secretCode }) => {
     try {
       const user = cachedUsers.get(phone);
@@ -652,7 +651,7 @@ io.on('connection', (socket) => {
     if (depAmt < 20) return;
 
     const u = cachedUsers.get(phone);
-    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     io.emit('admin_update', await getAdminPayload());
