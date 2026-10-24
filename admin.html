@@ -169,7 +169,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE WITH LIVE CLAIM STATS -->
+  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE -->
   <div class="grid lg:grid-cols-3 gap-6">
     <!-- ROCKET CONTROLLER (2 Cols) -->
     <div class="lg:col-span-2 bg-slate-900 border-2 border-rose-500/40 rounded-2xl p-5 space-y-4">
@@ -193,7 +193,7 @@
       <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
     </div>
 
-    <!-- ROCKET LIVE BETS (1 Col, Sorted by Highest Amount & Shows Cashout Status) -->
+    <!-- ROCKET LIVE BETS (1 Col, Sorted with Live Return Display) -->
     <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-5 space-y-3 flex flex-col">
       <h2 class="text-base font-bold text-rose-400 border-b border-slate-800 pb-3">🚀 Live Rocket Bets (Sorted)</h2>
       <div id="adminRocketBetsList" class="space-y-2 text-xs max-h-48 overflow-y-auto flex-1 pr-1">
@@ -417,9 +417,33 @@
       }
     }
 
-    socket.on('rocket_tick', ({ status, multiplier }) => {
+    socket.on('rocket_tick', ({ status, multiplier, betsLiveReturn }) => {
       const el = document.getElementById('adminRocketMult');
       if(el) el.innerText = status === 'CRASHED' ? `💥 ${multiplier.toFixed(2)}x` : `${multiplier.toFixed(2)}x`;
+
+      // Live update rocket bets list with live return amounts if flying
+      if (betsLiveReturn && Array.isArray(betsLiveReturn)) {
+        const rocketBetsEl = document.getElementById('adminRocketBetsList');
+        if (rocketBetsEl) {
+          if (betsLiveReturn.length === 0) {
+            rocketBetsEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
+          } else {
+            const sortedRocket = [...betsLiveReturn].sort((a, b) => b.amount - a.amount);
+            rocketBetsEl.innerHTML = sortedRocket.map(rb => `
+              <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <div>
+                  <strong class="text-white">${rb.userName || 'User'}</strong>
+                  <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone} | Bet: ₹${rb.amount}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-black ${rb.cashedOut ? 'text-amber-400' : 'text-emerald-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Live: ₹' + (rb.amount * (multiplier || 1)).toFixed(2)}</span>
+                  <span class="block text-[10px] text-slate-400">${rb.cashedOut ? 'Cashed Out' : status}</span>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      }
     });
 
     socket.on('kismat_tick', ({ period, timeLeft }) => {
@@ -556,7 +580,7 @@
 
       renderUsersTable();
 
-      // SORTED ROCKET LIVE BETS WITH LIVE CASHOUT/CLAIM AMOUNT
+      // SORTED ROCKET LIVE BETS WITH LIVE RETURN
       const rocketBetsEl = document.getElementById('adminRocketBetsList');
       if (rocketBetsEl) {
         if (!rocketBets || rocketBets.length === 0) {
@@ -567,11 +591,11 @@
             <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
               <div>
                 <strong class="text-white">${rb.userName || 'User'}</strong>
-                <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone}</span>
+                <span class="block text-[10px] text-indigo-300 font-mono">ID: ${rb.phone} | Bet: ₹${rb.amount}</span>
               </div>
               <div class="text-right">
-                <span class="font-black text-emerald-400">₹${rb.amount}</span>
-                <span class="block text-[10px] ${rb.cashedOut ? 'text-amber-400 font-bold' : 'text-slate-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Flying...'}</span>
+                <span class="font-black ${rb.cashedOut ? 'text-amber-400' : 'text-emerald-400'}">${rb.cashedOut ? 'Claimed: ₹' + (rb.winAmount || 0).toFixed(2) : 'Live: ₹' + (rb.amount * (rocketState.multiplier || 1)).toFixed(2)}</span>
+                <span class="block text-[10px] text-slate-400">${rb.cashedOut ? 'Cashed Out' : rocketState.status}</span>
               </div>
             </div>
           `).join('');
