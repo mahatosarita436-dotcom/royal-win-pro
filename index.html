@@ -88,7 +88,7 @@
       <span id="userInfo" class="text-[11px] font-mono text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700"></span>
     </header>
 
-    <div class="p-4 space-y-2">
+    <div class="p-4 space-y-3">
       <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-4 rounded-2xl border border-indigo-500/40 shadow-xl space-y-3">
         <div class="flex justify-between items-center">
           <div>
@@ -100,6 +100,13 @@
             <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow">↑ Withdraw</button>
           </div>
         </div>
+      </div>
+
+      <!-- DAILY CHECK-IN BUTTON -->
+      <div>
+        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-slate-950 font-black py-3 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-sm active:scale-95 transition">
+          <span>🎁</span> Daily Check-in & Mystery Box (Win up to ₹15)
+        </button>
       </div>
 
       <!-- REDEEM GIFT CODE BOX -->
@@ -272,6 +279,28 @@
     </div>
   </div>
 
+  <!-- DAILY CHECK-IN MODAL -->
+  <div id="checkinModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 w-full max-w-md p-5 rounded-3xl space-y-4 border-2 border-amber-500/50 shadow-2xl relative">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="font-black text-amber-400 text-lg">📅 Daily Check-in Rewards</h3>
+          <p class="text-[11px] text-slate-400">Rat 12 tay reset hobe. Ekdin miss korle Day 1 theke shuru hobe!</p>
+        </div>
+        <button onclick="document.getElementById('checkinModal').classList.add('hidden')" class="bg-slate-800 text-white w-8 h-8 rounded-full font-bold">✕</button>
+      </div>
+
+      <!-- 7 Days Grid UI -->
+      <div id="checkinDaysGrid" class="grid grid-cols-4 gap-2.5">
+        <!-- Generated dynamically by JS -->
+      </div>
+
+      <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg active:scale-95 transition">
+        CLAIM TODAY'S REWARD
+      </button>
+    </div>
+  </div>
+
   <!-- SOCIAL LINKS POPUP MODAL -->
   <div id="socialsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 w-full max-w-sm p-5 rounded-2xl space-y-4 border border-slate-700 text-center">
@@ -432,6 +461,68 @@
     let activeTxTab = 'deposit';
     let activeGameFilter = 'Colour Trading';
     let currentSocialLinks = { telegram: '', youtube: '', instagram: '' };
+
+    // Check-in client variables
+    let clientCheckInDay = 1;
+    let clientCheckedToday = false;
+
+    function openCheckinModal() {
+      document.getElementById('checkinModal').classList.remove('hidden');
+      if (currentUser) {
+        socket.emit('fetch_checkin_status', { phone: currentUser.phone });
+      }
+    }
+
+    socket.on('checkin_status_response', ({ checkInDay, checkedToday }) => {
+      clientCheckInDay = checkInDay;
+      clientCheckedToday = checkedToday;
+      renderCheckinGrid();
+    });
+
+    function renderCheckinGrid() {
+      const grid = document.getElementById('checkinDaysGrid');
+      const claimBtn = document.getElementById('claimCheckinBtn');
+      
+      let html = '';
+      for (let i = 1; i <= 7; i++) {
+        let rewardText = i <= 4 ? '₹2' : i <= 6 ? '₹3' : '🎁 Mystery Box (₹1-15)';
+        let isCompleted = i < clientCheckInDay || (i === clientCheckInDay && clientCheckedToday);
+        let isCurrent = i === clientCheckInDay && !clientCheckedToday;
+
+        html += `
+          <div class="bg-slate-950 p-3 rounded-2xl border ${isCurrent ? 'border-amber-400 bg-amber-500/10 animate-pulse' : isCompleted ? 'border-emerald-500/40 opacity-70' : 'border-slate-800'} text-center flex flex-col justify-between">
+            <span class="text-[10px] font-bold text-slate-400">Day ${i}</span>
+            <span class="text-sm font-black ${i === 7 ? 'text-amber-300' : 'text-emerald-400'} my-1">${rewardText}</span>
+            <span class="text-[9px] font-bold uppercase ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-amber-400' : 'text-slate-500'}">
+              ${isCompleted ? '✓ Claimed' : isCurrent ? 'Available' : 'Locked'}
+            </span>
+          </div>
+        `;
+      }
+      grid.innerHTML = html;
+
+      if (clientCheckedToday) {
+        claimBtn.innerText = 'ALREADY CLAIMED TODAY (Come back at 12 AM)';
+        claimBtn.disabled = true;
+        claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-xl cursor-not-allowed';
+      } else {
+        claimBtn.innerText = clientCheckInDay === 7 ? '🎁 OPEN MYSTERY BOX & CLAIM!' : `CLAIM DAY ${clientCheckInDay} REWARD`;
+        claimBtn.disabled = false;
+        claimBtn.className = 'w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black py-3.5 rounded-xl shadow-lg active:scale-95 transition';
+      }
+    }
+
+    function claimDailyCheckin() {
+      if (!currentUser) return;
+      socket.emit('claim_checkin', { phone: currentUser.phone });
+    }
+
+    socket.on('checkin_response', ({ success, message, reward }) => {
+      alert(message);
+      if (success && currentUser) {
+        socket.emit('fetch_checkin_status', { phone: currentUser.phone });
+      }
+    });
 
     socket.on('social_links_sync', (links) => {
       currentSocialLinks = links || {};
@@ -981,7 +1072,6 @@
       }
     });
 
-    // INSTANT BALANCE UPDATE LISTENER FIXED[cite: 8]
     socket.on('user_sync', ({ user }) => {
       if (currentUser && user.phone === currentUser.phone) {
         currentUser.balance = user.balance;
