@@ -118,7 +118,6 @@ async function loadDataFromDB() {
     allSupportTickets = await SupportTicket.find({}).sort({ id: -1 }).limit(100);
     allGiftCodes = await GiftCode.find({});
     
-    // Database theke permanent social links load kora hocche
     const savedLinks = await SocialLink.findOne({ key: 'main_links' });
     if (savedLinks) {
       currentSocialLinks = {
@@ -270,7 +269,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop (Speed Increased)
+// Rocket Game Loop (Speed Updated with >50x condition)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -301,10 +300,11 @@ setInterval(async () => {
       }
     }
   } else if (rocketState.status === 'FLYING') {
-    // Rocket Speed Increased Here
+    // Rocket Speed Increments (Added >50x -> 0.55 condition)
     let increment = 0.08; 
     if (rocketState.multiplier > 5) increment = 0.18;
     if (rocketState.multiplier > 20) increment = 0.45;
+    if (rocketState.multiplier > 50) increment = 0.55;
 
     rocketState.multiplier = +(rocketState.multiplier + increment).toFixed(2);
 
@@ -462,7 +462,6 @@ io.on('connection', (socket) => {
     } catch (e) {}
   });
 
-  // Social Links update and save to MongoDB permanently
   socket.on('admin_update_socials', async (links) => {
     currentSocialLinks = links || {};
     
