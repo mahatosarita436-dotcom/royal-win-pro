@@ -812,6 +812,7 @@ async function getAdminPayload() {
     kStakes[optNum] = (kStakes[optNum] || 0) + b.amount;
   }
   let totalRocketPool = rocketServiceTotalPool();
+  let totalRocketClaimed = rocketBets.reduce((acc, b) => acc + (b.cashedOut ? (b.winAmount || 0) : 0), 0);
 
   return {
     gameState,
@@ -824,6 +825,7 @@ async function getAdminPayload() {
     currentBets: currentRoundBets,
     rocketBets,
     totalRocketPool,
+    totalRocketClaimed: +totalRocketClaimed.toFixed(2),
     giftCodes: allGiftCodes,
     socialLinks: currentSocialLinks,
     depositConditionActive: global.requireDepositForGift || false
@@ -831,6 +833,7 @@ async function getAdminPayload() {
 }
 
 function getAdminPayloadSync() {
+  let totalRocketClaimed = rocketBets.reduce((acc, b) => acc + (b.cashedOut ? (b.winAmount || 0) : 0), 0);
   return {
     gameState,
     kismatState: { period: kismatState.period, timeLeft: kismatState.timeLeft },
@@ -841,6 +844,7 @@ function getAdminPayloadSync() {
     currentBets: currentRoundBets,
     rocketBets,
     totalRocketPool: rocketServiceTotalPool(),
+    totalRocketClaimed: +totalRocketClaimed.toFixed(2),
     giftCodes: allGiftCodes,
     socialLinks: currentSocialLinks,
     depositConditionActive: global.requireDepositForGift || false
