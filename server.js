@@ -415,7 +415,10 @@ io.on('connection', (socket) => {
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       
-      if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
+      if (!u.lastCheckInDate) {
+        u.checkInDay = 1;
+        await User.updateOne({ phone }, { checkInDay: 1 });
+      } else if (u.lastCheckInDate !== todayStr) {
         const lastDate = new Date(u.lastCheckInDate);
         const currentDate = new Date(todayStr);
         const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
