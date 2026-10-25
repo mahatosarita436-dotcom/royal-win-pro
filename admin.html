@@ -220,6 +220,7 @@
       </div>
     </div>
 
+    <!-- ADMIN NUMBER STAKES GRID -->
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
@@ -385,7 +386,6 @@
       }
     }
 
-    // Live Rocket Tick listener for Admin Panel Multiplier & Live Return update
     socket.on('rocket_tick', (data) => {
       const multEl = document.getElementById('adminRocketMult');
       if (multEl) multEl.innerText = `${data.multiplier.toFixed(2)}x`;
@@ -449,6 +449,34 @@
 
       const totalClaimedEl = document.getElementById('adminTotalRocketClaimed');
       if(totalClaimedEl) totalClaimedEl.innerText = `₹${totalRocketClaimed || 0}`;
+
+      // Update Colour Trading Stakes & Mode Banner
+      if (summary && summary.stakes) {
+        document.getElementById('stake-GREEN').innerText = summary.stakes.GREEN || 0;
+        document.getElementById('stake-VIOLET').innerText = summary.stakes.VIOLET || 0;
+        document.getElementById('stake-RED').innerText = summary.stakes.RED || 0;
+
+        let numGridHtml = '';
+        for (let n = 0; n <= 9; n++) {
+          let nStake = summary.stakes[n] || 0;
+          numGridHtml += `
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-xs font-black text-indigo-300">Num #${n}</span>
+              <p class="text-[11px] text-emerald-400 font-mono mt-0.5">₹${nStake}</p>
+            </div>
+          `;
+        }
+        document.getElementById('numberGrid').innerHTML = numGridHtml;
+      }
+
+      const winBanner = document.getElementById('winnerBanner');
+      if (winBanner) {
+        winBanner.innerText = gameState.mode === 'MANUAL' ? `🎯 Manual Override (Num: ${gameState.forcedNumber !== null ? gameState.forcedNumber : '--'})` : '📉 Auto Profit Mode Active';
+        winBanner.className = gameState.mode === 'MANUAL' ? 'bg-rose-500/20 border border-rose-400 text-rose-300 px-4 py-2 rounded-xl text-sm font-black' : 'bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-sm font-black';
+      }
+
+      document.getElementById('mode-MIN_PAYOUT').className = gameState.mode === 'MIN_PAYOUT' ? 'py-2.5 px-3 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300' : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800';
+      document.getElementById('mode-MANUAL').className = gameState.mode === 'MANUAL' ? 'py-2.5 px-3 rounded-xl text-xs font-bold border border-rose-500 bg-rose-500/20 text-rose-300' : 'py-2.5 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800';
 
       if (kismatState) {
         document.getElementById('adminKismatPeriod').innerText = kismatState.period;
