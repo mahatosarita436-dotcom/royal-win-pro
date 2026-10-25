@@ -101,11 +101,11 @@ function getISTTime() {
 }
 
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
-let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
+let kismatState = { period: 20261017001, timeLeft: 150, history: [], randomMode: false };
 let currentKismatBets = [];
 let forcedKismatOption = null;
 
-let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, history: [] };
+let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, randomMode: false, history: [] };
 let currentRoundBets = [];
 let rocketBets = [];
 let cachedUsers = new Map();
@@ -155,13 +155,15 @@ function calculatePayoutForNumber(num) {
   return totalPayout;
 }
 
-// Colour Game Timer
+// Colour Game Timer (With 2% Tax & Random Option)
 setInterval(async () => {
   gameState.timeLeft -= 1;
   if (gameState.timeLeft <= 0) {
     let winNum = Math.floor(Math.random() * 10);
     if (gameState.mode === 'MANUAL' && gameState.forcedNumber !== null) {
       winNum = Number(gameState.forcedNumber);
+    } else if (gameState.mode === 'RANDOM') {
+      winNum = Math.floor(Math.random() * 10);
     } else {
       let bestNums = [];
       let minPay = Infinity;
@@ -181,7 +183,7 @@ setInterval(async () => {
       else if (winCols.includes(b.choice)) { won = true; rawWin = b.amount * b.multiplier; }
       
       if (won) {
-        const tax = +(rawWin * 0.01).toFixed(3);
+        const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
         b.winAmount = +(rawWin - tax).toFixed(3);
         b.status = 'WON';
       } else {
@@ -213,7 +215,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Kismat Game Timer
+// Kismat Game Timer (With 2% Tax & Random Option)
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
@@ -222,6 +224,8 @@ setInterval(async () => {
     if (forcedKismatOption !== null) {
       winOption = forcedKismatOption;
       forcedKismatOption = null;
+    } else if (kismatState.randomMode) {
+      winOption = Math.floor(Math.random() * 10) + 1;
     } else {
       let bettedOptions = new Set();
       currentKismatBets.forEach(b => {
@@ -245,7 +249,7 @@ setInterval(async () => {
       if (b.choice === `Option #${winOption}`) {
         b.status = 'WON';
         const rawWin = b.amount * 9;
-        const tax = +(rawWin * 0.01).toFixed(3);
+        const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
         b.winAmount = +(rawWin - tax).toFixed(3);
         
         const u = cachedUsers.get(b.phone);
@@ -268,13 +272,14 @@ setInterval(async () => {
     io.emit('kismat_settled', { settledBets: currentKismatBets, winOption, history: kismatState.history });
     kismatState.period += 1;
     kismatState.timeLeft = 150;
+    kismatState.randomMode = false;
     currentKismatBets = [];
   }
   io.emit('kismat_tick', { period: kismatState.period, timeLeft: kismatState.timeLeft, history: kismatState.history });
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Optimized Rocket Game Loop
+// Optimized Rocket Game Loop (With Random Option & 2% Tax on Cashout)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -288,6 +293,10 @@ setInterval(async () => {
       if (rocketState.forcedNextCrash !== null) {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
+      } else if (rocketState.randomMode) {
+        let highChance = Math.random() < 0.25;
+        rocketState.crashPoint = highChance ? +(20 + Math.random() * 150).toFixed(2) : +(1.10 + Math.random() * 5).toFixed(2);
+        rocketState.randomMode = false;
       } else if (totalPool >= 1000) {
         let targetProfitMultiplier = +(1 + 0.80).toFixed(2);
         rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
@@ -742,13 +751,16 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // ROCKET CASHOUT WITH 2% TAX
   socket.on('rocket_cashout', async ({ phone }) => {
     if (rocketState.status !== 'FLYING') return;
     const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
     if (!rBet) return;
     rBet.cashedOut = true;
     rBet.status = 'WON';
-    rBet.winAmount = +(rBet.amount * rocketState.multiplier * 0.99).toFixed(3);
+    const rawWin = rBet.amount * rocketState.multiplier;
+    const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
+    rBet.winAmount = +(rawWin - tax).toFixed(3);
     
     await Bet.updateOne({ id: rBet.id }, { status: 'WON', winAmount: rBet.winAmount });
 
@@ -864,7 +876,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // REALTIME DATABASE DELETION FOR TRANSACTIONS & TICKETS
   socket.on('admin_delete_transaction', async (txId) => {
     try {
       await Transaction.deleteOne({ id: txId });
@@ -882,8 +893,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin_set_mode', (mode) => {
-    gameState.mode = mode;
-    if (mode === 'MIN_PAYOUT') gameState.forcedNumber = null;
+    if (mode === 'RANDOM') {
+      gameState.mode = 'RANDOM';
+      gameState.forcedNumber = null;
+    } else {
+      gameState.mode = mode;
+      if (mode === 'MIN_PAYOUT') gameState.forcedNumber = null;
+    }
     io.emit('admin_update', getAdminPayloadSync());
   });
 
@@ -910,10 +926,20 @@ io.on('connection', (socket) => {
     forcedKismatOption = Number(opt);
   });
 
+  socket.on('admin_kismat_set_random', () => {
+    kismatState.randomMode = true;
+    forcedKismatOption = null;
+  });
+
   socket.on('admin_rocket_crash_now', () => {
     if (rocketState.status === 'FLYING') {
       rocketState.crashPoint = rocketState.multiplier;
     }
+  });
+
+  socket.on('admin_rocket_set_random', () => {
+    rocketState.randomMode = true;
+    rocketState.forcedNextCrash = null;
   });
 
   socket.on('admin_rocket_set_next', (val) => {
