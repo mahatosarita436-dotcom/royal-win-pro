@@ -352,7 +352,7 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  // USER REGISTRATION WITH ROBUST INVITE MAPPING
+  // USER REGISTRATION WITH DIRECT REFERRER PHONE MAPPING
   socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -364,7 +364,12 @@ io.on('connection', (socket) => {
         
         let invitedByPhone = '';
         if (inviteCode && inviteCode.trim() !== '') {
-          const referrerUser = await User.findOne({ referralCode: inviteCode.trim().toUpperCase() });
+          const referrerUser = await User.findOne({ 
+            $or: [
+              { referralCode: inviteCode.trim().toUpperCase() },
+              { phone: inviteCode.trim() }
+            ]
+          });
           if (referrerUser) {
             invitedByPhone = referrerUser.phone;
           }
@@ -427,7 +432,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FETCH REFERRED USERS & TOTAL COUNT
+  // FETCH REFERRED USERS & ACTIVE RECHARGES COUNT
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       let u = cachedUsers.get(phone);
@@ -749,7 +754,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT COMMISSION & STAKES TRACKING FOR COLOUR BET
+  // 2% INSTANT REFERRAL COMMISSION ON COLOUR BET
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     let u = cachedUsers.get(phone);
@@ -805,7 +810,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% COMMISSION FOR KISMAT BET
+  // 2% INSTANT COMMISSION ON KISMAT BET
   socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
     if (kismatState.timeLeft <= 10) return;
     let u = cachedUsers.get(phone);
@@ -866,7 +871,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% COMMISSION FOR ROCKET BET
+  // 2% INSTANT COMMISSION ON ROCKET BET
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -1012,7 +1017,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // DEPOSIT APPROVAL: VIP UNLOCK & REFERRER INCREMENT
+  // DEPOSIT APPROVAL: VIP MILESTONE UNLOCK & REFERRER INCREMENT
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
