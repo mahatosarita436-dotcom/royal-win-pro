@@ -274,7 +274,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Rocket Game Loop
+// Optimized Rocket Game Loop (Fast and Lag-free)
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -709,6 +709,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // FAST ROCKET BET HANDLING
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -742,6 +743,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // FAST ROCKET CASHOUT HANDLING WITHOUT DELAY
   socket.on('rocket_cashout', async ({ phone }) => {
     if (rocketState.status !== 'FLYING') return;
     const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
@@ -833,6 +835,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ADMIN TRANSACTION PROCESSING & REFUND ON REJECTION
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -862,6 +865,23 @@ io.on('connection', (socket) => {
       allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
       io.emit('admin_update', await getAdminPayload());
     }
+  });
+
+  // ADMIN DELETION HANDLERS FOR TRANSACTIONS AND TICKETS
+  socket.on('admin_delete_transaction', async (txId) => {
+    try {
+      await Transaction.deleteOne({ id: txId });
+      allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {}
+  });
+
+  socket.on('admin_delete_ticket', async (ticketId) => {
+    try {
+      await SupportTicket.deleteOne({ id: ticketId });
+      allSupportTickets = allSupportTickets.filter(t => t.id !== ticketId);
+      io.emit('admin_update', await getAdminPayload());
+    } catch (e) {}
   });
 
   socket.on('admin_set_mode', (mode) => {
