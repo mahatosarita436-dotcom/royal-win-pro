@@ -138,7 +138,7 @@
     </div>
   </div>
 
-  <!-- KISMAT GAME CONTROL PANEL WITH RANDOM OPTION -->
+  <!-- KISMAT GAME CONTROL PANEL WITH 1-ROUND RANDOM BUTTON -->
   <div class="bg-slate-900/90 border border-amber-500/30 rounded-[28px] p-6 space-y-4 shadow-xl">
     <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
       <div>
@@ -146,7 +146,7 @@
         <p class="text-xs text-slate-400 mt-0.5">Kismat Period: <strong class="text-indigo-300 font-mono" id="adminKismatPeriod">--</strong></p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="setRandomKismat()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition">🎲 Random Kismat</button>
+        <button onclick="setRandomKismatOnce()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow">🎲 Next Round Random</button>
         <input id="forcedKismatOptionInput" type="number" min="1" max="10" placeholder="Win Option (1-10)" class="bg-[#03050a] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-amber-500" />
         <button onclick="setForcedKismat()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Force Win</button>
       </div>
@@ -154,7 +154,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="adminKismatOptionsGrid"></div>
   </div>
 
-  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE WITH RANDOM OPTION -->
+  <!-- ROCKET GAME CONTROL & ROCKET LIVE BETS SIDE-BY-SIDE WITH 1-ROUND RANDOM BUTTON -->
   <div class="grid lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 bg-slate-900/90 border border-rose-500/30 rounded-[28px] p-6 space-y-4 shadow-xl">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -169,15 +169,15 @@
         <button onclick="crashRocketNow()" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-3.5 rounded-2xl shadow-lg active:scale-95 transition">
           💥 CRASH NOW!
         </button>
-        <button onclick="setRandomRocket()" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-3.5 rounded-2xl shadow-lg active:scale-95 transition">
-          🎲 RANDOM ROCKET
+        <button onclick="setRandomRocketOnce()" class="bg-purple-600 hover:bg-purple-500 text-white font-black py-3.5 rounded-2xl shadow-lg active:scale-95 transition">
+          🎲 Next Flight Random
         </button>
         <div class="flex gap-2">
           <input id="customRocketXInput" type="number" step="0.1" placeholder="Ex: 5.50" class="w-full bg-[#03050a] border border-slate-800 rounded-2xl px-3 text-xs text-white outline-none focus:border-indigo-500" />
           <button onclick="setCustomRocketX()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Set X</button>
         </div>
       </div>
-      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto / Random</p>
+      <p id="nextRocketBanner" class="text-xs font-bold text-amber-400">Next Flight Mode: Auto Profit / Set Override</p>
     </div>
 
     <div class="bg-slate-900/90 border border-rose-500/20 rounded-[28px] p-6 space-y-3 flex flex-col shadow-xl">
@@ -188,7 +188,7 @@
     </div>
   </div>
 
-  <!-- COLOUR TRADING CONTROL WITH RANDOM OPTION -->
+  <!-- COLOUR TRADING CONTROL WITH 1-ROUND RANDOM BUTTON -->
   <div class="bg-slate-900/90 border border-indigo-500/30 rounded-[28px] p-6 space-y-5 shadow-xl">
     <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
       <div>
@@ -200,10 +200,9 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-3">
-      <button onclick="setMode('MIN_PAYOUT')" id="mode-MIN_PAYOUT" class="py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 transition">📉 Auto Profit</button>
-      <button onclick="setMode('RANDOM')" id="mode-RANDOM" class="py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 transition">🎲 Random Colour</button>
-      <button onclick="setMode('MANUAL')" id="mode-MANUAL" class="py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 transition">🎯 Manual Override</button>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="setMode('MIN_PAYOUT')" id="mode-MIN_PAYOUT" class="py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 transition">📉 Auto Profit (Active)</button>
+      <button onclick="setRandomColourOnce()" class="py-3 px-3 rounded-xl text-xs font-bold border border-purple-500 bg-purple-500/20 text-purple-300 transition">🎲 Next Round Random Colour</button>
     </div>
 
     <div class="space-y-3">
@@ -249,7 +248,7 @@
     <div class="bg-slate-900/90 border border-amber-500/30 rounded-[28px] p-6 space-y-4 shadow-xl">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <h3 class="text-sm font-black text-amber-400 uppercase tracking-wider">📤 Withdrawal Requests (Bank & Details)</h3>
-        <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-[#03050a] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white w-full sm:w-48 outline-none focus:border-amber-500" />
+        <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-[#03050a] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white w-full sm:w-48 outline-none focus:border-emerald-500" />
       </div>
       <div id="withdrawList" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
     </div>
@@ -349,8 +348,19 @@
     function forceNum(n) { socket.emit('admin_force_num', n); }
     function forceColour(col) { socket.emit('admin_force_colour', col); }
     function crashRocketNow() { socket.emit('admin_rocket_crash_now'); }
-    function setRandomRocket() { socket.emit('admin_rocket_set_random'); alert('Rocket set to Random Mode!'); }
-    function setRandomKismat() { socket.emit('admin_kismat_set_random'); alert('Kismat set to Random Mode!'); }
+    
+    function setRandomColourOnce() { 
+      socket.emit('admin_colour_set_random_once'); 
+      alert('Colour set to Random for next round only!'); 
+    }
+    function setRandomRocketOnce() { 
+      socket.emit('admin_rocket_set_random_once'); 
+      alert('Rocket set to Random for next flight only!'); 
+    }
+    function setRandomKismatOnce() { 
+      socket.emit('admin_kismat_set_random_once'); 
+      alert('Kismat set to Random for next round only!'); 
+    }
 
     function setNextRocket(val) { socket.emit('admin_rocket_set_next', val); }
     function setCustomRocketX() {
@@ -489,10 +499,7 @@
 
       const winBanner = document.getElementById('winnerBanner');
       if (winBanner) {
-        if (gameState.mode === 'RANDOM') {
-          winBanner.innerText = '🎲 Random Colour Mode Active';
-          winBanner.className = 'bg-purple-500/20 border border-purple-400 text-purple-300 px-4 py-2 rounded-xl text-sm font-black';
-        } else if (gameState.mode === 'MANUAL') {
+        if (gameState.mode === 'MANUAL') {
           winBanner.innerText = `🎯 Manual Override (Num: ${gameState.forcedNumber !== null ? gameState.forcedNumber : '--'})`;
           winBanner.className = 'bg-rose-500/20 border border-rose-400 text-rose-300 px-4 py-2 rounded-xl text-sm font-black';
         } else {
@@ -502,7 +509,6 @@
       }
 
       document.getElementById('mode-MIN_PAYOUT').className = gameState.mode === 'MIN_PAYOUT' ? 'py-3 px-3 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-500/20 text-emerald-300' : 'py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800';
-      document.getElementById('mode-RANDOM').className = gameState.mode === 'RANDOM' ? 'py-3 px-3 rounded-xl text-xs font-bold border border-purple-500 bg-purple-500/20 text-purple-300' : 'py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800';
       document.getElementById('mode-MANUAL').className = gameState.mode === 'MANUAL' ? 'py-3 px-3 rounded-xl text-xs font-bold border border-rose-500 bg-rose-500/20 text-rose-300' : 'py-3 px-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800';
 
       if (kismatState) {
@@ -656,7 +662,7 @@
                   <button onclick="processTx(${t.id}, false)" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 rounded-lg text-white font-bold">Reject</button>
                 </div>
               ` : `<span class="font-bold text-xs px-2.5 py-1 rounded-lg ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${t.status}</span>`}
-              <button onclick="deleteTransaction(${t.id})" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 rounded-lg text-white font-bold text-[10px]">Delete</button>
+              <button onclick="deleteTransaction(${t.id})" class="bg-rose-600 hover:bg-rose-500 px-2 py-1.5 rounded-lg text-white font-bold text-[10px]">Delete</button>
             </div>
           </div>
           <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-slate-300 font-mono text-[11px] space-y-0.5">
