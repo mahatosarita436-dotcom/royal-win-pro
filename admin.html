@@ -117,15 +117,15 @@
     </div>
   </div>
 
-  <!-- GIFT CODE LIVE TRACKING & REDEEM MANAGER -->
-  <div class="bg-slate-900 border-2 border-teal-500/40 rounded-2xl p-5 space-y-4">
+  <!-- GIFT CODE LIVE TRACKING & REDEEM MANAGER (UNIQUE UI) -->
+  <div class="bg-slate-900 border-2 border-teal-500/40 rounded-2xl p-5 space-y-4 shadow-xl">
     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
       <div>
         <h2 class="text-base font-black text-teal-400">📊 Active Gift Codes & Redeem History</h2>
-        <p class="text-xs text-slate-400">Real-time status, countdown timers, and user redemption logs.</p>
+        <p class="text-xs text-slate-400">Real-time tracking, live countdown timers, and user claims list.</p>
       </div>
     </div>
-    <div id="adminGiftCodesList" class="space-y-3 max-h-96 overflow-y-auto text-xs">
+    <div id="adminGiftCodesList" class="space-y-3 max-h-[420px] overflow-y-auto text-xs pr-1">
       <p class="text-slate-500 text-center py-4">No active gift codes.</p>
     </div>
   </div>
@@ -422,7 +422,7 @@
         document.getElementById('adminKismatOptionsGrid').innerHTML = kGrid;
       }
 
-      // Render Admin Gift Codes & Claims List
+      // Render Admin Gift Codes & Unique Redeem History (Code upore, tar niche "Code:")
       const giftEl = document.getElementById('adminGiftCodesList');
       if (giftEl) {
         giftEl.innerHTML = (!cachedGiftCodes || cachedGiftCodes.length === 0)
@@ -440,26 +440,30 @@
                 }
               }
               return `
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                  <div class="flex justify-between items-center">
-                    <div>
-                      <span class="font-mono font-black text-emerald-400 text-sm">${g.code}</span>
-                      <span class="ml-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-bold">₹${g.amount}</span>
+                <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 shadow-md relative overflow-hidden">
+                  <div class="flex justify-between items-start">
+                    <div class="space-y-1">
+                      <div class="text-[10px] font-extrabold text-teal-400 uppercase tracking-widest">Code:</div>
+                      <div class="font-mono font-black text-white text-base bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 inline-block">${g.code}</div>
+                      <span class="ml-2 px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg font-bold text-xs">₹${g.amount}</span>
                     </div>
-                    <div class="flex items-center gap-3">
-                      <span class="text-amber-400 font-mono font-bold">Uses: ${g.usedCount} / ${g.maxUses}</span>
-                      <button onclick="deleteAdminGiftCode('${g.code}')" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1 rounded text-white font-bold">Delete</button>
+                    <div class="flex flex-col items-end gap-2">
+                      <span class="text-amber-400 font-mono font-bold text-xs bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">Uses: ${g.usedCount} / ${g.maxUses}</span>
+                      <button onclick="deleteAdminGiftCode('${g.code}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded-lg text-white font-bold text-xs shadow">Delete Code</button>
                     </div>
                   </div>
-                  <div class="flex justify-between text-[11px] text-slate-400 border-t border-slate-900 pt-2">
-                    <span>⏳ Expiry: <strong class="text-indigo-300">${timeLeftStr}</strong></span>
+                  
+                  <div class="flex justify-between items-center text-[11px] text-slate-300 border-t border-slate-900 pt-2 font-mono">
+                    <span>⏳ Expiry Countdown: <strong class="text-amber-400">${timeLeftStr}</strong></span>
                   </div>
-                  <div class="bg-slate-900/80 p-2.5 rounded-lg space-y-1 mt-2">
-                    <p class="text-[10px] uppercase font-extrabold text-slate-400">Redeemed Users History:</p>
-                    ${(!g.claims || g.claims.length === 0) ? `<p class="text-slate-500 text-[11px]">No users claimed yet.</p>` : g.claims.map(c => `
-                      <div class="flex justify-between items-center text-[11px] border-b border-slate-800/50 pb-1">
+
+                  <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2 mt-2">
+                    <p class="text-[11px] uppercase font-black text-indigo-300 tracking-wider">👥 Redeemed Users History (${g.claims ? g.claims.length : 0}):</p>
+                    ${(!g.claims || g.claims.length === 0) ? `<p class="text-slate-500 text-[11px]">No users claimed this code yet.</p>` : g.claims.map(c => `
+                      <div class="flex justify-between items-center text-[11px] bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800/60">
                         <div>
-                          <strong class="text-white">${c.userName}</strong> <span class="text-indigo-400 font-mono">(${c.userId} - ${c.phone})</span>
+                          <strong class="text-white">${c.userName}</strong> 
+                          <span class="text-indigo-400 font-mono text-[10px]">(${c.userId} • ${c.phone})</span>
                         </div>
                         <div class="text-right">
                           <span class="text-emerald-400 font-bold">+₹${c.amount}</span>
