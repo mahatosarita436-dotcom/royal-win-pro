@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully![cite: 3]'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const userSchema = new mongoose.Schema({
@@ -364,7 +364,6 @@ setInterval(async () => {
     }
   }
 
-  // Broadcast rocket ticks to clients & admin
   io.emit('rocket_tick', { 
     status: rocketState.status, 
     countdown: rocketState.countdown, 
