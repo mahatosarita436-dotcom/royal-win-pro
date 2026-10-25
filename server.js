@@ -202,18 +202,6 @@ setInterval(async () => {
         io.emit('user_sync', { user: u });
       }
 
-      if (cachedUsers.has(b.phone)) {
-        const betUser = cachedUsers.get(b.phone);
-        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
-          const referrer = cachedUsers.get(betUser.invitedBy);
-          const commission = +(b.amount * 0.02).toFixed(3);
-          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
-          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
-          cachedUsers.set(referrer.phone, referrer);
-          io.emit('user_sync', { user: referrer });
-        }
-      }
-
       await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
     }
 
@@ -275,18 +263,6 @@ setInterval(async () => {
       } else {
         b.status = 'LOST';
         b.winAmount = 0;
-      }
-
-      if (cachedUsers.has(b.phone)) {
-        const betUser = cachedUsers.get(b.phone);
-        if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
-          const referrer = cachedUsers.get(betUser.invitedBy);
-          const commission = +(b.amount * 0.02).toFixed(3);
-          referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
-          await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
-          cachedUsers.set(referrer.phone, referrer);
-          io.emit('user_sync', { user: referrer });
-        }
       }
 
       await Bet.updateOne({ id: b.id }, { status: b.status, winAmount: b.winAmount }, { upsert: true });
@@ -410,9 +386,9 @@ io.on('connection', (socket) => {
           joinedTime: getISTTime()
         };
 
-        await User.create(newUser);
-        cachedUsers.set(phone, newUser);
-        socket.emit('auth_success', { user: newUser });
+        const createdUser = await User.create(newUser);
+        cachedUsers.set(phone, createdUser);
+        socket.emit('auth_success', { user: createdUser });
         io.emit('admin_update', await getAdminPayload());
       }
     } catch (err) {
@@ -763,6 +739,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // INSTANT 2% REFERRAL COMMISSION ON ANY BET PLACED
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     const u = cachedUsers.get(phone);
@@ -771,6 +748,16 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
+
+    // Instant Refer Commission (2% of bet amount)
+    if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
+      const referrer = cachedUsers.get(u.invitedBy);
+      const commission = +(amt * 0.02).toFixed(3);
+      referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+      await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+      cachedUsers.set(referrer.phone, referrer);
+      io.emit('user_sync', { user: referrer });
+    }
 
     const betData = { 
       id: Date.now(), 
@@ -806,6 +793,16 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
+    // Instant Refer Commission for Kismat
+    if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
+      const referrer = cachedUsers.get(u.invitedBy);
+      const commission = +(amt * 0.02).toFixed(3);
+      referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+      await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+      cachedUsers.set(referrer.phone, referrer);
+      io.emit('user_sync', { user: referrer });
+    }
+
     const betData = { 
       id: Date.now(), 
       phone, 
@@ -836,6 +833,16 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
+
+    // Instant Refer Commission for Rocket
+    if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
+      const referrer = cachedUsers.get(u.invitedBy);
+      const commission = +(amt * 0.02).toFixed(3);
+      referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
+      await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
+      cachedUsers.set(referrer.phone, referrer);
+      io.emit('user_sync', { user: referrer });
+    }
 
     const rBet = { 
       id: Date.now(), 
@@ -948,6 +955,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // INSTANT VIP REFERRAL UNLOCK ON DEPOSIT APPROVAL
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -959,20 +967,14 @@ io.on('connection', (socket) => {
         if (u) {
           u.balance = +(u.balance + tx.amount).toFixed(3);
           
-          if (u.invitedBy && !u.firstDepositTime) {
-            const now = new Date();
-            const regTime = new Date(u._id.getTimestamp());
-            const hoursDiff = Math.abs(now - regTime) / 36e5;
-            
-            if (hoursDiff <= 24 && tx.amount >= 20) {
-              u.firstDepositTime = now;
-              const referrer = cachedUsers.get(u.invitedBy);
-              if (referrer) {
-                referrer.totalReferrals += 1;
-                await User.updateOne({ phone: referrer.phone }, { totalReferrals: referrer.totalReferrals });
-                cachedUsers.set(referrer.phone, referrer);
-                io.emit('user_sync', { user: referrer });
-              }
+          if (u.invitedBy && !u.firstDepositTime && tx.amount >= 20) {
+            u.firstDepositTime = new Date();
+            const referrer = cachedUsers.get(u.invitedBy);
+            if (referrer) {
+              referrer.totalReferrals += 1;
+              await User.updateOne({ phone: referrer.phone }, { totalReferrals: referrer.totalReferrals });
+              cachedUsers.set(referrer.phone, referrer);
+              io.emit('user_sync', { user: referrer });
             }
           }
 
