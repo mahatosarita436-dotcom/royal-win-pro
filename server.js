@@ -442,7 +442,7 @@ io.on('connection', (socket) => {
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
       if (u.lastCheckInDate === todayStr) {
-        return socket.emit('checkin_response', { success: false, message: 'Already checked in today!' });
+        return socket.emit('checkin_response', { success: false, message: 'Apni ajke already check-in korechen! Agami kal abar chesta korun.' });
       }
 
       if (u.lastCheckInDate) {
@@ -471,7 +471,7 @@ io.on('connection', (socket) => {
       if (currentDay >= 7) {
         u.checkInDay = 1;
       } else {
-        u.checkInDay += 1;
+        u.checkInDay = currentDay + 1;
       }
 
       await User.updateOne({ phone }, { 
