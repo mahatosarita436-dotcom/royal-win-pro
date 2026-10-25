@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
   invitedBy: { type: String, default: '' },
   totalReferrals: { type: Number, default: 0 },
   inviteBalance: { type: Number, default: 0 },
-  firstDepositTime: { type: Date, default: null }
+  firstDepositTime: { type: Date, default: null },
+  joinedTime: { type: String, default: '' }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -101,7 +102,6 @@ const socialSchema = new mongoose.Schema({
 });
 const SocialLink = mongoose.model('SocialLink', socialSchema);
 
-// Helper for Indian Time (IST)
 function getISTTime() {
   return new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
 }
@@ -406,7 +406,8 @@ io.on('connection', (socket) => {
           invitedBy,
           totalReferrals: 0,
           inviteBalance: 0,
-          firstDepositTime: null
+          firstDepositTime: null,
+          joinedTime: getISTTime()
         };
 
         await User.create(newUser);
@@ -454,10 +455,18 @@ io.on('connection', (socket) => {
       const u = cachedUsers.get(phone);
       if (!u) return;
 
+      const referredUsers = await User.find({ invitedBy: phone }).select('name phone joinedTime');
+      const referredList = referredUsers.map(ru => ({
+        name: ru.name,
+        phone: ru.phone,
+        joinedTime: ru.joinedTime || 'Recent'
+      }));
+
       socket.emit('referral_data_response', {
         referralCode: u.referralCode || 'RW123456',
         totalReferrals: u.totalReferrals || 0,
-        inviteBalance: u.inviteBalance || 0
+        inviteBalance: u.inviteBalance || 0,
+        referredList
       });
     } catch (e) {
       console.log('Referral data error:', e);
@@ -510,14 +519,14 @@ io.on('connection', (socket) => {
       amount: reqAmt, 
       tax: 0, 
       totalDeducted: reqAmt, 
-      details: `Refer Payout To: ${account}`, 
+      details: `Refer Bonus Payout To: ${account}`, 
       status: 'PENDING', 
       time: getISTTime() 
     };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
 
-    socket.emit('refer_withdraw_response', { success: true, message: 'Referral withdrawal requested successfully!' });
+    socket.emit('refer_withdraw_response', { success: true, message: 'Referral bonus withdrawal requested successfully!' });
     socket.emit('user_sync', { user: u });
     io.emit('admin_update', await getAdminPayload());
   });
@@ -904,7 +913,7 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - finalDeduct).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: getISTTime() };
+    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `${account}`, status: 'PENDING', time: getISTTime() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     socket.emit('user_sync', { user: u });
