@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/royalwin";
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas successfully![cite: 3]'))
+  .then(() => console.log('✅ Connected to MongoDB Atlas successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const userSchema = new mongoose.Schema({
@@ -100,6 +100,11 @@ const socialSchema = new mongoose.Schema({
   instagram: String
 });
 const SocialLink = mongoose.model('SocialLink', socialSchema);
+
+// Helper for Indian Time (IST)
+function getISTTime() {
+  return new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+}
 
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
 let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
@@ -197,7 +202,6 @@ setInterval(async () => {
         io.emit('user_sync', { user: u });
       }
 
-      // 2% Bet Commission to Referrer's Invite Wallet
       if (cachedUsers.has(b.phone)) {
         const betUser = cachedUsers.get(b.phone);
         if (betUser.invitedBy && cachedUsers.has(betUser.invitedBy)) {
@@ -359,6 +363,8 @@ setInterval(async () => {
       }, 3000);
     }
   }
+
+  // Broadcast rocket ticks to clients & admin
   io.emit('rocket_tick', { 
     status: rocketState.status, 
     countdown: rocketState.countdown, 
@@ -444,7 +450,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Fetch Referral & VIP Level Data
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       const u = cachedUsers.get(phone);
@@ -460,7 +465,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Claim Tier/Milestone Rewards (Bronze to Platinum)
   socket.on('claim_referral_tier', async ({ phone, tier }) => {
     try {
       const u = cachedUsers.get(phone);
@@ -490,7 +494,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Refer Withdrawal Request (Min ₹30, 0% Tax, Separate Type)
   socket.on('refer_withdraw_request', async ({ phone, amount, account }) => {
     const u = cachedUsers.get(phone);
     const reqAmt = Number(amount);
@@ -510,7 +513,7 @@ io.on('connection', (socket) => {
       totalDeducted: reqAmt, 
       details: `Refer Payout To: ${account}`, 
       status: 'PENDING', 
-      time: new Date().toLocaleTimeString() 
+      time: getISTTime() 
     };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
@@ -520,13 +523,12 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // Check-in status & claim handlers
   socket.on('fetch_checkin_status', async ({ phone }) => {
     try {
       const u = cachedUsers.get(phone);
       if (!u) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       
       if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
         const lastDate = new Date(u.lastCheckInDate);
@@ -556,7 +558,7 @@ io.on('connection', (socket) => {
       const u = cachedUsers.get(phone);
       if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
       if (u.lastCheckInDate === todayStr) {
         return socket.emit('checkin_response', { success: false, message: 'Already checked in today!' });
@@ -677,7 +679,7 @@ io.on('connection', (socket) => {
         userName: u.name,
         phone: u.phone,
         amount: gift.amount,
-        time: new Date().toLocaleTimeString()
+        time: getISTTime()
       });
 
       if (gift.usedCount >= gift.maxUses) {
@@ -773,7 +775,7 @@ io.on('connection', (socket) => {
       multiplier: Number(multiplier), 
       status: 'PENDING', 
       winAmount: 0,
-      time: new Date().toLocaleTimeString() 
+      time: getISTTime() 
     };
 
     await Bet.create(betData);
@@ -807,7 +809,7 @@ io.on('connection', (socket) => {
       multiplier: 9,
       status: 'PENDING', 
       winAmount: 0,
-      time: new Date().toLocaleTimeString() 
+      time: getISTTime() 
     };
 
     await Bet.create(betData);
@@ -838,7 +840,7 @@ io.on('connection', (socket) => {
       cashedOut: false, 
       status: 'PENDING', 
       winAmount: 0,
-      time: new Date().toLocaleTimeString() 
+      time: getISTTime() 
     };
 
     await Bet.create(rBet);
@@ -886,7 +888,7 @@ io.on('connection', (socket) => {
     if (depAmt < 20) return;
 
     const u = cachedUsers.get(phone);
-    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: getISTTime() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     io.emit('admin_update', await getAdminPayload());
@@ -903,7 +905,7 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - finalDeduct).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: new Date().toLocaleTimeString() };
+    const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `To: ${account}`, status: 'PENDING', time: getISTTime() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     socket.emit('user_sync', { user: u });
@@ -921,7 +923,7 @@ io.on('connection', (socket) => {
 
   socket.on('submit_support_ticket', async ({ phone, name, message }) => {
     if (!phone || !message) return;
-    const ticket = { id: Date.now(), phone, userName: name || phone, message, adminReply: '', status: 'PENDING', time: new Date().toLocaleTimeString() };
+    const ticket = { id: Date.now(), phone, userName: name || phone, message, adminReply: '', status: 'PENDING', time: getISTTime() };
     await SupportTicket.create(ticket);
     allSupportTickets.unshift(ticket);
     
@@ -949,7 +951,6 @@ io.on('connection', (socket) => {
         if (u) {
           u.balance = +(u.balance + tx.amount).toFixed(3);
           
-          // 24 Hours ₹20 Recharge Validation for Referrals
           if (u.invitedBy && !u.firstDepositTime) {
             const now = new Date();
             const regTime = new Date(u._id.getTimestamp());
