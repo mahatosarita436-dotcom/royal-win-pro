@@ -352,7 +352,7 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  // USER REGISTRATION WITH DIRECT REFERRER PHONE MAPPING
+  // USER REGISTRATION WITH ROBUST REFERRER PHONE RESOLUTION
   socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -432,7 +432,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FETCH REFERRED USERS & ACTIVE RECHARGES COUNT
+  // FETCH REFERRED USERS & ACTIVE RECHARGES COUNT BASED ON invitedBy PHONE
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       let u = cachedUsers.get(phone);
@@ -754,7 +754,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT REFERRAL COMMISSION ON COLOUR BET
+  // 2% INSTANT COMMISSION ON COLOUR BET
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     let u = cachedUsers.get(phone);
