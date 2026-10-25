@@ -406,7 +406,11 @@ io.on('connection', (socket) => {
 
   socket.on('fetch_checkin_status', async ({ phone }) => {
     try {
-      const u = cachedUsers.get(phone);
+      let u = cachedUsers.get(phone);
+      if (!u) {
+        u = await User.findOne({ phone });
+        if (u) cachedUsers.set(phone, u);
+      }
       if (!u) return;
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -414,8 +418,7 @@ io.on('connection', (socket) => {
       if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
         const lastDate = new Date(u.lastCheckInDate);
         const currentDate = new Date(todayStr);
-        const diffTime = currentDate - lastDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
         
         if (diffDays > 1) {
           u.checkInDay = 1;
@@ -436,7 +439,11 @@ io.on('connection', (socket) => {
 
   socket.on('claim_checkin', async ({ phone }) => {
     try {
-      const u = cachedUsers.get(phone);
+      let u = cachedUsers.get(phone);
+      if (!u) {
+        u = await User.findOne({ phone });
+        if (u) cachedUsers.set(phone, u);
+      }
       if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
