@@ -415,18 +415,23 @@ io.on('connection', (socket) => {
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       
-      if (!u.lastCheckInDate) {
-        u.checkInDay = 1;
-        await User.updateOne({ phone }, { checkInDay: 1 });
-      } else if (u.lastCheckInDate !== todayStr) {
+      if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
         const lastDate = new Date(u.lastCheckInDate);
         const currentDate = new Date(todayStr);
         const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
         
-        if (diffDays > 1) {
+        if (diffDays === 1) {
+          // New day arrived, advance checkInDay safely
+          u.checkInDay = (u.checkInDay || 1) + 1;
+          if (u.checkInDay > 7) u.checkInDay = 1;
+          await User.updateOne({ phone }, { checkInDay: u.checkInDay });
+        } else if (diffDays > 1) {
           u.checkInDay = 1;
           await User.updateOne({ phone }, { checkInDay: 1 });
         }
+      } else if (!u.lastCheckInDate) {
+        u.checkInDay = 1;
+        await User.updateOne({ phone }, { checkInDay: 1 });
       }
 
       let checkedToday = u.lastCheckInDate === todayStr;
@@ -455,15 +460,6 @@ io.on('connection', (socket) => {
         return socket.emit('checkin_response', { success: false, message: 'Apni ajke already check-in korechen! Agami kal abar chesta korun.' });
       }
 
-      if (u.lastCheckInDate) {
-        const lastDate = new Date(u.lastCheckInDate);
-        const currentDate = new Date(todayStr);
-        const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
-        if (diffDays > 1) {
-          u.checkInDay = 1;
-        }
-      }
-
       let rewardAmount = 0;
       let currentDay = u.checkInDay || 1;
 
@@ -477,16 +473,10 @@ io.on('connection', (socket) => {
 
       u.balance = +(u.balance + rewardAmount).toFixed(3);
       u.lastCheckInDate = todayStr;
-
-      if (currentDay >= 7) {
-        u.checkInDay = 1;
-      } else {
-        u.checkInDay = currentDay + 1;
-      }
+      // Note: We do NOT increment u.checkInDay here. It will advance automatically tomorrow when a new day starts.
 
       await User.updateOne({ phone }, { 
         balance: u.balance, 
-        checkInDay: u.checkInDay, 
         lastCheckInDate: u.lastCheckInDate 
       });
 
