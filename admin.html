@@ -7,31 +7,31 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { background-color: #04060b; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+    body { background-color: #030712; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; overflow-x: hidden; }
     .num-0 { background: linear-gradient(135deg, #ef4444 50%, #8b5cf6 50%); }
     .num-5 { background: linear-gradient(135deg, #10b981 50%, #8b5cf6 50%); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #070b14; }
+    ::-webkit-scrollbar-track { background: #030712; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
   </style>
 </head>
 <body class="p-4 md:p-8 max-w-7xl mx-auto space-y-6 relative">
 
   <!-- SECURITY AUTH MODAL -->
-  <div id="adminAuthModal" class="fixed inset-0 bg-[#020408]/95 backdrop-blur-xl z-[9999] flex items-center justify-center p-4">
-    <div class="bg-gradient-to-b from-slate-900 to-[#070b14] border border-indigo-500/30 p-8 rounded-[32px] w-full max-w-sm text-center shadow-[0_0_50px_rgba(79,70,229,0.2)] space-y-5">
-      <span class="px-3.5 py-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
-        🔐 Security Gate
+  <div id="adminAuthModal" class="fixed inset-0 bg-[#020408]/95 backdrop-blur-2xl z-[9999] flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-[#030712] border border-indigo-500/40 p-8 rounded-[36px] w-full max-w-sm text-center shadow-[0_0_60px_rgba(79,70,229,0.25)] space-y-5">
+      <span class="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 rounded-full text-[10px] font-black uppercase tracking-widest shadow-inner">
+        🛡️ Ultra Security Gate
       </span>
       <div>
-        <h2 class="text-xl font-black text-white mt-2">Admin Authentication</h2>
-        <p class="text-xs text-slate-400 mt-1">Enter master password to access control panel.</p>
+        <h2 class="text-xl font-black text-white mt-2">Master Admin Access</h2>
+        <p class="text-xs text-slate-400 mt-1">Enter secure password to unlock control engine.</p>
       </div>
       
       <input id="adminPassInput" type="password" placeholder="Enter Password..." class="w-full bg-[#03050a] border border-slate-800 rounded-2xl px-4 py-3.5 text-sm text-white text-center outline-none focus:border-indigo-500 font-mono tracking-widest shadow-inner" />
       
-      <button onclick="verifyAdminPass()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-indigo-600/30 active:scale-95 transition text-xs tracking-wider uppercase">
-        ACCESS PANEL
+      <button onclick="verifyAdminPass()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-indigo-600/40 active:scale-95 transition text-xs tracking-wider uppercase">
+        UNLOCK PANEL
       </button>
       <p id="passError" class="text-xs text-rose-400 font-bold hidden bg-rose-500/10 py-2 rounded-xl border border-rose-500/20">Incorrect Password! Redirecting...</p>
     </div>
@@ -40,7 +40,7 @@
   <script>
     function verifyAdminPass() {
       const val = document.getElementById('adminPassInput').value;
-      if (val === "Deba000") {
+      if (val === "Nesa4748") {
         document.getElementById('adminAuthModal').style.display = 'none';
       } else {
         const err = document.getElementById('passError');
@@ -54,23 +54,23 @@
   <header class="bg-gradient-to-r from-slate-900 via-[#0b101d] to-slate-900 border border-slate-800/80 rounded-[28px] p-6 flex flex-wrap justify-between items-center gap-4 shadow-2xl relative overflow-hidden">
     <div class="absolute -right-16 -top-16 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
     <div class="relative z-10">
-      <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Master Backoffice</span>
+      <span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Master Backoffice v2.0</span>
       <h1 class="text-2xl font-black text-white mt-1.5">ROYAL WIN PRO • CONTROL ENGINE</h1>
     </div>
     <div class="flex flex-wrap items-center gap-3 relative z-10">
-      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center">
+      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center shadow-inner">
         <span class="text-[9px] text-slate-400 uppercase font-bold block">Total Users</span>
         <span id="totalUsers" class="font-mono text-base font-black text-emerald-400">0</span>
       </div>
-      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center">
+      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center shadow-inner">
         <span class="text-[9px] text-slate-400 uppercase font-bold block">Colour Period</span>
         <span id="adminPeriod" class="font-mono text-sm font-bold text-indigo-400">--</span>
       </div>
-      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center">
+      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-slate-800 text-center shadow-inner">
         <span class="text-[9px] text-slate-400 uppercase font-bold block">Colour Timer</span>
         <span id="adminTimer" class="font-mono text-base font-black text-amber-400">00:30</span>
       </div>
-      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-amber-500/30 text-center">
+      <div class="bg-[#03050a] px-3.5 py-2.5 rounded-2xl border border-amber-500/30 text-center shadow-inner">
         <span class="text-[9px] text-amber-400 uppercase font-bold block">✨ Kismat Timer</span>
         <span id="adminKismatTimer" class="font-mono text-base font-black text-amber-400">02:30</span>
       </div>
@@ -639,7 +639,7 @@
                   <button onclick="processTx(${t.id}, false)" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 rounded-lg text-white font-bold">Reject</button>
                 </div>
               ` : `<span class="font-bold text-xs px-2.5 py-1 rounded-lg ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${t.status}</span>`}
-              <button onclick="deleteTransaction(${t.id})" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 rounded-lg text-white font-bold text-[10px]">Delete</button>
+              <button onclick="deleteTransaction(${t.id})" class="bg-rose-600 hover:bg-rose-500 px-2 py-1.5 rounded-lg text-white font-bold text-[10px]">Delete</button>
             </div>
           </div>
           <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-slate-300 font-mono text-[11px] space-y-0.5">
