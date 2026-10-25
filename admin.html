@@ -223,42 +223,31 @@
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- DEPOSIT, WITHDRAW & REFER WITHDRAW REQUESTS (VERTICAL STACKED WITH SEARCH) -->
+  <!-- DEPOSIT, WITHDRAW & REFER WITHDRAW REQUESTS -->
   <div class="space-y-6">
-    
-    <!-- 1. DEPOSIT SECTION -->
     <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-emerald-400">📥 Deposit Requests</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <input id="depositSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-emerald-500" />
-        </div>
+        <input id="depositSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-emerald-500" />
       </div>
       <div id="depositList" class="space-y-2.5 text-xs max-h-80 overflow-y-auto pr-1"></div>
     </div>
 
-    <!-- 2. WITHDRAW SECTION -->
     <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-amber-400">📤 Withdrawal Requests (Bank & Details)</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-amber-500" />
-        </div>
+        <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-amber-500" />
       </div>
       <div id="withdrawList" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
     </div>
 
-    <!-- 3. REFER WITHDRAW SECTION -->
     <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-purple-400">🤝 Refer Withdrawal Requests (0% Tax)</h3>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <input id="referWithdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-purple-500" />
-        </div>
+        <input id="referWithdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-purple-500" />
       </div>
       <div id="referWithdrawList" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
     </div>
-
   </div>
 
   <!-- SUPPORT TICKETS -->
@@ -396,6 +385,35 @@
       }
     }
 
+    // Live Rocket Tick listener for Admin Panel Multiplier & Bets update
+    socket.on('rocket_tick', (data) => {
+      const multEl = document.getElementById('adminRocketMult');
+      if (multEl) multEl.innerText = `${data.multiplier.toFixed(2)}x`;
+
+      const betsListEl = document.getElementById('adminRocketBetsList');
+      if (betsListEl) {
+        const bets = data.betsLiveReturn || [];
+        if (bets.length === 0) {
+          betsListEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
+        } else {
+          betsListEl.innerHTML = bets.map(b => `
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+              <div>
+                <strong class="text-white">${b.userName}</strong> <span class="text-emerald-400 font-mono">(${b.phone})</span>
+                <span class="block text-[10px] text-slate-400">Bet: ₹${b.amount}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-bold text-xs ${b.cashedOut ? 'text-emerald-400' : 'text-amber-400'}">
+                  ${b.cashedOut ? 'Cashed Out' : 'Flying...'}
+                </span>
+                ${b.cashedOut ? `<span class="block text-[10px] text-emerald-300 font-mono">+₹${b.winAmount}</span>` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    });
+
     socket.on('admin_update', ({ gameState, kismatState, rocketState, summary, transactions, supportTickets, usersList, totalRocketPool, totalRocketClaimed, giftCodes, socialLinks, depositConditionActive }) => {
       cachedUsers = usersList || [];
       cachedTransactions = transactions || [];
@@ -435,7 +453,6 @@
         document.getElementById('adminKismatOptionsGrid').innerHTML = kGrid;
       }
 
-      // Render Admin Gift Codes & Unique Redeem History
       const giftEl = document.getElementById('adminGiftCodesList');
       if (giftEl) {
         giftEl.innerHTML = (!cachedGiftCodes || cachedGiftCodes.length === 0)
@@ -543,7 +560,6 @@
       const withs = cachedTransactions.filter(t => t.type === 'WITHDRAW' && (t.userName.toLowerCase().includes(withQ) || t.phone.toLowerCase().includes(withQ) || t.details.toLowerCase().includes(withQ)));
       const referWiths = cachedTransactions.filter(t => t.type === 'REFER_WITHDRAW' && (t.userName.toLowerCase().includes(referWithQ) || t.phone.toLowerCase().includes(referWithQ)));
 
-      // 1. Render Deposits
       document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500 text-center py-2">No deposits found.</p>` : deps.map(t => `
         <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
           <div>
@@ -561,7 +577,6 @@
         </div>
       `).join('');
 
-      // 2. Render Withdrawals (With Name, Phone, Bank Account, IFSC Code clear view)
       document.getElementById('withdrawList').innerHTML = withs.length === 0 ? `<p class="text-slate-500 text-center py-2">No withdrawals found.</p>` : withs.map(t => `
         <div class="bg-slate-950 p-3.5 rounded-xl border border-amber-500/30 space-y-2">
           <div class="flex justify-between items-center">
@@ -586,7 +601,6 @@
         </div>
       `).join('');
 
-      // 3. Render Refer Withdrawals
       document.getElementById('referWithdrawList').innerHTML = referWiths.length === 0 ? `<p class="text-slate-500 text-center py-2">No refer withdrawals.</p>` : referWiths.map(t => `
         <div class="bg-slate-950 p-3.5 rounded-xl border border-purple-500/30 space-y-2">
           <div class="flex justify-between items-center">
