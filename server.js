@@ -27,13 +27,7 @@ const userSchema = new mongoose.Schema({
   secretCode: { type: String, default: '1234' },
   balance: { type: Number, default: 10 },
   checkInDay: { type: Number, default: 1 },
-  lastCheckInDate: { type: String, default: '' },
-  referralCode: { type: String, unique: true },
-  invitedBy: { type: String, default: '' },
-  totalReferrals: { type: Number, default: 0 },
-  inviteBalance: { type: Number, default: 0 },
-  firstDepositTime: { type: Date, default: null },
-  joinedTime: { type: String, default: '' }
+  lastCheckInDate: { type: String, default: '' }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -352,29 +346,13 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  // USER REGISTRATION WITH ROBUST REFERRER PHONE RESOLUTION
-  socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
+  socket.on('user_register', async ({ name, phone, password, secretCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
       if (existingUser || cachedUsers.has(phone)) {
         socket.emit('auth_error', 'Phone number already registered![cite: 3]');
       } else {
         const userId = 'USR' + Math.floor(1000 + Math.random() * 9000);
-        const referralCode = 'RW' + Math.floor(100000 + Math.random() * 900000);
-        
-        let invitedByPhone = '';
-        if (inviteCode && inviteCode.trim() !== '') {
-          const referrerUser = await User.findOne({ 
-            $or: [
-              { referralCode: inviteCode.trim().toUpperCase() },
-              { phone: inviteCode.trim() }
-            ]
-          });
-          if (referrerUser) {
-            invitedByPhone = referrerUser.phone;
-          }
-        }
-
         const newUser = { 
           userId, 
           name, 
@@ -383,13 +361,7 @@ io.on('connection', (socket) => {
           secretCode: secretCode || '1234', 
           balance: 10, 
           checkInDay: 1, 
-          lastCheckInDate: '',
-          referralCode,
-          invitedBy: invitedByPhone,
-          totalReferrals: 0,
-          inviteBalance: 0,
-          firstDepositTime: null,
-          joinedTime: getISTTime()
+          lastCheckInDate: ''
         };
 
         const createdUser = await User.create(newUser);
@@ -430,96 +402,6 @@ io.on('connection', (socket) => {
     } catch (e) {
       socket.emit('forgot_password_response', { success: false, message: 'Failed to update password!' });
     }
-  });
-
-  // FETCH REFERRED USERS & ACTIVE RECHARGES COUNT BASED ON invitedBy PHONE
-  socket.on('fetch_referral_data', async ({ phone }) => {
-    try {
-      let u = cachedUsers.get(phone);
-      if (!u) {
-        u = await User.findOne({ phone });
-        if (u) cachedUsers.set(phone, u);
-      }
-      if (!u) return;
-
-      const referredUsers = await User.find({ invitedBy: phone }).select('name phone joinedTime');
-      const referredList = referredUsers.map(ru => ({
-        name: ru.name,
-        phone: ru.phone,
-        joinedTime: ru.joinedTime || 'Recent'
-      }));
-
-      const activeCount = await User.countDocuments({ invitedBy: phone, firstDepositTime: { $ne: null } });
-
-      socket.emit('referral_data_response', {
-        referralCode: u.referralCode || 'RW123456',
-        totalReferrals: activeCount,
-        inviteBalance: u.inviteBalance || 0,
-        referredList
-      });
-    } catch (e) {
-      console.log('Referral data error:', e);
-    }
-  });
-
-  socket.on('claim_referral_tier', async ({ phone, tier }) => {
-    try {
-      const u = cachedUsers.get(phone);
-      if (!u) return socket.emit('referral_claim_response', { success: false, message: 'User not found!' });
-
-      const activeCount = await User.countDocuments({ invitedBy: phone, firstDepositTime: { $ne: null } });
-
-      let reward = 0;
-      let requiredRefers = 0;
-
-      if (tier === 'Bronze') { requiredRefers = 1; reward = 5; }
-      else if (tier === 'Silver') { requiredRefers = 5; reward = 25; }
-      else if (tier === 'Gold') { requiredRefers = 10; reward = 50; }
-      else if (tier === 'Diamond') { requiredRefers = 20; reward = 100; }
-      else if (tier === 'Platinum') { requiredRefers = 50; reward = 250; }
-
-      if (activeCount < requiredRefers) {
-        return socket.emit('referral_claim_response', { success: false, message: `Target ${requiredRefers} active recharges not reached yet!` });
-      }
-
-      u.inviteBalance = +(u.inviteBalance + reward).toFixed(3);
-      await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
-      cachedUsers.set(phone, u);
-
-      socket.emit('referral_claim_response', { success: true, message: `Successfully claimed ₹${reward} reward!` });
-      socket.emit('user_sync', { user: u });
-    } catch (e) {
-      socket.emit('referral_claim_response', { success: false, message: 'Claim failed!' });
-    }
-  });
-
-  socket.on('refer_withdraw_request', async ({ phone, amount, account }) => {
-    const u = cachedUsers.get(phone);
-    const reqAmt = Number(amount);
-    if (!u || reqAmt < 30) return socket.emit('refer_withdraw_response', { success: false, message: 'Minimum withdrawal is ₹30!' });
-    if (u.inviteBalance < reqAmt) return socket.emit('refer_withdraw_response', { success: false, message: 'Insufficient invite wallet balance!' });
-
-    u.inviteBalance = +(u.inviteBalance - reqAmt).toFixed(3);
-    await User.updateOne({ phone }, { inviteBalance: u.inviteBalance });
-
-    const tx = { 
-      id: Date.now(), 
-      phone, 
-      userName: u.name, 
-      type: 'REFER_WITHDRAW', 
-      amount: reqAmt, 
-      tax: 0, 
-      totalDeducted: reqAmt, 
-      details: `Refer Bonus Payout To: ${account}`, 
-      status: 'PENDING', 
-      time: getISTTime() 
-    };
-    await Transaction.create(tx);
-    allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
-
-    socket.emit('refer_withdraw_response', { success: true, message: 'Referral bonus withdrawal requested successfully!' });
-    socket.emit('user_sync', { user: u });
-    io.emit('admin_update', await getAdminPayload());
   });
 
   socket.on('fetch_checkin_status', async ({ phone }) => {
@@ -754,7 +636,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT COMMISSION ON COLOUR BET
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     let u = cachedUsers.get(phone);
@@ -767,27 +648,6 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
-
-    let referrerPhone = u.invitedBy;
-    if (!referrerPhone) {
-      const freshU = await User.findOne({ phone });
-      if (freshU && freshU.invitedBy) referrerPhone = freshU.invitedBy;
-    }
-
-    if (referrerPhone) {
-      let referrer = cachedUsers.get(referrerPhone);
-      if (!referrer) {
-        referrer = await User.findOne({ phone: referrerPhone });
-        if (referrer) cachedUsers.set(referrerPhone, referrer);
-      }
-      if (referrer) {
-        const commission = +(amt * 0.02).toFixed(3);
-        referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
-        await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
-        cachedUsers.set(referrer.phone, referrer);
-        io.emit('user_sync', { user: referrer });
-      }
-    }
 
     const betData = { 
       id: Date.now(), 
@@ -810,7 +670,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT COMMISSION ON KISMAT BET
   socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
     if (kismatState.timeLeft <= 10) return;
     let u = cachedUsers.get(phone);
@@ -827,27 +686,6 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
-
-    let referrerPhone = u.invitedBy;
-    if (!referrerPhone) {
-      const freshU = await User.findOne({ phone });
-      if (freshU && freshU.invitedBy) referrerPhone = freshU.invitedBy;
-    }
-
-    if (referrerPhone) {
-      let referrer = cachedUsers.get(referrerPhone);
-      if (!referrer) {
-        referrer = await User.findOne({ phone: referrerPhone });
-        if (referrer) cachedUsers.set(referrerPhone, referrer);
-      }
-      if (referrer) {
-        const commission = +(amt * 0.02).toFixed(3);
-        referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
-        await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
-        cachedUsers.set(referrer.phone, referrer);
-        io.emit('user_sync', { user: referrer });
-      }
-    }
 
     const betData = { 
       id: Date.now(), 
@@ -871,7 +709,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT COMMISSION ON ROCKET BET
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -884,27 +721,6 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
-
-    let referrerPhone = u.invitedBy;
-    if (!referrerPhone) {
-      const freshU = await User.findOne({ phone });
-      if (freshU && freshU.invitedBy) referrerPhone = freshU.invitedBy;
-    }
-
-    if (referrerPhone) {
-      let referrer = cachedUsers.get(referrerPhone);
-      if (!referrer) {
-        referrer = await User.findOne({ phone: referrerPhone });
-        if (referrer) cachedUsers.set(referrerPhone, referrer);
-      }
-      if (referrer) {
-        const commission = +(amt * 0.02).toFixed(3);
-        referrer.inviteBalance = +(referrer.inviteBalance + commission).toFixed(3);
-        await User.updateOne({ phone: referrer.phone }, { inviteBalance: referrer.inviteBalance });
-        cachedUsers.set(referrer.phone, referrer);
-        io.emit('user_sync', { user: referrer });
-      }
-    }
 
     const rBet = { 
       id: Date.now(), 
@@ -1017,7 +833,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // DEPOSIT APPROVAL: VIP MILESTONE UNLOCK & REFERRER INCREMENT
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -1033,30 +848,6 @@ io.on('connection', (socket) => {
       if (approve && tx.type === 'DEPOSIT') {
         if (u) {
           u.balance = +(u.balance + tx.amount).toFixed(3);
-          
-          let referrerPhone = u.invitedBy;
-          if (!referrerPhone) {
-            const freshU = await User.findOne({ phone: tx.phone });
-            if (freshU && freshU.invitedBy) referrerPhone = freshU.invitedBy;
-          }
-
-          if (referrerPhone && !u.firstDepositTime && tx.amount >= 20) {
-            u.firstDepositTime = new Date();
-            await User.updateOne({ phone: u.phone }, { firstDepositTime: u.firstDepositTime });
-            
-            let referrer = cachedUsers.get(referrerPhone);
-            if (!referrer) {
-              referrer = await User.findOne({ phone: referrerPhone });
-              if (referrer) cachedUsers.set(referrerPhone, referrer);
-            }
-            if (referrer) {
-              referrer.totalReferrals = (referrer.totalReferrals || 0) + 1;
-              await User.updateOne({ phone: referrer.phone }, { totalReferrals: referrer.totalReferrals });
-              cachedUsers.set(referrer.phone, referrer);
-              io.emit('user_sync', { user: referrer });
-            }
-          }
-
           await User.updateOne({ phone: u.phone }, { balance: u.balance });
           io.emit('user_sync', { user: u });
         }
@@ -1064,12 +855,6 @@ io.on('connection', (socket) => {
         if (u) {
           u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
           await User.updateOne({ phone: u.phone }, { balance: u.balance });
-          io.emit('user_sync', { user: u });
-        }
-      } else if (!approve && tx.type === 'REFER_WITHDRAW') {
-        if (u) {
-          u.inviteBalance = +(u.inviteBalance + tx.amount).toFixed(3);
-          await User.updateOne({ phone: u.phone }, { inviteBalance: u.inviteBalance });
           io.emit('user_sync', { user: u });
         }
       }
