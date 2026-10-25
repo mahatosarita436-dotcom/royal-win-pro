@@ -385,7 +385,7 @@
       }
     }
 
-    // Live Rocket Tick listener for Admin Panel Multiplier & Bets update
+    // Live Rocket Tick listener for Admin Panel Multiplier & Live Return update
     socket.on('rocket_tick', (data) => {
       const multEl = document.getElementById('adminRocketMult');
       if (multEl) multEl.innerText = `${data.multiplier.toFixed(2)}x`;
@@ -396,20 +396,27 @@
         if (bets.length === 0) {
           betsListEl.innerHTML = `<p class="text-slate-500 text-center py-4">No rocket bets right now.</p>`;
         } else {
-          betsListEl.innerHTML = bets.map(b => `
-            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <div>
-                <strong class="text-white">${b.userName}</strong> <span class="text-emerald-400 font-mono">(${b.phone})</span>
-                <span class="block text-[10px] text-slate-400">Bet: ₹${b.amount}</span>
+          let currentMult = data.multiplier;
+          betsListEl.innerHTML = bets.map(b => {
+            let liveReturnAmt = (b.amount * currentMult).toFixed(2);
+            return `
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                <div>
+                  <strong class="text-white">${b.userName}</strong> <span class="text-emerald-400 font-mono">(${b.phone})</span>
+                  <span class="block text-[10px] text-slate-400">Bet: ₹${b.amount}</span>
+                </div>
+                <div class="text-right">
+                  ${b.cashedOut ? `
+                    <span class="font-bold text-xs text-emerald-400">Cashed Out</span>
+                    <span class="block text-[10px] text-emerald-300 font-mono">+₹${b.winAmount}</span>
+                  ` : `
+                    <span class="font-bold text-xs text-amber-400">LIVE RETURN</span>
+                    <span class="block text-[11px] text-amber-300 font-mono font-black">₹${liveReturnAmt}</span>
+                  `}
+                </div>
               </div>
-              <div class="text-right">
-                <span class="font-bold text-xs ${b.cashedOut ? 'text-emerald-400' : 'text-amber-400'}">
-                  ${b.cashedOut ? 'Cashed Out' : 'Flying...'}
-                </span>
-                ${b.cashedOut ? `<span class="block text-[10px] text-emerald-300 font-mono">+₹${b.winAmount}</span>` : ''}
-              </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         }
       }
     });
