@@ -553,15 +553,30 @@
       let html = '';
       for (let i = 1; i <= 7; i++) {
         let rewardText = i <= 4 ? '₹2' : i <= 6 ? '₹3' : '🎁 Box';
-        let isCompleted = i < clientCheckInDay || (i === clientCheckInDay && clientCheckedToday);
+        let isCompleted = i < clientCheckInDay;
         let isCurrent = i === clientCheckInDay && !clientCheckedToday;
+        let isAlreadyDoneToday = i === clientCheckInDay && clientCheckedToday;
+
+        let statusText = 'LOCKED';
+        let cardStyle = 'border-slate-800 bg-[#05070d]';
+        let textStyle = 'text-slate-500';
+
+        if (isCompleted || isAlreadyDoneToday) {
+          statusText = '✓ DONE';
+          cardStyle = 'border-emerald-500/40 bg-[#05070d] opacity-75';
+          textStyle = 'text-emerald-400';
+        } else if (isCurrent) {
+          statusText = 'ACTIVE';
+          cardStyle = 'border-indigo-400 bg-indigo-500/20 shadow-lg scale-105';
+          textStyle = 'text-indigo-300 animate-pulse';
+        }
 
         html += `
-          <div class="bg-[#05070d] p-3 rounded-2xl border ${isCurrent ? 'border-indigo-400 bg-indigo-500/20 shadow-lg scale-105' : isCompleted ? 'border-emerald-500/40 opacity-60' : 'border-slate-800'} text-center flex flex-col justify-between transition-all">
+          <div class="p-3 rounded-2xl border ${cardStyle} text-center flex flex-col justify-between transition-all">
             <span class="text-[10px] font-bold text-slate-400">Day ${i}</span>
             <span class="text-sm font-black ${i === 7 ? 'text-amber-400' : 'text-emerald-400'} my-1">${rewardText}</span>
-            <span class="text-[9px] font-extrabold uppercase ${isCompleted ? 'text-emerald-400' : isCurrent ? 'text-indigo-300 animate-pulse' : 'text-slate-500'}">
-              ${isCompleted ? '✓ Done' : isCurrent ? 'Active' : 'Locked'}
+            <span class="text-[9px] font-extrabold uppercase ${textStyle}">
+              ${statusText}
             </span>
           </div>
         `;
@@ -569,11 +584,11 @@
       grid.innerHTML = html;
 
       if (clientCheckedToday) {
-        claimBtn.innerText = 'Check-in';
+        claimBtn.innerText = 'CHECK-IN DONE';
         claimBtn.disabled = true;
         claimBtn.className = 'w-full bg-slate-800 text-slate-500 font-bold py-3.5 rounded-2xl cursor-not-allowed uppercase text-xs tracking-wider';
       } else {
-        claimBtn.innerText = 'Check-in';
+        claimBtn.innerText = 'CHECK-IN';
         claimBtn.disabled = false;
         claimBtn.className = 'w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-indigo-600/30 active:scale-95 transition-all text-xs tracking-widest uppercase';
       }
