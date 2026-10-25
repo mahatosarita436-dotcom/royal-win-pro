@@ -352,7 +352,7 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  // USER REGISTRATION WITH ROBUST REFERRAL MAPPING
+  // USER REGISTRATION WITH ROBUST REFERRER LINKING
   socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -427,7 +427,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FETCH REFERRED USERS & TOTAL COUNT ACCURATELY FOR THE REFER PAGE
+  // FETCH REFERRED USERS & TOTAL COUNT DYNAMICALLY FROM DB
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       let u = cachedUsers.get(phone);
@@ -444,7 +444,6 @@ io.on('connection', (socket) => {
         joinedTime: ru.joinedTime || 'Recent'
       }));
 
-      // Count active ones with deposit >= 20 for VIP milestones
       const activeCount = await User.countDocuments({ invitedBy: phone, firstDepositTime: { $ne: null } });
 
       socket.emit('referral_data_response', {
