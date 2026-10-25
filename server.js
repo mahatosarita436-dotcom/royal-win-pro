@@ -352,6 +352,7 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
+  // USER REGISTRATION WITH PROPER INVITE CODE LINKING
   socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -426,6 +427,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // FETCH REFERRED USERS DYNAMICALLY FROM DB BASED ON invitedBy PHONE
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       const u = cachedUsers.get(phone);
@@ -440,7 +442,7 @@ io.on('connection', (socket) => {
 
       socket.emit('referral_data_response', {
         referralCode: u.referralCode || 'RW123456',
-        totalReferrals: u.totalReferrals || 0,
+        totalReferrals: u.totalReferrals || referredList.length,
         inviteBalance: u.inviteBalance || 0,
         referredList
       });
@@ -739,7 +741,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // INSTANT 2% REFERRAL COMMISSION ON ANY BET PLACED
+  // INSTANT 2% REFERRAL COMMISSION ON COLOUR BET
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     const u = cachedUsers.get(phone);
@@ -749,7 +751,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Instant Refer Commission (2% of bet amount)
     if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
       const referrer = cachedUsers.get(u.invitedBy);
       const commission = +(amt * 0.02).toFixed(3);
@@ -780,6 +781,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // INSTANT 2% REFERRAL COMMISSION ON KISMAT BET
   socket.on('kismat_place_bet', async ({ phone, option, amount }) => {
     if (kismatState.timeLeft <= 10) return;
     const u = cachedUsers.get(phone);
@@ -793,7 +795,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Instant Refer Commission for Kismat
     if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
       const referrer = cachedUsers.get(u.invitedBy);
       const commission = +(amt * 0.02).toFixed(3);
@@ -825,6 +826,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // INSTANT 2% REFERRAL COMMISSION ON ROCKET BET
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     const u = cachedUsers.get(phone);
     const amt = Number(amount);
@@ -834,7 +836,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Instant Refer Commission for Rocket
     if (u.invitedBy && cachedUsers.has(u.invitedBy)) {
       const referrer = cachedUsers.get(u.invitedBy);
       const commission = +(amt * 0.02).toFixed(3);
@@ -955,7 +956,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // INSTANT VIP REFERRAL UNLOCK ON DEPOSIT APPROVAL
+  // INSTANT VIP REFERRAL UNLOCK & REFERRER INCREMENT ON DEPOSIT APPROVAL
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -969,6 +970,8 @@ io.on('connection', (socket) => {
           
           if (u.invitedBy && !u.firstDepositTime && tx.amount >= 20) {
             u.firstDepositTime = new Date();
+            await User.updateOne({ phone: u.phone }, { firstDepositTime: u.firstDepositTime });
+            
             const referrer = cachedUsers.get(u.invitedBy);
             if (referrer) {
               referrer.totalReferrals += 1;
@@ -978,7 +981,7 @@ io.on('connection', (socket) => {
             }
           }
 
-          await User.updateOne({ phone: u.phone }, { balance: u.balance, firstDepositTime: u.firstDepositTime });
+          await User.updateOne({ phone: u.phone }, { balance: u.balance });
           io.emit('user_sync', { user: u });
         }
       } else if (!approve && tx.type === 'WITHDRAW') {
