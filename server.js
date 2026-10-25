@@ -352,7 +352,7 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   socket.emit('social_links_sync', currentSocialLinks);
 
-  // USER REGISTRATION WITH ROBUST REFERRER LINKING
+  // USER REGISTRATION WITH ROBUST INVITE CODE RESOLUTION
   socket.on('user_register', async ({ name, phone, password, secretCode, inviteCode }) => {
     try {
       let existingUser = await User.findOne({ phone });
@@ -427,7 +427,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FETCH REFERRED USERS & TOTAL COUNT DYNAMICALLY FROM DB
+  // FETCH REFERRED USERS & TOTAL REFRALS COUNT DYNAMICALLY
   socket.on('fetch_referral_data', async ({ phone }) => {
     try {
       let u = cachedUsers.get(phone);
@@ -749,7 +749,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 2% INSTANT REFERRAL COMMISSION ON COLOUR BET (CHECKING BOTH MEMORY AND DB FOR invitedBy)
+  // 2% INSTANT REFERRAL COMMISSION ON COLOUR BET (DB FETCH GUARANTEED)
   socket.on('place_bet', async ({ phone, name, choice, amount, multiplier }) => {
     if (gameState.timeLeft <= 5) return;
     let u = cachedUsers.get(phone);
@@ -764,6 +764,11 @@ io.on('connection', (socket) => {
     await User.updateOne({ phone }, { balance: u.balance });
 
     let referrerPhone = u.invitedBy;
+    if (!referrerPhone) {
+      const freshUser = await User.findOne({ phone });
+      if (freshUser && freshUser.invitedBy) referrerPhone = freshUser.invitedBy;
+    }
+
     if (referrerPhone) {
       let referrer = cachedUsers.get(referrerPhone);
       if (!referrer) {
@@ -819,6 +824,11 @@ io.on('connection', (socket) => {
     await User.updateOne({ phone }, { balance: u.balance });
 
     let referrerPhone = u.invitedBy;
+    if (!referrerPhone) {
+      const freshUser = await User.findOne({ phone });
+      if (freshUser && freshUser.invitedBy) referrerPhone = freshUser.invitedBy;
+    }
+
     if (referrerPhone) {
       let referrer = cachedUsers.get(referrerPhone);
       if (!referrer) {
@@ -871,6 +881,11 @@ io.on('connection', (socket) => {
     await User.updateOne({ phone }, { balance: u.balance });
 
     let referrerPhone = u.invitedBy;
+    if (!referrerPhone) {
+      const freshUser = await User.findOne({ phone });
+      if (freshUser && freshUser.invitedBy) referrerPhone = freshUser.invitedBy;
+    }
+
     if (referrerPhone) {
       let referrer = cachedUsers.get(referrerPhone);
       if (!referrer) {
@@ -997,7 +1012,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // DEPOSIT APPROVAL: INSTANT REFERRAL COUNT UPDATE & VIP UNLOCK
+  // DEPOSIT APPROVAL: INSTANT REFERRAL COUNT & VIP MILESTONE UNLOCK
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -1015,6 +1030,11 @@ io.on('connection', (socket) => {
           u.balance = +(u.balance + tx.amount).toFixed(3);
           
           let referrerPhone = u.invitedBy;
+          if (!referrerPhone) {
+            const freshU = await User.findOne({ phone: tx.phone });
+            if (freshU && freshU.invitedBy) referrerPhone = freshU.invitedBy;
+          }
+
           if (referrerPhone && !u.firstDepositTime && tx.amount >= 20) {
             u.firstDepositTime = new Date();
             await User.updateOne({ phone: u.phone }, { firstDepositTime: u.firstDepositTime });
