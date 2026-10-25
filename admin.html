@@ -220,11 +220,10 @@
       </div>
     </div>
 
-    <!-- ADMIN NUMBER STAKES GRID -->
     <div id="numberGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
   </div>
 
-  <!-- DEPOSIT, WITHDRAW & REFER WITHDRAW REQUESTS -->
+  <!-- DEPOSIT & WITHDRAW REQUESTS (WITHOUT REFER WITHDRAW) -->
   <div class="space-y-6">
     <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 space-y-4">
       <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
@@ -240,14 +239,6 @@
         <input id="withdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-amber-500" />
       </div>
       <div id="withdrawList" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
-    </div>
-
-    <div class="bg-slate-900 border border-purple-500/30 rounded-2xl p-5 space-y-4">
-      <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-purple-400">🤝 Refer Withdrawal Requests (0% Tax)</h3>
-        <input id="referWithdrawSearchInput" type="text" oninput="renderTransactions()" placeholder="🔍 Search Name/Phone..." class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white w-full sm:w-48 outline-none focus:border-purple-500" />
-      </div>
-      <div id="referWithdrawList" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
     </div>
   </div>
 
@@ -450,7 +441,6 @@
       const totalClaimedEl = document.getElementById('adminTotalRocketClaimed');
       if(totalClaimedEl) totalClaimedEl.innerText = `₹${totalRocketClaimed || 0}`;
 
-      // Update Colour Trading Stakes & Mode Banner
       if (summary && summary.stakes) {
         document.getElementById('stake-GREEN').innerText = summary.stakes.GREEN || 0;
         document.getElementById('stake-VIOLET').innerText = summary.stakes.VIOLET || 0;
@@ -589,11 +579,9 @@
     function renderTransactions() {
       const depQ = (document.getElementById('depositSearchInput').value || '').trim().toLowerCase();
       const withQ = (document.getElementById('withdrawSearchInput').value || '').trim().toLowerCase();
-      const referWithQ = (document.getElementById('referWithdrawSearchInput').value || '').trim().toLowerCase();
 
       const deps = cachedTransactions.filter(t => t.type === 'DEPOSIT' && (t.userName.toLowerCase().includes(depQ) || t.phone.toLowerCase().includes(depQ)));
       const withs = cachedTransactions.filter(t => t.type === 'WITHDRAW' && (t.userName.toLowerCase().includes(withQ) || t.phone.toLowerCase().includes(withQ) || t.details.toLowerCase().includes(withQ)));
-      const referWiths = cachedTransactions.filter(t => t.type === 'REFER_WITHDRAW' && (t.userName.toLowerCase().includes(referWithQ) || t.phone.toLowerCase().includes(referWithQ)));
 
       document.getElementById('depositList').innerHTML = deps.length === 0 ? `<p class="text-slate-500 text-center py-2">No deposits found.</p>` : deps.map(t => `
         <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800">
@@ -632,29 +620,6 @@
           <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-slate-300 font-mono text-[11px] space-y-0.5">
             <p>🏦 <strong class="text-indigo-300">Bank Details:</strong> ${t.details}</p>
             <p class="text-rose-300">📉 Tax Deduction (3%): ₹${t.tax || 0} | <span class="text-emerald-400 font-bold">Final Payout: ₹${(t.amount - (t.tax || 0)).toFixed(2)}</span></p>
-          </div>
-        </div>
-      `).join('');
-
-      document.getElementById('referWithdrawList').innerHTML = referWiths.length === 0 ? `<p class="text-slate-500 text-center py-2">No refer withdrawals.</p>` : referWiths.map(t => `
-        <div class="bg-slate-950 p-3.5 rounded-xl border border-purple-500/30 space-y-2">
-          <div class="flex justify-between items-center">
-            <div>
-              <span class="font-black text-purple-400 text-sm">Refer Payout: ₹${t.amount}</span> 
-              <strong class="text-white ml-2">${t.userName}</strong> 
-              <span class="text-emerald-300 font-mono text-xs">(${t.phone})</span>
-            </div>
-            <div>
-              ${t.status === 'PENDING' ? `
-                <div class="flex gap-1">
-                  <button onclick="processTx(${t.id}, true)" class="bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 rounded-lg text-white font-bold">Approve</button>
-                  <button onclick="processTx(${t.id}, false)" class="bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 rounded-lg text-white font-bold">Reject</button>
-                </div>
-              ` : `<span class="font-bold text-xs px-2.5 py-1 rounded-lg ${t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${t.status}</span>`}
-            </div>
-          </div>
-          <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-slate-300 font-mono text-[11px]">
-            <p>🤝 <strong class="text-indigo-300">Account/UPI Details:</strong> ${t.details} (0% Tax)</p>
           </div>
         </div>
       `).join('');
