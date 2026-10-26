@@ -24,7 +24,7 @@
 </head>
 <body class="min-h-screen flex justify-center items-start bg-[#020617] pb-24">
 
-  <!-- AUTH SCREEN WITH LOGO -->
+  <!-- AUTH SCREEN -->
   <div id="authScreen" class="w-full max-w-md bg-gradient-to-b from-[#0b0f19] to-[#05070d] p-8 rounded-[36px] border border-indigo-500/30 space-y-6 shadow-[0_0_50px_rgba(79,70,229,0.15)] mt-8 mx-4 relative overflow-hidden">
     <div class="absolute -top-32 -right-32 w-56 h-56 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-32 -left-32 w-56 h-56 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -494,7 +494,7 @@
     </div>
   </div>
 
-  <!-- WITHDRAW MODAL (Updated with 18% Tax Display) -->
+  <!-- WITHDRAW MODAL -->
   <div id="withdrawModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] overflow-y-auto shadow-2xl animate-pop">
       <h3 class="font-black text-amber-400 text-center text-base">↑ Withdraw Balance (18% Tax)</h3>
@@ -583,10 +583,12 @@
     function renderTaskList(monthlyBetAmount, claimedTasks) {
       const container = document.getElementById('taskListContainer');
       const tasksData = [
-        { name: 'Bronze Task', target: 100, reward: 10 },
-        { name: 'Silver Task', target: 200, reward: 20 },
-        { name: 'Gold Task', target: 300, reward: 30 },
-        { name: 'Platinum Task', target: 500, reward: 50 }
+        { name: 'Bronze Task', target: 200, reward: 20 },
+        { name: 'Silver Task', target: 400, reward: 40 },
+        { name: 'Gold Task', target: 600, reward: 60 },
+        { name: 'Platinum Task', target: 800, reward: 80 },
+        { name: 'Diamond Task', target: 1000, reward: 100 },
+        { name: 'Master Task', target: 1500, reward: 150 }
       ];
 
       container.innerHTML = tasksData.map(t => {
@@ -729,7 +731,6 @@
       }
     });
 
-    // Updated calculation for 18% Tax display
     function calculateWithdrawTax() {
       const amt = Number(document.getElementById('withAmount').value) || 0;
       const tax = +(amt * 0.18).toFixed(2);
