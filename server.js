@@ -576,10 +576,12 @@ io.on('connection', (socket) => {
     }
 
     const tasks = {
-      100: 10,
       200: 20,
-      300: 30,
-      500: 50
+      400: 40,
+      600: 60,
+      800: 80,
+      1000: 100,
+      1500: 150
     };
 
     const reward = tasks[target];
@@ -605,7 +607,7 @@ io.on('connection', (socket) => {
     socket.emit('user_sync', { user: u });
     socket.emit('task_claim_response', { 
       success: true, 
-      message: `Success! You claimed task reward.`,
+      message: `Success! You claimed task reward ₹${reward}.`,
       monthlyBetAmount: u.monthlyBetAmount,
       claimedTasks: u.claimedTasks
     });
@@ -918,7 +920,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // WITHDRAWAL REQUEST WITH 18% TAX & DAILY 1-TIME LIMIT
   socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -1046,7 +1047,7 @@ io.on('connection', (socket) => {
     let matching = [];
     for (let n = 0; n <= 9; n++) {
       const cols = getColoursForNumber(n);
-      if (cols.includes(col)) matching.path(n);
+      if (cols.includes(col)) matching.push(n);
     }
     if (matching.length > 0) {
       gameState.forcedNumber = matching[Math.floor(Math.random() * matching.length)];
