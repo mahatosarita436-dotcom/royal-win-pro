@@ -145,10 +145,13 @@
         </div>
       </div>
 
-      <!-- CHECK-IN BUTTON -->
-      <div>
-        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2.5 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
-          <span class="text-base">📅</span> Check-in
+      <!-- CHECK-IN & TASK BUTTONS (4 OPTIONS INSTEAD OF 3) -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="openCheckinModal()" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
+          <span>📅</span> Check-in
+        </button>
+        <button onclick="openTaskModal()" class="bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-amber-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
+          <span>🎯</span> Task Rewards
         </button>
       </div>
 
@@ -338,6 +341,31 @@
       <button id="claimCheckinBtn" onclick="claimDailyCheckin()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-indigo-600/30 active:scale-95 transition-all text-xs tracking-widest uppercase">
         Check-in
       </button>
+    </div>
+  </div>
+
+  <!-- TASK REWARDS MODAL (BRONZ, SILVER, GOLD, PLATINUM) -->
+  <div id="taskModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-gradient-to-b from-[#0b0f19] via-[#0b0f19] to-amber-950/40 w-full max-w-md p-6 rounded-[28px] space-y-4 border border-amber-500/40 shadow-2xl relative animate-pop">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎯</span>
+          <h3 class="font-black text-amber-400 text-base">Monthly Task Rewards</h3>
+        </div>
+        <button onclick="document.getElementById('taskModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center transition-all">✕</button>
+      </div>
+      <p class="text-xs text-slate-300">Protidin game khele maser total bet target puron korun ebong reward claim korun! (Resets 1st of every month)</p>
+      
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center font-mono">
+        <span class="text-slate-400">Total Bet This Month:</span>
+        <span class="text-emerald-400 font-bold text-sm">₹<span id="userMonthlyBetDisplay">0</span></span>
+      </div>
+
+      <div id="taskListContainer" class="space-y-2.5 max-h-72 overflow-y-auto pr-1 text-xs">
+        <!-- Dynamically filled -->
+      </div>
+
+      <button onclick="document.getElementById('taskModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
     </div>
   </div>
 
@@ -539,6 +567,68 @@
         socket.emit('fetch_checkin_status', { phone: currentUser.phone });
       }
     }
+
+    // OPEN TASK MODAL
+    function openTaskModal() {
+      document.getElementById('taskModal').classList.remove('hidden');
+      if (currentUser) {
+        socket.emit('fetch_tasks_status', { phone: currentUser.phone });
+      }
+    }
+
+    socket.on('tasks_status_response', ({ monthlyBetAmount, claimedTasks }) => {
+      document.getElementById('userMonthlyBetDisplay').innerText = monthlyBetAmount;
+      renderTaskList(monthlyBetAmount, claimedTasks);
+    });
+
+    function renderTaskList(monthlyBetAmount, claimedTasks) {
+      const container = document.getElementById('taskListContainer');
+      const tasksData = [
+        { name: 'Bronze Task', target: 100, reward: 10 },
+        { name: 'Silver Task', target: 200, reward: 20 },
+        { name: 'Gold Task', target: 300, reward: 30 },
+        { name: 'Platinum Task', target: 500, reward: 50 }
+      ];
+
+      container.innerHTML = tasksData.map(t => {
+        let isClaimed = claimedTasks.includes(t.target);
+        let canClaim = monthlyBetAmount >= t.target && !isClaimed;
+        let progress = Math.min(100, Math.floor((monthlyBetAmount / t.target) * 100));
+
+        let btnHtml = '';
+        if (isClaimed) {
+          btnHtml = `<span class="bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold">✓ Claimed</span>`;
+        } else if (canClaim) {
+          btnHtml = `<button onclick="claimTask(${t.target})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl shadow">Claim ₹${t.reward}</button>`;
+        } else {
+          btnHtml = `<span class="text-slate-500 font-bold">Locked (${progress}%)</span>`;
+        }
+
+        return `
+          <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center">
+              <div>
+                <strong class="text-white text-sm">${t.name} (Target: ₹${t.target})</strong>
+                <p class="text-indigo-300 text-[11px]">Reward: <strong class="text-amber-400">+₹${t.reward}</strong></p>
+              </div>
+              <div>${btnHtml}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function claimTask(target) {
+      if (!currentUser) return;
+      socket.emit('claim_task_reward', { phone: currentUser.phone, target });
+    }
+
+    socket.on('task_claim_response', ({ success, message, monthlyBetAmount, claimedTasks }) => {
+      alert(message);
+      if (success) {
+        renderTaskList(monthlyBetAmount, claimedTasks);
+      }
+    });
 
     socket.on('checkin_status_response', ({ checkInDay, checkedToday }) => {
       clientCheckInDay = checkInDay;
