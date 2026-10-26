@@ -28,7 +28,10 @@ const userSchema = new mongoose.Schema({
   balance: { type: Number, default: 10 },
   checkInDay: { type: Number, default: 1 },
   lastCheckInDate: { type: String, default: '' },
-  lastWithdrawDate: { type: String, default: '' } // 1 withdraw per day tracking
+  lastWithdrawDate: { type: String, default: '' },
+  monthlyBetAmount: { type: Number, default: 0 },
+  lastBetMonth: { type: String, default: '' },
+  claimedTasks: { type: [Number], default: [] } // Stores targets like [100, 200, 300, 500]
 });
 const User = mongoose.model('User', userSchema);
 
@@ -105,6 +108,11 @@ function getISTDate() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
 
+function getCurrentMonth() {
+  const d = new Date();
+  return d.toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' });
+}
+
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
 let kismatState = { period: 20261017001, timeLeft: 150, history: [] };
 let currentKismatBets = [];
@@ -143,6 +151,31 @@ async function loadDataFromDB() {
   }
 }
 loadDataFromDB();
+
+// Track monthly bet & auto-reset on 1st of every month
+async function trackUserMonthlyBet(phone, betAmount) {
+  let u = cachedUsers.get(phone);
+  if (!u) {
+    u = await User.findOne({ phone });
+    if (u) cachedUsers.set(phone, u);
+  }
+  if (!u) return;
+
+  const currentMonthStr = getCurrentMonth();
+  if (u.lastBetMonth !== currentMonthStr) {
+    u.monthlyBetAmount = 0;
+    u.lastBetMonth = currentMonthStr;
+    u.claimedTasks = [];
+  }
+
+  u.monthlyBetAmount += betAmount;
+  await User.updateOne({ phone }, { 
+    monthlyBetAmount: u.monthlyBetAmount, 
+    lastBetMonth: u.lastBetMonth, 
+    claimedTasks: u.claimedTasks 
+  });
+  cachedUsers.set(phone, u);
+}
 
 function getColoursForNumber(num) {
   if (num === 0) return ['RED', 'VIOLET'];
@@ -367,7 +400,10 @@ io.on('connection', (socket) => {
           balance: 10, 
           checkInDay: 1, 
           lastCheckInDate: '',
-          lastWithdrawDate: ''
+          lastWithdrawDate: '',
+          monthlyBetAmount: 0,
+          lastBetMonth: getCurrentMonth(),
+          claimedTasks: []
         };
 
         const createdUser = await User.create(newUser);
@@ -501,6 +537,81 @@ io.on('connection', (socket) => {
       console.log('Claim checkin error:', e);
       socket.emit('checkin_response', { success: false, message: 'Check-in claim failed!' });
     }
+  });
+
+  // FETCH MONTHLY TASKS STATUS (Bronze, Silver, Gold, Platinum)
+  socket.on('fetch_tasks_status', async ({ phone }) => {
+    let u = cachedUsers.get(phone);
+    if (!u) {
+      u = await User.findOne({ phone });
+      if (u) cachedUsers.set(phone, u);
+    }
+    if (!u) return;
+
+    const currentMonthStr = getCurrentMonth();
+    if (u.lastBetMonth !== currentMonthStr) {
+      u.monthlyBetAmount = 0;
+      u.lastBetMonth = currentMonthStr;
+      u.claimedTasks = [];
+      await User.updateOne({ phone }, { monthlyBetAmount: 0, lastBetMonth: currentMonthStr, claimedTasks: [] });
+    }
+
+    socket.emit('tasks_status_response', {
+      monthlyBetAmount: u.monthlyBetAmount || 0,
+      claimedTasks: u.claimedTasks || []
+    });
+  });
+
+  // CLAIM MONTHLY TASK REWARD
+  socket.on('claim_task_reward', async ({ phone, target }) => {
+    let u = cachedUsers.get(phone);
+    if (!u) {
+      u = await User.findOne({ phone });
+      if (u) cachedUsers.set(phone, u);
+    }
+    if (!u) return;
+
+    const currentMonthStr = getCurrentMonth();
+    if (u.lastBetMonth !== currentMonthStr) {
+      u.monthlyBetAmount = 0;
+      u.lastBetMonth = currentMonthStr;
+      u.claimedTasks = [];
+    }
+
+    const tasks = {
+      100: 10,
+      200: 20,
+      300: 30,
+      500: 50
+    };
+
+    const reward = tasks[target];
+    if (!reward) return socket.emit('task_claim_response', { success: false, message: 'Invalid task target!' });
+
+    if ((u.monthlyBetAmount || 0) < target) {
+      return socket.emit('task_claim_response', { success: false, message: `Apnar bet amount abohio porjapto noy! Target chilo ₹${target}` });
+    }
+
+    if (u.claimedTasks && u.claimedTasks.includes(target)) {
+      return socket.emit('task_claim_response', { success: false, message: 'Apni ei reward ti already claim korechen!' });
+    }
+
+    u.claimedTasks.push(target);
+    u.balance = +(u.balance + reward).toFixed(3);
+
+    await User.updateOne({ phone }, { 
+      balance: u.balance, 
+      claimedTasks: u.claimedTasks 
+    });
+    cachedUsers.set(phone, u);
+
+    socket.emit('user_sync', { user: u });
+    socket.emit('task_claim_response', { 
+      success: true, 
+      message: `Success! You claimed task reward.`,
+      monthlyBetAmount: u.monthlyBetAmount,
+      claimedTasks: u.claimedTasks
+    });
   });
 
   socket.on('admin_update_user_credentials', async ({ phone, name, password, secretCode }) => {
@@ -653,6 +764,9 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
+    // Track monthly bet for Tasks
+    await trackUserMonthlyBet(phone, amt);
+
     const betData = { 
       id: Date.now(), 
       phone, 
@@ -691,6 +805,9 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
+    // Track monthly bet for Tasks
+    await trackUserMonthlyBet(phone, amt);
+
     const betData = { 
       id: Date.now(), 
       phone, 
@@ -725,6 +842,9 @@ io.on('connection', (socket) => {
 
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
+
+    // Track monthly bet for Tasks
+    await trackUserMonthlyBet(phone, amt);
 
     const rBet = { 
       id: Date.now(), 
@@ -780,7 +900,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // UTR DUPLICATE CHECK IN DEPOSIT REQUEST
+  // UTR DUPLICATE CHECK
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
     const depAmt = Number(amount);
     if (depAmt < 20) return;
