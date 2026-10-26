@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
   lastWithdrawDate: { type: String, default: '' },
   monthlyBetAmount: { type: Number, default: 0 },
   lastBetMonth: { type: String, default: '' },
-  claimedTasks: { type: [Number], default: [] } // Stores targets like [100, 200, 300, 500]
+  claimedTasks: { type: [Number], default: [] }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -152,7 +152,6 @@ async function loadDataFromDB() {
 }
 loadDataFromDB();
 
-// Track monthly bet & auto-reset on 1st of every month
 async function trackUserMonthlyBet(phone, betAmount) {
   let u = cachedUsers.get(phone);
   if (!u) {
@@ -539,7 +538,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // FETCH MONTHLY TASKS STATUS (Bronze, Silver, Gold, Platinum)
   socket.on('fetch_tasks_status', async ({ phone }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -562,7 +560,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  // CLAIM MONTHLY TASK REWARD
   socket.on('claim_task_reward', async ({ phone, target }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -764,7 +761,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Track monthly bet for Tasks
     await trackUserMonthlyBet(phone, amt);
 
     const betData = { 
@@ -805,7 +801,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Track monthly bet for Tasks
     await trackUserMonthlyBet(phone, amt);
 
     const betData = { 
@@ -843,7 +838,6 @@ io.on('connection', (socket) => {
     u.balance = +(u.balance - amt).toFixed(3);
     await User.updateOne({ phone }, { balance: u.balance });
 
-    // Track monthly bet for Tasks
     await trackUserMonthlyBet(phone, amt);
 
     const rBet = { 
@@ -900,7 +894,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // UTR DUPLICATE CHECK
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
     const depAmt = Number(amount);
     if (depAmt < 20) return;
@@ -925,7 +918,7 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // 1 WITHDRAWAL PER DAY LIMIT WITH 12 AM RESET
+  // WITHDRAWAL REQUEST WITH 18% TAX & DAILY 1-TIME LIMIT
   socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -941,7 +934,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const taxAmount = +(requestedAmt * 0.03).toFixed(2);
+    const taxAmount = +(requestedAmt * 0.18).toFixed(2);
     const finalDeduct = +(requestedAmt + taxAmount).toFixed(2);
     if (u.balance < finalDeduct) {
       socket.emit('auth_error', 'Insufficient balance!');
@@ -1053,7 +1046,7 @@ io.on('connection', (socket) => {
     let matching = [];
     for (let n = 0; n <= 9; n++) {
       const cols = getColoursForNumber(n);
-      if (cols.includes(col)) matching.push(n);
+      if (cols.includes(col)) matching.path(n);
     }
     if (matching.length > 0) {
       gameState.forcedNumber = matching[Math.floor(Math.random() * matching.length)];
