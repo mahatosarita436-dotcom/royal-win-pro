@@ -27,7 +27,8 @@ const userSchema = new mongoose.Schema({
   secretCode: { type: String, default: '1234' },
   balance: { type: Number, default: 10 },
   checkInDay: { type: Number, default: 1 },
-  lastCheckInDate: { type: String, default: '' }
+  lastCheckInDate: { type: String, default: '' },
+  lastWithdrawDate: { type: String, default: '' } // 1 withdraw per day tracking
 });
 const User = mongoose.model('User', userSchema);
 
@@ -98,6 +99,10 @@ const SocialLink = mongoose.model('SocialLink', socialSchema);
 
 function getISTTime() {
   return new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+}
+
+function getISTDate() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
 
 let gameState = { period: 20261017001, timeLeft: 30, mode: 'MIN_PAYOUT', forcedNumber: null, history: [] };
@@ -361,7 +366,8 @@ io.on('connection', (socket) => {
           secretCode: secretCode || '1234', 
           balance: 10, 
           checkInDay: 1, 
-          lastCheckInDate: ''
+          lastCheckInDate: '',
+          lastWithdrawDate: ''
         };
 
         const createdUser = await User.create(newUser);
@@ -413,7 +419,7 @@ io.on('connection', (socket) => {
       }
       if (!u) return;
 
-      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const todayStr = getISTDate();
       
       if (u.lastCheckInDate && u.lastCheckInDate !== todayStr) {
         const lastDate = new Date(u.lastCheckInDate);
@@ -421,7 +427,6 @@ io.on('connection', (socket) => {
         const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
         
         if (diffDays === 1) {
-          // New day arrived, advance checkInDay safely
           u.checkInDay = (u.checkInDay || 1) + 1;
           if (u.checkInDay > 7) u.checkInDay = 1;
           await User.updateOne({ phone }, { checkInDay: u.checkInDay });
@@ -454,7 +459,7 @@ io.on('connection', (socket) => {
       }
       if (!u) return socket.emit('checkin_response', { success: false, message: 'User not found!' });
 
-      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const todayStr = getISTDate();
 
       if (u.lastCheckInDate === todayStr) {
         return socket.emit('checkin_response', { success: false, message: 'Apni ajke already check-in korechen! Agami kal abar chesta korun.' });
@@ -473,7 +478,6 @@ io.on('connection', (socket) => {
 
       u.balance = +(u.balance + rewardAmount).toFixed(3);
       u.lastCheckInDate = todayStr;
-      // Note: We do NOT increment u.checkInDay here. It will advance automatically tomorrow when a new day starts.
 
       await User.updateOne({ phone }, { 
         balance: u.balance, 
@@ -709,7 +713,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // HIGH PERFORMANCE FAST ROCKET BET
   socket.on('rocket_place_bet', async ({ phone, name, amount }) => {
     let u = cachedUsers.get(phone);
     if (!u) {
@@ -743,7 +746,6 @@ io.on('connection', (socket) => {
     io.emit('admin_update', await getAdminPayload());
   });
 
-  // HIGH PERFORMANCE FAST ROCKET CASHOUT
   socket.on('rocket_cashout', async ({ phone }) => {
     if (rocketState.status !== 'FLYING') return;
     const rBet = rocketBets.find(b => b.phone === phone && !b.cashedOut);
@@ -778,27 +780,58 @@ io.on('connection', (socket) => {
     }
   });
 
+  // UTR DUPLICATE CHECK IN DEPOSIT REQUEST
   socket.on('deposit_request', async ({ phone, name, amount, utr }) => {
     const depAmt = Number(amount);
     if (depAmt < 20) return;
 
+    const trimmedUtr = utr.trim();
+    if (!trimmedUtr) return;
+
+    const existingUtrTx = await Transaction.findOne({ 
+      type: 'DEPOSIT', 
+      details: { $regex: new RegExp(`UTR:\\s*${trimmedUtr}\\b`, 'i') } 
+    });
+
+    if (existingUtrTx) {
+      socket.emit('auth_error', 'Ei UTR ID ti already use kora hoyeche! Ditiyo bar ekti UTR ID use kora jabe na.');
+      return;
+    }
+
     const u = cachedUsers.get(phone);
-    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${utr}`, status: 'PENDING', time: getISTTime() };
+    const tx = { id: Date.now(), phone, userName: u ? u.name : phone, type: 'DEPOSIT', amount: depAmt, tax: 0, totalDeducted: depAmt, details: `UTR: ${trimmedUtr}`, status: 'PENDING', time: getISTTime() };
     await Transaction.create(tx);
     allTransactions = await Transaction.find({}).sort({ id: -1 }).limit(100);
     io.emit('admin_update', await getAdminPayload());
   });
 
+  // 1 WITHDRAWAL PER DAY LIMIT WITH 12 AM RESET
   socket.on('withdraw_request', async ({ phone, name, amount, account }) => {
-    const u = cachedUsers.get(phone);
+    let u = cachedUsers.get(phone);
+    if (!u) {
+      u = await User.findOne({ phone });
+      if (u) cachedUsers.set(phone, u);
+    }
     const requestedAmt = Number(amount);
     if (!u || requestedAmt < 30) return;
+
+    const todayStr = getISTDate();
+    if (u.lastWithdrawDate === todayStr) {
+      socket.emit('auth_error', 'Apni ajke already 1 bar withdraw request korechen! Protidin rat 12 tar por abar korte parben.');
+      return;
+    }
+
     const taxAmount = +(requestedAmt * 0.03).toFixed(2);
     const finalDeduct = +(requestedAmt + taxAmount).toFixed(2);
-    if (u.balance < finalDeduct) return;
+    if (u.balance < finalDeduct) {
+      socket.emit('auth_error', 'Insufficient balance!');
+      return;
+    }
 
     u.balance = +(u.balance - finalDeduct).toFixed(3);
-    await User.updateOne({ phone }, { balance: u.balance });
+    u.lastWithdrawDate = todayStr;
+    await User.updateOne({ phone }, { balance: u.balance, lastWithdrawDate: u.lastWithdrawDate });
+    cachedUsers.set(phone, u);
 
     const tx = { id: Date.now(), phone, userName: u.name, type: 'WITHDRAW', amount: requestedAmt, tax: taxAmount, totalDeducted: finalDeduct, details: `${account}`, status: 'PENDING', time: getISTTime() };
     await Transaction.create(tx);
@@ -835,7 +868,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ADMIN TRANSACTION APPROVAL / REJECTION & REFUND
   socket.on('admin_process_tx', async ({ txId, approve }) => {
     const tx = await Transaction.findOne({ id: txId });
     if (tx && tx.status === 'PENDING') {
@@ -857,7 +889,8 @@ io.on('connection', (socket) => {
       } else if (!approve && tx.type === 'WITHDRAW') {
         if (u) {
           u.balance = +(u.balance + tx.totalDeducted).toFixed(3);
-          await User.updateOne({ phone: u.phone }, { balance: u.balance });
+          u.lastWithdrawDate = ''; 
+          await User.updateOne({ phone: u.phone }, { balance: u.balance, lastWithdrawDate: '' });
           io.emit('user_sync', { user: u });
         }
       }
@@ -867,7 +900,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // INSTANT DELETION HANDLERS FROM ADMIN PANEL
   socket.on('admin_delete_transaction', async (txId) => {
     try {
       await Transaction.deleteOne({ id: txId });
