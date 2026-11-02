@@ -131,27 +131,48 @@
 
     <!-- SECTION 1: GAMES ARENA -->
     <div id="view-games" class="p-4 space-y-3.5">
-      <div class="bg-gradient-to-br from-[#0e1628] via-[#0b0f19] to-[#070a14] p-5 rounded-[24px] border border-indigo-500/30 shadow-xl relative overflow-hidden">
-        <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-indigo-600/10 rounded-full blur-2xl"></div>
-        <div class="flex justify-between items-center relative z-10">
-          <div>
-            <p class="text-[10px] uppercase tracking-widest text-indigo-300 font-extrabold">Total Balance</p>
-            <h2 class="text-3xl font-black text-white mt-0.5 tracking-tight">₹<span id="userBalance">0.00</span></h2>
+      <!-- Enhanced Balance Card Section -->
+      <div class="bg-gradient-to-br from-[#0f172a] via-[#0b0f19] to-[#090d16] p-5 rounded-[28px] border border-indigo-500/30 shadow-[0_0_30px_rgba(79,70,229,0.15)] relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-40 h-40 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex justify-between items-center relative z-10 gap-2">
+          <!-- Balance Details -->
+          <div class="space-y-2">
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-indigo-300 font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">Total Balance</span>
+              <h2 class="text-3xl font-black text-white mt-1 tracking-tight drop-shadow-md">₹<span id="userBalance">0.00</span></h2>
+            </div>
+
+            <!-- Deposit & Winning Tags -->
+            <div class="flex items-center gap-2 pt-1">
+              <div class="bg-[#03050a]/80 px-2.5 py-1 rounded-xl border border-slate-800/80 shadow-inner">
+                <span class="text-[9px] text-slate-400 uppercase font-bold block">Deposit</span>
+                <span class="text-xs font-mono font-bold text-slate-200">₹<span id="userDepositBal">0.00</span></span>
+              </div>
+              <div class="bg-emerald-950/30 px-2.5 py-1 rounded-xl border border-emerald-500/30 shadow-inner">
+                <span class="text-[9px] text-emerald-400 uppercase font-bold block">Winning</span>
+                <span class="text-xs font-mono font-black text-emerald-300">₹<span id="userWinningBal">0.00</span></span>
+              </div>
+            </div>
           </div>
-          <div class="flex gap-2">
-            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">+ Deposit</button>
-            <button onclick="document.getElementById('withdrawModal').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all">↑ Withdraw</button>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-col gap-2.5">
+            <button onclick="document.getElementById('depositModal').classList.remove('hidden')" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-95 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider">
+              <span>+</span> Deposit
+            </button>
+            <button onclick="openWithdrawModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-95 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider">
+              <span>↑</span> Withdraw
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- CHECK-IN & TASK BUTTONS -->
-      <div class="grid grid-cols-2 gap-2.5">
-        <button onclick="openCheckinModal()" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
-          <span>📅</span> Check-in
-        </button>
-        <button onclick="openTaskModal()" class="bg-gradient-to-r from-amber-600 via-orange-600 to-yellow-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-amber-600/20 flex items-center justify-center gap-2 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
-          <span>🎯</span> Task Rewards
+      <!-- CHECK-IN BUTTON -->
+      <div>
+        <button onclick="openCheckinModal()" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black py-3 rounded-2xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2.5 text-xs active:scale-[0.98] transition-all tracking-wider uppercase border border-white/10">
+          <span class="text-base">📅</span> Check-in
         </button>
       </div>
 
@@ -193,7 +214,8 @@
           <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Colour History (Last 20)</span>
           <button onclick="openMyBetsModal('Colour Trading')" class="text-xs text-indigo-400 font-bold hover:underline">📊 My Colour Bets</button>
         </div>
-        <div id="colourHistoryBar" class="flex gap-1.5 overflow-x-auto py-1 text-xs font-mono"></div>
+        <!-- Colour History Bar with Proper Coloured Circles & Numbers inside -->
+        <div id="colourHistoryBar" class="flex gap-2 overflow-x-auto py-1.5 text-xs font-mono items-center"></div>
 
         <div class="relative bg-[#0b0f19]/60 border border-slate-800/80 rounded-2xl p-4 space-y-4 shadow-xl">
           <div id="colourLockOverlay" class="hidden absolute inset-0 bg-[#05070d]/90 backdrop-blur-sm z-20 rounded-2xl flex items-center justify-center text-rose-500 font-black text-lg tracking-wider">
@@ -344,31 +366,6 @@
     </div>
   </div>
 
-  <!-- TASK REWARDS MODAL -->
-  <div id="taskModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-gradient-to-b from-[#0b0f19] via-[#0b0f19] to-amber-950/40 w-full max-w-md p-6 rounded-[28px] space-y-4 border border-amber-500/40 shadow-2xl relative animate-pop">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🎯</span>
-          <h3 class="font-black text-amber-400 text-base">Monthly Task Rewards</h3>
-        </div>
-        <button onclick="document.getElementById('taskModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white w-8 h-8 rounded-full font-bold flex items-center justify-center transition-all">✕</button>
-      </div>
-      <p class="text-xs text-slate-300">Protidin game khele maser total bet target puron korun ebong reward claim korun! (Resets 1st of every month)</p>
-      
-      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center font-mono">
-        <span class="text-slate-400">Total Bet This Month:</span>
-        <span class="text-emerald-400 font-bold text-sm">₹<span id="userMonthlyBetDisplay">0</span></span>
-      </div>
-
-      <div id="taskListContainer" class="space-y-2.5 max-h-72 overflow-y-auto pr-1 text-xs">
-        <!-- Dynamically filled -->
-      </div>
-
-      <button onclick="document.getElementById('taskModal').classList.add('hidden')" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl text-xs text-slate-300 font-bold transition-all">Close</button>
-    </div>
-  </div>
-
   <!-- SOCIAL LINKS POPUP MODAL -->
   <div id="socialsModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-4 border border-slate-800 text-center shadow-2xl animate-pop">
@@ -427,7 +424,7 @@
     </div>
   </div>
 
-  <!-- MY BET HISTORY MODAL -->
+  <!-- MY BET HISTORY MODAL (Updated with Choice & Negative Red Loss Amount) -->
   <div id="myBetsModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-[#0b0f19] w-full max-w-md p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl animate-pop">
       <h3 id="myBetsModalTitle" class="font-black text-indigo-400 text-base">📊 My Bet History</h3>
@@ -497,7 +494,8 @@
   <!-- WITHDRAW MODAL -->
   <div id="withdrawModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-[#0b0f19] w-full max-w-sm p-6 rounded-[28px] space-y-3.5 border border-slate-800 max-h-[90vh] overflow-y-auto shadow-2xl animate-pop">
-      <h3 class="font-black text-amber-400 text-center text-base">↑ Withdraw Balance (18% Tax)</h3>
+      <h3 class="font-black text-amber-400 text-center text-base">↑ Withdraw Winning Balance (3% Tax)</h3>
+      <p class="text-[11px] text-slate-400 text-center">Available Winning: ₹<span id="modalWinningBalText">0.00</span></p>
       
       <div class="grid grid-cols-2 bg-[#05070d] p-1 rounded-xl text-xs font-bold border border-slate-800">
         <button type="button" onclick="switchWithdrawMethod('bank')" id="withMethodBankBtn" class="py-2 rounded-lg bg-amber-600 text-slate-950 shadow transition-all">Bank Account</button>
@@ -508,7 +506,7 @@
       
       <div class="bg-[#05070d] p-3.5 rounded-2xl border border-amber-500/30 text-xs space-y-1.5 font-mono text-slate-300 shadow-inner">
         <div class="flex justify-between"><span>Requested:</span> <span class="text-white">₹<span id="calcReq">0</span></span></div>
-        <div class="flex justify-between"><span>18% Tax:</span> <span class="text-rose-400">-₹<span id="calcTax">0</span></span></div>
+        <div class="flex justify-between"><span>3% Tax:</span> <span class="text-rose-400">-₹<span id="calcTax">0</span></span></div>
         <div class="flex justify-between border-t border-slate-800/80 pt-1.5 font-bold"><span>You Will Get:</span> <span class="text-emerald-400">₹<span id="calcFinal">0</span></span></div>
       </div>
 
@@ -557,6 +555,13 @@
       document.getElementById('withdrawUpiFields').classList.toggle('hidden', method !== 'upi');
     }
 
+    function openWithdrawModal() {
+      if (currentUser) {
+        document.getElementById('modalWinningBalText').innerText = (currentUser.winningBalance || 0).toFixed(2);
+      }
+      document.getElementById('withdrawModal').classList.remove('hidden');
+    }
+
     function switchMainView(view) {
       document.getElementById('view-games').classList.toggle('hidden', view !== 'games');
     }
@@ -567,69 +572,6 @@
         socket.emit('fetch_checkin_status', { phone: currentUser.phone });
       }
     }
-
-    function openTaskModal() {
-      document.getElementById('taskModal').classList.remove('hidden');
-      if (currentUser) {
-        socket.emit('fetch_tasks_status', { phone: currentUser.phone });
-      }
-    }
-
-    socket.on('tasks_status_response', ({ monthlyBetAmount, claimedTasks }) => {
-      document.getElementById('userMonthlyBetDisplay').innerText = monthlyBetAmount;
-      renderTaskList(monthlyBetAmount, claimedTasks);
-    });
-
-    function renderTaskList(monthlyBetAmount, claimedTasks) {
-      const container = document.getElementById('taskListContainer');
-      const tasksData = [
-        { name: 'Bronze Task', target: 200, reward: 20 },
-        { name: 'Silver Task', target: 400, reward: 40 },
-        { name: 'Gold Task', target: 600, reward: 60 },
-        { name: 'Platinum Task', target: 800, reward: 80 },
-        { name: 'Diamond Task', target: 1000, reward: 100 },
-        { name: 'Master Task', target: 1500, reward: 150 }
-      ];
-
-      container.innerHTML = tasksData.map(t => {
-        let isClaimed = claimedTasks.includes(t.target);
-        let canClaim = monthlyBetAmount >= t.target && !isClaimed;
-        let progress = Math.min(100, Math.floor((monthlyBetAmount / t.target) * 100));
-
-        let btnHtml = '';
-        if (isClaimed) {
-          btnHtml = `<span class="bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold">✓ Claimed</span>`;
-        } else if (canClaim) {
-          btnHtml = `<button onclick="claimTask(${t.target})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl shadow">Claim ₹${t.reward}</button>`;
-        } else {
-          btnHtml = `<span class="text-slate-500 font-bold">Locked (${progress}%)</span>`;
-        }
-
-        return `
-          <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800 space-y-2">
-            <div class="flex justify-between items-center">
-              <div>
-                <strong class="text-white text-sm">${t.name} (Target: ₹${t.target})</strong>
-                <p class="text-indigo-300 text-[11px]">Reward: <strong class="text-amber-400">+₹${t.reward}</strong></p>
-              </div>
-              <div>${btnHtml}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function claimTask(target) {
-      if (!currentUser) return;
-      socket.emit('claim_task_reward', { phone: currentUser.phone, target });
-    }
-
-    socket.on('task_claim_response', ({ success, message, monthlyBetAmount, claimedTasks }) => {
-      alert(message);
-      if (success) {
-        renderTaskList(monthlyBetAmount, claimedTasks);
-      }
-    });
 
     socket.on('checkin_status_response', ({ checkInDay, checkedToday }) => {
       clientCheckInDay = checkInDay;
@@ -733,7 +675,7 @@
 
     function calculateWithdrawTax() {
       const amt = Number(document.getElementById('withAmount').value) || 0;
-      const tax = +(amt * 0.18).toFixed(2);
+      const tax = +(amt * 0.03).toFixed(2);
       const finalGet = +(amt - tax).toFixed(2);
       document.getElementById('calcReq').innerText = amt;
       document.getElementById('calcTax').innerText = tax;
@@ -894,10 +836,11 @@
 
     requestAnimationFrame(animateRocketCanvas);
 
-    function updateBalanceDisplay(newBal) {
-      if (!currentUser) return;
-      currentUser.balance = Math.max(0, +Number(newBal).toFixed(2));
-      document.getElementById('userBalance').innerText = currentUser.balance.toFixed(2);
+    function updateBalanceDisplay(user) {
+      if (!user) return;
+      document.getElementById('userBalance').innerText = (user.balance || 0).toFixed(2);
+      document.getElementById('userDepositBal').innerText = (user.depositBalance || 0).toFixed(2);
+      document.getElementById('userWinningBal').innerText = (user.winningBalance || 0).toFixed(2);
     }
 
     function switchAuthTab(tab) {
@@ -929,7 +872,7 @@
       document.getElementById('gameScreen').classList.remove('hidden');
       document.getElementById('userInfo').innerText = `${user.name} (${user.phone})`;
       document.getElementById('supportPhone').value = user.phone;
-      updateBalanceDisplay(user.balance);
+      updateBalanceDisplay(user);
       socket.emit('fetch_my_bets', { phone: user.phone });
       socket.emit('fetch_user_transactions', { phone: user.phone });
       socket.emit('fetch_user_tickets', { phone: user.phone });
@@ -966,7 +909,6 @@
     }
 
     socket.on('kismat_bet_confirmed', ({ balance, bet }) => {
-      updateBalanceDisplay(balance);
       alert(`Successfully placed ₹${bet.amount} on Kismat ${bet.choice}!`);
       socket.emit('fetch_my_bets', { phone: currentUser.phone });
     });
@@ -1028,6 +970,7 @@
       }
     }
 
+    // Render Bet History with Choice, Result and Red Minus Loss Amount
     socket.on('my_bets_response', (bets) => {
       myBetsHistory = bets || [];
       const listEl = document.getElementById('myBetsHistoryList');
@@ -1037,18 +980,29 @@
         listEl.innerHTML = `<p class="text-slate-500 text-center py-4">No ${activeGameFilter} bets placed yet.</p>`;
         return;
       }
-      listEl.innerHTML = filteredBets.map(b => `
-        <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-sm">
-          <div>
-            <strong class="text-white">${b.period ? 'Period: ' + b.period : 'Rocket Flight'}</strong>
-            <p class="text-slate-300 mt-0.5">Choice: <span class="text-amber-400 font-bold">${b.choice}</span> | Amt: ₹${b.amount}</p>
+      listEl.innerHTML = filteredBets.map(b => {
+        let amountDisplay = '';
+        if (b.status === 'WON') {
+          amountDisplay = `<span class="block text-emerald-400 font-bold text-xs mt-1">+₹${b.winAmount}</span>`;
+        } else if (b.status === 'LOST') {
+          amountDisplay = `<span class="block text-rose-500 font-bold text-xs mt-1">-₹${b.amount}</span>`;
+        } else {
+          amountDisplay = `<span class="block text-amber-400 font-bold text-xs mt-1">₹${b.amount}</span>`;
+        }
+
+        return `
+          <div class="bg-[#05070d] p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-sm">
+            <div>
+              <strong class="text-white">${b.period ? 'Period: ' + b.period : 'Rocket Flight'}</strong>
+              <p class="text-slate-300 mt-0.5">Your Choice: <span class="text-indigo-300 font-bold">${b.choice}</span> | Bet: ₹${b.amount}</p>
+            </div>
+            <div class="text-right">
+              <span class="font-bold uppercase px-2.5 py-1 rounded-lg text-[10px] ${b.status === 'WON' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : b.status === 'LOST' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${b.status || 'PENDING'}</span>
+              ${amountDisplay}
+            </div>
           </div>
-          <div class="text-right">
-            <span class="font-bold uppercase px-2.5 py-1 rounded-lg ${b.status === 'WON' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : b.status === 'LOST' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${b.status || 'PENDING'}</span>
-            ${b.status === 'WON' ? `<span class="block text-emerald-300 font-bold text-[11px] mt-1">+₹${b.winAmount}</span>` : ''}
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     });
 
     function sendSupportTicket() {
@@ -1131,7 +1085,6 @@
 
       if (rocketStateClient.status === 'WAITING' && !myRocketBet) {
         if (currentUser.balance < amt) return alert('Insufficient balance!');
-        updateBalanceDisplay(currentUser.balance - amt);
         myRocketBet = { amount: amt, cashedOut: false };
         socket.emit('rocket_place_bet', { phone: currentUser.phone, name: currentUser.name, amount: amt });
       }
@@ -1188,11 +1141,22 @@
       socket.emit('fetch_user_transactions', { phone: currentUser.phone });
     });
 
+    // Helper to render proper coloured ball with number inside for history
+    function renderColourHistory(historyList) {
+      return (historyList || []).slice(0, 20).map(h => {
+        let bgClass = 'bg-slate-800 text-white';
+        if (h.number === 0) bgClass = 'num-0 text-white';
+        else if (h.number === 5) bgClass = 'num-5 text-white';
+        else if ([1, 3, 7, 9].includes(h.number)) bgClass = 'bg-emerald-600 text-white';
+        else bgClass = 'bg-rose-600 text-white';
+
+        return `<div class="w-8 h-8 rounded-full ${bgClass} font-black flex items-center justify-center shadow-md text-xs border border-white/10 shrink-0">${h.number}</div>`;
+      }).join('');
+    }
+
     socket.on('round_settled', ({ settledBets, history }) => {
       if (history) {
-        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-indigo-300 font-bold border border-slate-800 shadow-sm">#${h.number}</span>
-        `).join('');
+        document.getElementById('colourHistoryBar').innerHTML = renderColourHistory(history);
       }
       if (!currentUser) return;
       socket.emit('fetch_my_bets', { phone: currentUser.phone });
@@ -1222,9 +1186,7 @@
       if (isLocked) closeUniqueBetDrawer();
 
       if (history) {
-        document.getElementById('colourHistoryBar').innerHTML = history.slice(0, 20).map(h => `
-          <span class="px-2.5 py-1 rounded-xl bg-[#0b0f19] text-indigo-300 font-bold border border-slate-800 shadow-sm">#${h.number}</span>
-        `).join('');
+        document.getElementById('colourHistoryBar').innerHTML = renderColourHistory(history);
       }
     });
 
@@ -1247,8 +1209,8 @@
 
     socket.on('user_sync', ({ user }) => {
       if (currentUser && user.phone === currentUser.phone) {
-        currentUser.balance = user.balance;
-        updateBalanceDisplay(user.balance);
+        currentUser = user;
+        updateBalanceDisplay(user);
       }
     });
 
@@ -1270,6 +1232,10 @@
     function sendWithdraw() {
       const amount = Number(document.getElementById('withAmount').value);
       if (!amount || amount < 30) return alert('Minimum withdrawal is ₹30!');
+
+      if (currentUser && amount > currentUser.winningBalance) {
+        return alert(`Apni kebal winning amount withdraw korte paren! Apnar available winning balance: ₹${currentUser.winningBalance}`);
+      }
 
       let accountDetails = '';
       if (currentWithdrawMethod === 'bank') {
